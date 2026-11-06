@@ -2,7 +2,7 @@ import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { BasilIcon, ChevronDownIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
+import { CalendarIcon, ChevronDownIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, TrophyIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
@@ -165,18 +165,6 @@ export function Profile() {
       </section>
       {profileError ? <p role="alert">{profileError}</p> : null}
 
-      <section className="profile-basil" aria-labelledby="profile-basil-heading">
-        <h2 id="profile-basil-heading">Your Basil</h2>
-        {basil.isPending ? <InlineLoader compact label="Loading your Basil" />
-          : basil.isError ? <p role="alert">We couldn’t load your Basil. Reload to retry.</p>
-          : <>
-            <div className="profile-basil__grid">
-              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{basil.data.basil.weekly}</strong></div>
-              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{basil.data.basil.lifetime}</strong></div>
-            </div>
-          </>}
-      </section>
-
       <section className="profile-section">
         <h2>Learning setup</h2>
         <Card plain className="profile-settings-card">
@@ -205,16 +193,6 @@ export function Profile() {
             </span>
             <select disabled={profileSaving || !activeProfile} value={learner.dailyMinutes ?? 10} onChange={event => void saveLanguageProfile({ dailyGoalMinutes: Number(event.target.value) })}>
               {[5, 10, 15, 20].map(minutes => <option key={minutes} value={minutes}>{minutes} min</option>)}
-            </select>
-          </label>
-
-          <label className="profile-setting">
-            <span>
-              <strong>Practice preference</strong>
-              <small>How you prefer to respond</small>
-            </span>
-            <select disabled={profileSaving || !activeProfile} value={activeProfile?.preferredInputMode ?? "both"} onChange={event => void saveLanguageProfile({ preferredInputMode: event.target.value as "speech" | "text" | "both" })}>
-              <option value="both">Both</option><option value="speech">Speaking</option><option value="text">Typing</option>
             </select>
           </label>
         </Card>
@@ -414,16 +392,21 @@ export function Profile() {
         </Card>
       </section>
 
-      <Button block className="profile-logout" onClick={() => void logOut()}>
-        Log Out
-      </Button>
-
-      <section className="profile-danger-zone" aria-labelledby="delete-account-heading">
-        <h2 id="delete-account-heading">Delete account</h2>
-        <p>Permanently remove your Linguini account and everything associated with it.</p>
-        <Button variant="quiet" block className="profile-delete-trigger" onClick={() => setDeleteOpen(true)}>
-          Delete my account
-        </Button>
+      <section className="profile-section" aria-labelledby="manage-account-heading">
+        <h2 id="manage-account-heading">Manage my account</h2>
+        <Card plain className="profile-settings-card">
+          <button type="button" className="profile-setting profile-support-link" onClick={() => void logOut()}>
+            <span><strong>Log out</strong></span>
+            <ChevronRightIcon size={20} />
+          </button>
+          <button type="button" className="profile-setting profile-support-link profile-setting--danger" onClick={() => setDeleteOpen(true)}>
+            <span>
+              <strong>Delete my account</strong>
+              <small>Permanently remove your Linguini account and everything associated with it.</small>
+            </span>
+            <ChevronRightIcon size={20} />
+          </button>
+        </Card>
       </section>
 
       {deleteOpen ? (

@@ -136,8 +136,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `forgot_password_requested` | — | User submits email to request password reset link |
 | `password_reset_completed` | — | User submits and sets a new password on `/reset-password` |
 | `profile_password_changed` | — | Authenticated user changes password from Profile page |
+| `profile_locked_badges_toggled` | `{ open, count }` | User opens or closes the locked Chef Badges list on the Profile page |
 | `profile_note_toggled` | `{ note, open }` | User opens or closes the "How AI helps" or "Your privacy" note on the Profile page |
-| `logout_clicked` | — | User clicks "Log Out" in Profile |
+| `logout_clicked` | — | User clicks "Log out" in Profile |
 | `account_deleted` | — | User confirms account deletion request |
 
 ### Onboarding & Setup

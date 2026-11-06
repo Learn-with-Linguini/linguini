@@ -5739,7 +5739,7 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-5);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
-  background: var(--cream);
+  background: var(--paper);
   color: var(--ink);
   text-align: left;
   border: 1px solid var(--line);
@@ -5756,13 +5756,13 @@ p[role="alert"]::before { content: "!"; }
 
 .profile-avatar {
   display: grid;
-  width: 90px;
-  height: 90px;
-  flex: 0 0 90px;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
   place-items: center;
   overflow: hidden;
-  background: var(--teal);
-  border: 1px solid var(--line);
+  background: var(--paper);
+  border: var(--stroke) solid var(--teal-dark);
   border-radius: var(--radius-pill);
 }
 
@@ -5793,7 +5793,6 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .profile-identity__details {
-  margin-top: 10px;
   display: grid;
   min-width: 0;
   gap: 1px;
@@ -5939,10 +5938,13 @@ p[role="alert"]::before { content: "!"; }
 
 .profile-basil { display: grid; gap: var(--space-3); }
 .profile-basil__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-.profile-basil__grid > div { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 var(--space-3); min-height: 104px; padding: var(--space-4); border: 1px solid rgba(33, 113, 111, .2); border-radius: var(--radius-md); background: var(--paper); }
-.profile-basil__icon { grid-row: 1 / 3; display: grid; width: 48px; height: 48px; place-items: center; border-radius: 50%; background: var(--basil-surface); color: var(--basil); }
-.profile-basil__grid span:not(.profile-basil__icon) { color: var(--ink-muted); font-size: var(--text-small); font-weight: 800; }
-.profile-basil__grid strong { color: var(--basil); font-family: var(--font-display); font-size: 32px; line-height: 1; }
+.profile-basil h2 { display: flex; align-items: center; gap: var(--space-2); }
+.profile-basil h2 svg { flex: none; color: var(--basil); }
+/* The icon tells the two totals apart. */
+.profile-basil__card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--space-2); padding: var(--space-3); border: 1px solid rgba(33, 113, 111, .2); border-radius: var(--radius-md); background: var(--basil-surface); }
+.profile-basil__icon { grid-row: 1 / 3; display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--paper); color: var(--teal-dark); }
+.profile-basil__card > span:not(.profile-basil__icon) { color: var(--ink); font-size: var(--text-small); font-weight: 800; }
+.profile-basil__grid strong { color: var(--basil); font-family: var(--font-display); font-size: var(--text-h2); line-height: 1.1; }
 
 .profile-tier-card {
   display: grid;
@@ -6056,14 +6058,14 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .profile-setting select {
-  min-width: 112px;
-  min-height: 44px;
-  padding-inline: var(--space-3);
+  min-width: 124px;
+  min-height: 60px;
+  padding-inline: var(--space-4) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--butter);
   color: var(--ink);
-  font: 800 var(--text-small) / 1 var(--font-ui);
+  font: 800 var(--text-body) / 1 var(--font-ui);
 }
 
 .profile-setting select:disabled,
@@ -6220,26 +6222,7 @@ p[role="alert"]::before { content: "!"; }
   .profile-note__summary svg { transition: none; }
 }
 
-.profile-logout { margin-top: var(--space-2); }
-
-.profile-danger-zone {
-  display: grid;
-  gap: var(--space-2);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--line);
-}
-
-.profile-danger-zone p {
-  color: var(--ink-muted);
-  font-size: var(--text-small);
-  line-height: 1.45;
-}
-
-.profile-delete-trigger.btn--quiet {
-  justify-content: flex-start;
-  padding-inline: 0;
-  color: var(--danger);
-}
+.profile-setting--danger strong { color: var(--danger); }
 
 .account-delete-summary {
   display: grid;
@@ -6441,17 +6424,12 @@ p[role="alert"]::before { content: "!"; }
 }
 
 @media (max-width: 400px) {
-  .profile-identity-card { align-items: flex-start; gap: var(--space-3); }
-  .profile-avatar { width: 92px; height: 92px; flex-basis: 92px; }
+  .profile-identity-card { gap: var(--space-3); }
   .profile-avatar-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile-setting { align-items: flex-start; flex-direction: column; }
   .profile-setting select { width: 100%; }
-  /* Two across on phones: icon and label share a row with the number large beneath. */
   .profile-basil__grid { gap: var(--space-2); }
-  .profile-basil__grid > div { align-content: center; gap: var(--space-2); padding: var(--space-3); }
-  .profile-basil__icon { grid-row: auto; width: 36px; height: 36px; }
-  .profile-basil__icon svg { width: 20px; height: 20px; }
-  .profile-basil__grid strong { grid-column: 1 / -1; overflow-wrap: anywhere; }
+  .profile-basil__grid strong { overflow-wrap: anywhere; }
 }
 
 .profile-page:not(.profile-edit-page) .profile-setting {
@@ -6464,15 +6442,27 @@ p[role="alert"]::before { content: "!"; }
   white-space: nowrap;
 }
 
+/* The label keeps one line; the dropdown takes only the width it needs. */
+.profile-page:not(.profile-edit-page) .profile-setting select {
+  flex: none;
+  width: auto;
+  margin-left: auto;
+}
+
+.profile-page:not(.profile-edit-page) .profile-support-link {
+  padding-inline: 0;
+}
+
 /* Phones: settings read as short rows, with the helper lines left to wider screens. */
 @media (max-width: 760px) {
   .profile-page { gap: var(--space-5); }
-  .profile-setting { min-height: 56px; padding-block: var(--space-2); }
-  .profile-setting small { display: none; }
-  .profile-danger-zone p { display: none; }
+  .profile-page:not(.profile-edit-page) .profile-setting { min-height: 56px; padding-block: var(--space-2); }
+  .profile-page:not(.profile-edit-page) .profile-setting small { display: none; }
+  /* Each social link is its own card, so the shared card's frame drops away. */
+  .profile-settings-card:has(.profile-social-grid) { padding: 0; border: 0; background: none; box-shadow: none; }
   .profile-social-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); }
-  .profile-social-item { justify-content: center; min-height: 56px; padding: var(--space-2) 0; border: 0; }
-  .profile-social-item + .profile-social-item { border: 0; }
+  .profile-social-item { justify-content: center; min-height: 64px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper); }
+  .profile-social-item + .profile-social-item { border-top: 1px solid var(--line); }
   .profile-social-info, .profile-social-item > svg { display: none; }
 }
 

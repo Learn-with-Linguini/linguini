@@ -2,7 +2,8 @@ import { useGamification } from "../state/gamification";
 import { BADGE_LEVELS, EARNABLE_BADGE_LEVELS, earnedBadgeLevels, type MissionBadge } from "../lib/gamification";
 import { missionBadgeAsset } from "../lib/missionBadges";
 import { MissionIllustration } from "./MissionIllustration";
-import { LockIcon } from "./icons";
+import { trackAction } from "../lib/analytics.ts";
+import { ChevronDownIcon, LockIcon } from "./icons";
 import { Button, Card } from "./ui";
 import "./gamification.css";
 
@@ -27,13 +28,27 @@ function BadgeLevelDots({ mission }: { mission: MissionBadge }) {
     {mission.badgeLevel ? <span className="small muted">{mission.badgeLevel}</span> : null}</p>;
 }
 
+function BadgeCards({ missions }: { missions: MissionBadge[] }) {
+  return <div className="mission-badges">{missions.map(mission => <Card plain key={mission.missionId}>
+    <div className="mission-badges__heading"><ChefBadge mission={mission} /><div><h3>{mission.name}</h3><p className="small muted">{mission.skill}</p><BadgeLevelDots mission={mission} /></div></div>
+  </Card>)}</div>;
+}
+
 export function MissionBadges() {
   const progress = useGamification();
+  const missions = progress.data?.missions ?? [];
+  const open = missions.filter(mission => mission.badgeLevel || mission.available);
+  const locked = missions.filter(mission => !mission.badgeLevel && !mission.available);
   return <section className="stack" aria-labelledby="mission-badges-title"><h2 id="mission-badges-title">Your Chef Badges</h2>
     {progress.isPending ? <p role="status">Loading your badges</p> : progress.isError ? <div><p role="alert">We couldn’t load your badges.</p>
       <Button variant="quiet" onClick={() => void progress.refetch()}>Retry badges</Button></div> :
-      <div className="mission-badges">{progress.data?.missions.map(mission => <Card plain key={mission.missionId}>
-        <div className="mission-badges__heading"><ChefBadge mission={mission} /><div><h3>{mission.name}</h3><p className="small muted">{mission.skill}</p><BadgeLevelDots mission={mission} /></div></div>
-      </Card>)}</div>}
+      <>
+        {open.length ? <BadgeCards missions={open} /> : null}
+        {/* Badges for a higher level stay folded; earned and unlocked ones lead. */}
+        {locked.length ? <details className="badges-locked" onToggle={event => trackAction("profile_locked_badges_toggled", { open: event.currentTarget.open, count: locked.length })}>
+          <summary><strong>Locked badges ({locked.length})</strong><ChevronDownIcon size={20} /></summary>
+          <BadgeCards missions={locked} />
+        </details> : null}
+      </>}
   </section>;
 }
