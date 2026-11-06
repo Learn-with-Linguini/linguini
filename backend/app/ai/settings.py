@@ -25,6 +25,7 @@ from app.ai.config.models import (
     AiFeature,
     AiProvider,
 )
+from app.ai.contracts.config import ReasoningEffort
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class FeatureModelConfig(BaseModel):
     max_output_tokens: int | None = Field(default=None, gt=0)
     max_retries: int = Field(default=0, ge=0)
     temperature: float = Field(default=0.0, ge=0, le=2)
+    reasoning_effort: ReasoningEffort | None = None
     deployment_id: str = ""
     credential_id: str = ""
 
@@ -345,6 +347,7 @@ def _features_from_config(
             max_output_tokens=defaults.max_output_tokens,
             max_retries=defaults.max_retries,
             temperature=defaults.temperature,
+            reasoning_effort=defaults.reasoning_effort,
             deployment_id=deployment_id,
             credential_id=select_credential(config, deployment.credentials, secrets),
         )

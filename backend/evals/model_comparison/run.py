@@ -24,8 +24,10 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from app.ai.contracts.config import REASONING_EFFORTS
+
 from . import calls
-from .providers import CALLS, CANDIDATES, Candidate, facts
+from .providers import CALLS, CANDIDATES, JUDGE, Candidate, facts, require_keys
 from .recording import Overrides
 
 HERE = Path(__file__).resolve().parent
@@ -46,7 +48,7 @@ SCREEN = {
 }
 # Typical (input, output) tokens per call, for estimates before any data exists.
 PRIOR_TOKENS = {
-    "scene_analysis": (2500, 1200), "translation": (900, 700),
+    "scene_analysis": (3400, 2500), "translation": (900, 700),
     "learning_tasks": (3500, 3000), "ispy_clues": (1500, 400), "ispy_guess": (1500, 300),
 }
 JUDGE_ESTIMATE = {"learning_tasks": 0.02, "ispy_clues": 0.008}
@@ -121,6 +123,11 @@ def parse_grid(specs: list[str]) -> list[Overrides]:
                     value = float(raw)
                 elif name == "max_output_tokens":
                     value = int(raw)
+                elif name == "reasoning_effort":
+                    if raw not in REASONING_EFFORTS:
+                        raise SystemExit(
+                            f"reasoning_effort must be one of {', '.join(REASONING_EFFORTS)}"
+                        )
                 else:
                     raise SystemExit(f"unknown sweep parameter {name!r}")
                 expanded.append(replace(base, **{name: value}))
@@ -139,7 +146,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cases", nargs="+", default=None)
     parser.add_argument("--runs", type=int, default=None)
     parser.add_argument("--grid", nargs="+", default=[],
-                        help="sweep: name=v1,v2 for temperature or max_output_tokens")
+                        help="sweep: name=v1,v2 for temperature, max_output_tokens "
+                         "or reasoning_effort")
     parser.add_argument("--judge-runs", type=int, default=1,
                         help="how many repeat runs per case get an LLM-judge verdict")
     parser.add_argument("--budget", type=float, default=6.5)
@@ -179,6 +187,9 @@ def main(argv: list[str] | None = None) -> int:
                         judged = call in calls.JUDGED and run < args.judge_runs
                         jobs.append((call, cand, overrides, case, run, judged))
 
+    if not args.dry_run:
+        require_keys({cand.provider for _, cand, _, _, _, _ in jobs}
+                     | ({JUDGE.provider} if any(j for *_, j in jobs) else set()))
     total_estimate = sum(estimate(c, cand, j) for c, cand, _, _, _, j in jobs)
     print(f"{len(jobs)} calls planned, estimated ${total_estimate:.2f}; "
           f"spent so far ${ledger.data['total']:.2f} of ${args.budget:.2f}")

@@ -108,7 +108,11 @@ class ResponsesApiClient:
         self, request: TextModelRequest | VisionModelRequest, user_content: list[dict]
     ) -> dict[str, Any]:
         body: dict[str, Any] = {"model": self._config.model_name}
-        if self.ENDPOINT.sends_temperature:
+        effort = self._config.reasoning_effort
+        if effort is not None:
+            body["reasoning"] = {"effort": effort}
+        # OpenAI reasoning models accept a temperature only with effort "none".
+        if self.ENDPOINT.sends_temperature and effort in (None, "none"):
             body["temperature"] = self._config.temperature
         body["max_output_tokens"] = self._config.max_output_tokens
         body["input"] = [

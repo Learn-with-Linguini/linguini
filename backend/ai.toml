@@ -22,71 +22,90 @@ env = ["AI_OPENROUTER_API_KEY"]
 quota_group = "openrouter"
 billing_group = "openrouter"
 
-[credentials.openai]
+# Three OpenAI keys share the load: every OpenAI deployment takes them in turn,
+# skipping a key that is missing, invalid or cooling down. OpenAI limits and
+# bills per organisation, so each key has its own quota_group on the assumption
+# that each comes from a different organisation. Keys from one organisation must
+# share a quota_group, since a rate limit on one then applies to all of them.
+# Key 1 falls back to AI_OPENAI_API_KEY so a single-key .env.local still works.
+[credentials.openai-1]
 adapter = "openai"
-env = ["AI_OPENAI_API_KEY"]
-quota_group = "openai"
-billing_group = "openai"
+env = ["AI_OPENAI_API_KEY_1", "AI_OPENAI_API_KEY"]
+quota_group = "openai-1"
+billing_group = "openai-1"
 
-[credentials.gemini]
+[credentials.openai-2]
+adapter = "openai"
+env = ["AI_OPENAI_API_KEY_2"]
+quota_group = "openai-2"
+billing_group = "openai-2"
+
+[credentials.openai-3]
+adapter = "openai"
+env = ["AI_OPENAI_API_KEY_3"]
+quota_group = "openai-3"
+billing_group = "openai-3"
+
+[credentials.gemini-1]
 adapter = "gemini"
-env = ["AI_GEMINI_API_KEY"]
-quota_group = "gemini"
-billing_group = "gemini"
+env = ["AI_GEMINI_API_KEY_1", "AI_GEMINI_API_KEY"]
+quota_group = "gemini-1"
+billing_group = "gemini-1"
 
-[deployments.scene-claude-haiku]
-adapter = "openrouter"
+[credentials.gemini-2]
+adapter = "gemini"
+env = ["AI_GEMINI_API_KEY_2"]
+quota_group = "gemini-2"
+billing_group = "gemini-2"
+
+[credentials.gemini-3]
+adapter = "gemini"
+env = ["AI_GEMINI_API_KEY_3"]
+quota_group = "gemini-3"
+billing_group = "gemini-3"
+
+[deployments.scene-gpt-4-1-mini]
+adapter = "openai"
 api = "responses"
-model = "anthropic/claude-haiku-4.5"
+model = "gpt-4.1-mini"
 capabilities = ["vision", "jsonSchema"]
-credentials = ["openrouter"]
-upstream_fallback = { allow_fallbacks = true }
-# A reusable scene inventory can contain up to 20 objects plus attributes,
-# relations, actions and visible prices. The shared 1,500-token default was
-# sized for the former six-object response and can truncate valid inventories.
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 120, max_output_tokens = 5000, max_retries = 0 }
 
-# Mistral Small scored marginally higher but is served only by Mistral and
-# rate-limited upstream too often to be the default.
 [deployments.translation-gpt-4o-mini]
-adapter = "openrouter"
+adapter = "openai"
 api = "responses"
-model = "openai/gpt-4o-mini"
+model = "gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openrouter"]
-upstream_fallback = { allow_fallbacks = true }
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.lessons-gpt-5-4-mini]
-adapter = "openrouter"
+adapter = "openai"
 api = "responses"
-model = "openai/gpt-5.4-mini"
+model = "gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openrouter"]
-upstream_fallback = { allow_fallbacks = true }
-# Four grammar tasks run past the shared 1500-token default.
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 60, max_output_tokens = 4000, max_retries = 1 }
 
 [deployments.clues-gemini-flash-lite]
-adapter = "openrouter"
-api = "responses"
-model = "google/gemini-3.1-flash-lite"
+adapter = "gemini"
+api = "generateContent"
+model = "gemini-3.1-flash-lite"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openrouter"]
-upstream_fallback = { allow_fallbacks = true }
+credentials = ["gemini-1", "gemini-2", "gemini-3"]
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.guess-gpt-4-1-mini]
-adapter = "openrouter"
+adapter = "openai"
 api = "responses"
-model = "openai/gpt-4.1-mini"
+model = "gpt-4.1-mini"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openrouter"]
-upstream_fallback = { allow_fallbacks = true }
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 60, max_retries = 0 }
 
 [routes.sceneAnalysis]
-deployments = ["scene-claude-haiku"]
+deployments = ["scene-gpt-4-1-mini"]
 policy = "priority"
 deadline_seconds = 120
 max_model_calls = 1
@@ -107,7 +126,7 @@ max_model_calls = 2
 deployments = ["clues-gemini-flash-lite"]
 policy = "priority"
 deadline_seconds = 120
-max_model_calls = 2
+max_model_calls = 3
 
 [routes.ispyGuess]
 deployments = ["guess-gpt-4-1-mini"]

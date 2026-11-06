@@ -191,6 +191,24 @@ def test_invalid_geometry_is_rejected_by_the_production_validator() -> None:
     assert "boundingBoxOutsideImage" in score.issue_codes
 
 
+def test_gemini_thousandths_are_scored_as_the_app_reads_them() -> None:
+    case = _case("classroom-clean")
+    payload = {
+        "suggestedSceneTitle": "Classroom",
+        "objects": [
+            _object("object_1", "desk", (70, 450, 300, 200)),
+            _object("object_2", "chair", (160, 610, 80, 240)),
+            _object("object_3", "globe", (291, 359, 58, 91)),
+        ],
+        "relations": [],
+    }
+
+    assert not score_case(case, payload).parsed
+    gemini = score_case(case, payload, normalize_gemini_coordinates=True)
+    assert gemini.parsed
+    assert gemini.mean_iou is not None and gemini.mean_iou > 0.9
+
+
 def test_unparseable_output_fails_the_case_rather_than_the_run() -> None:
     score = score_case(_case("classroom-clean"), "Here is the JSON you asked for: {oops")
     assert not score.parsed

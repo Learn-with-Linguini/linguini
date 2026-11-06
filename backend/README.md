@@ -816,8 +816,12 @@ directory. The file holds no secrets. It has three sections:
 - `[deployments.<id>]`: `adapter`, `api` (`responses` or `generateContent`),
   `model`, `capabilities` (`text`, `vision`, `jsonSchema`), the eligible
   `credentials`, generation `defaults` (`timeout_seconds`,
-  `max_output_tokens`, `max_retries`, `temperature`), and, for OpenRouter
-  only, a required `upstream_fallback` (see [AI routing](#ai-routing)).
+  `max_output_tokens`, `max_retries`, `temperature`, and an optional
+  `reasoning_effort` of `none`, `minimal`, `low`, `medium` or `high` for
+  reasoning models only: Responses API hosts receive `reasoning.effort` and no
+  temperature unless the effort is `none`; Gemini receives the matching thinking
+  level, with `none` as `minimal`), and, for OpenRouter only, a required
+  `upstream_fallback` (see [AI routing](#ai-routing)).
 - `[routes.<feature>]`, one for each of `sceneAnalysis`, `sceneTranslation`,
   `learningTask`, `ispyClue` and `ispyGuess`:
   - `enabled`;
@@ -833,8 +837,10 @@ There is no per-feature environment fallback. Variables such as
 environment supplies only:
 
 - secrets, from the variables each credential names (`AI_OPENROUTER_API_KEY`,
-  `AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` in the default file). OpenAI image
-  moderation uses the first `openai` credential with a secret;
+  and `AI_OPENAI_API_KEY_1` to `_3` and `AI_GEMINI_API_KEY_1` to `_3` in the
+  default file, with `AI_OPENAI_API_KEY` and `AI_GEMINI_API_KEY` as each key 1's
+  fallback). OpenAI image moderation uses the first `openai` credential with a
+  secret;
 - `AI_MODE` and, optionally, `AI_CONFIG_FILE`;
 - result cache, observability, image moderation and object grounding settings.
 
@@ -852,9 +858,10 @@ Validation runs at startup and makes no network calls. It checks:
 With `AI_MODE=real`, every enabled route must also resolve a secret; with
 `demo`, a route without one falls back to deterministic behaviour.
 
-Uploaded-image analysis runs on the `sceneAnalysis` route, which uses OpenRouter
-in the default `ai.toml`; `AI_OPENROUTER_API_KEY` is required. In `demo` mode,
-missing this secret does not prevent startup, but uploaded photos fail analysis
+Uploaded-image analysis runs on the `sceneAnalysis` route, which calls OpenAI
+(`gpt-4.1-mini`) directly in the default `ai.toml`; an OpenAI key
+(`AI_OPENAI_API_KEY` or `AI_OPENAI_API_KEY_1` to `_3`) is required. In `demo`
+mode, missing this secret does not prevent startup, but uploaded photos fail analysis
 with a retryable “We couldn't analyse that photo” error instead of receiving
 placeholder objects. The backend warning names the missing variable, and this
 failure is logged with `code=analysisUnavailable`. Curated scenes are unaffected.
@@ -901,6 +908,23 @@ Every model call leases a credential from the app-wide `CredentialPool`
   skipping any without a secret, disabled, or cooling down (itself or its
   `quota_group`). A lock guards only selection and health updates; it is
   never held during a model call.
+- **Several keys for one provider:** the default `ai.toml` defines three
+  OpenAI credentials (`openai-1` to `openai-3`, read from
+  `AI_OPENAI_API_KEY_1` to `_3`) and three Gemini credentials (`gemini-1` to
+  `gemini-3`, read from `AI_GEMINI_API_KEY_1` to `_3`). Every deployment lists
+  all three of its provider's credentials, so successive calls use each key in
+  turn. Set one, two or three of the variables; empty ones are skipped. Key 1
+  also reads the unnumbered `AI_OPENAI_API_KEY` or `AI_GEMINI_API_KEY`, so a
+  single-key setup needs no change. Each key has its own `quota_group`, which
+  assumes each comes from a different OpenAI organisation or Google Cloud
+  project, because both providers rate-limit per organisation or project, not
+  per key. Keys from one organisation or project should share a `quota_group`;
+  spreading calls across them adds no capacity. A Gemini 503 ("overloaded")
+  pauses the deployment rather than the key, so extra keys do not help with
+  it. The `ispyClue` route allows three model calls so one request can reach a
+  third key. The rotation position lives in each process's memory, so several
+  workers or instances each rotate on their own, and it balances calls, not
+  spend.
 - **Clients:** one immutable client per deployment, credential and model
   config, built on first use and reused. A shared client's key or model is
   never changed.
@@ -956,8 +980,9 @@ the budget counts every attempt we make. `httpx` never retries, Gemini pins
 
 **OpenRouter upstream fallback:** OpenRouter deployments must set
 `upstream_fallback`, sent as `provider.allow_fallbacks` (plus `models` when
-fallback models are listed). The default keeps OpenRouter's fallback on, as
-before. OpenRouter's internal attempts on other hosts or models happen inside
+fallback models are listed). The default `ai.toml` has no OpenRouter
+deployments, but keeps the `openrouter` credential so a custom file can add
+one. OpenRouter's internal attempts on other hosts or models happen inside
 one HTTP request, so `max_model_calls` counts them as one call and cannot
 see or limit them; only the deadline bounds them.
 

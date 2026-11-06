@@ -38,8 +38,11 @@ rejected answer can still be diagnosed.
 1. **screen** — every candidate, a hard subset of cases, one run.
 2. **full** — the shortlist, every case, 2–3 runs (repeat runs measure consistency).
 3. **sweep** — the winner per call against parameter settings
-   (`temperature`, `max_output_tokens`, `reasoning_effort`, `thinking_budget`,
-   `image_detail`, `media_resolution`). The first row is always production settings.
+   (`temperature`, `max_output_tokens`, `reasoning_effort`). The first row is always
+   production settings. `reasoning_effort` is `none`, `minimal`, `low`, `medium` or
+   `high`: OpenAI sends it as `reasoning.effort` (and drops temperature unless it is
+   `none`); Gemini maps it to a thinking level, with `none` sent as `minimal`.
+   Leave it out for non-reasoning models such as gpt-4.1-mini, which reject it.
 
 Every call is costed into `results/spend.json`; a job is skipped rather than
 sent once spend plus its estimate would pass `--budget` (default $6.50). Only
@@ -52,8 +55,10 @@ family with the `claude-haiku-4.5` candidate; the report flags that.
 
 ## Requirements
 
-`AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` and `AI_OPENROUTER_API_KEY` in
-`backend/.env.local`. Behind antivirus HTTPS inspection (for example Avast Web
+A key in `backend/.env.local` for each provider the run calls:
+`AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` and/or `AI_OPENROUTER_API_KEY`. The
+lesson and clue calls also need the OpenRouter key for the judge. A dry run needs
+no keys. Behind antivirus HTTPS inspection (for example Avast Web
 Shield), `pip install truststore` so Python trusts the Windows certificate
 store; the runner uses it when present. `matplotlib` is needed only to draw the
 report charts.

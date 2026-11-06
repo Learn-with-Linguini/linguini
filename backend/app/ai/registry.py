@@ -105,6 +105,7 @@ def _model_config(model: str, defaults: Any, default_max_output_tokens: int) -> 
         max_output_tokens=defaults.max_output_tokens or default_max_output_tokens,
         max_retries=min(defaults.max_retries, 1),
         temperature=defaults.temperature,
+        reasoning_effort=defaults.reasoning_effort,
     )
 
 
