@@ -89,16 +89,46 @@ RECOMMENDATIONS = """## Recommendations
 
 | Call | Chosen | Replaces |
 |---|---|---|
-| Scene analysis | `openrouter:anthropic/claude-haiku-4.5` | gemini-3.7-flash |
+| Scene analysis | `openai:gpt-4.1-mini` (November 2026) | claude-haiku-4.5 |
 | Translation | `openrouter:mistralai/mistral-small-2603` | gemini-3.5-flash-lite |
 | Learning tasks | `openai:gpt-5.4-mini` | gpt-4o-mini |
 | I-Spy clues | `gemini:gemini-3.1-flash-lite` | gpt-4o-mini |
 | I-Spy guess | `openai:gpt-4.1-mini` | gpt-4o-mini |
 
-**Scene analysis — Claude Haiku 4.5.** Highest quality (0.79), found every
-anchor object, and the only candidate the app accepted every time, at a third
-of gpt-4o's cost. gpt-4.1-mini is the budget alternative at 0.68 and a third
-of the price. Today's default failed every call.
+**Scene analysis — Claude Haiku 4.5 (October).** Highest quality (0.79), found
+every anchor object, and the only candidate the app accepted every time, at a
+third of gpt-4o's cost. gpt-4.1-mini is the budget alternative at 0.68 and a
+third of the price. Today's default failed every call.
+
+**Scene analysis — GPT-4.1-mini (November 2026 re-run).** The scene prompt has
+since grown into a reusable inventory of up to 20 objects, which made Haiku
+expensive. A re-run on the current prompt compared OpenAI and Gemini models
+only, on the same 14 photos: two runs per photo for OpenAI, one for Gemini to
+save free-tier quota. Gemini quality counts its 503 errors as zeros.
+
+| Candidate | Quality | Accepted | Anchor recall | Precision | p50 / p95 | Per 1,000 sessions |
+|---|---|---|---|---|---|---|
+| openai:gpt-5.4-nano | 0.65 | 50% | 1.00 | 0.84 | 8.2 s / 12.4 s | $1.71 |
+| openai:gpt-4.1-mini | 0.64 | 82% | 0.74 | 0.80 | 10.2 s / 17.8 s | $2.88 |
+| openai:gpt-5.4-mini | 0.62 | 75% | 0.91 | 0.68 | 6.4 s / 9.4 s | $6.84 |
+| gemini:gemini-3.1-flash-lite | 0.43 | 71% | 0.79 | 0.80 | 6.5 s / 7.3 s | $2.46 |
+| gemini:gemini-3.5-flash-lite | 0.32 | 50% | 0.43 | 0.67 | 6.2 s / 10.0 s | $2.17 |
+
+gpt-4.1-mini is the most dependable low-cost choice: accepted most often, no
+invented objects, and well under Haiku's cost, though it is the slowest and
+finds the fewest anchors. Its rejections were empty answers on blurred or
+low-resolution photos. gpt-5.4-nano found every anchor with the best precision
+but rated real objects on degraded photos at 0.12–0.6, below the app's 0.7
+confidence cut-off, so half its answers were discarded; a lower cut-off would
+make it the better and cheaper choice, but would affect every model. On the
+free tier, Gemini 3.5 Flash-Lite hit 503 "overloaded" on 5 of 14 calls and
+mixed coordinate scales inside single boxes, 3.1 Flash-Lite wrote corner points
+into box sizes, and gemini-3.7-flash returned 503 on both probes. gpt-4.1-nano
+has been retired by OpenAI. Haiku was not re-run, and box accuracy rests on
+1–10 labelled boxes per model, so it is not used to rank. Raw results are in
+`backend/evals/model_comparison/results/full/scene-nov-openai.jsonl` and
+`scene-nov-gemini-rescored.jsonl`. The generated scene-analysis tables below
+still show October, because they would otherwise mix the two prompts.
 
 **Translation — Mistral Small.** Joint best quality (0.97) at the lowest cost
 ($0.24 per 1,000 sessions) and the fastest median response (2.2 s). Claude
@@ -126,8 +156,10 @@ language score (4.25 against 5.00).
 today's model), and it reads the directional traps correctly.
 
 Three of the five recommendations change the current default, and the two
-Gemini defaults are replaced outright. Together the chosen set costs about
-**$13 per 1,000 learning sessions**, most of it scene analysis and lessons.
+Gemini defaults are replaced outright. Together the October set costs about
+**$13 per 1,000 learning sessions**, most of it scene analysis and lessons;
+moving scene analysis to gpt-4.1-mini brings that to roughly $9, though the two
+scene figures come from different prompts.
 
 **Provider spread is deliberate.** No provider won everywhere: Anthropic took
 vision, Mistral translation, OpenAI the two reasoning-heavy text calls and

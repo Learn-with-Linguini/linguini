@@ -17,7 +17,7 @@ from app.ai import (
     load_ai_settings,
 )
 from app.ai.settings import DEFAULT_AI_CONFIG_FILE
-from tests.test_ai_config import example, write
+from tests.test_ai_config import as_openrouter, example, openrouter_file, write
 
 
 def test_object_grounding_is_off_by_default_and_can_use_grounding_dino():
@@ -87,9 +87,11 @@ def test_image_moderation_is_off_by_default_and_parses_openai_config():
         load_ai_settings(env={"AI_IMAGE_MODERATION_TIMEOUT_SECONDS": "0"})
 
 
-def test_real_mode_requires_openai_key_for_openai_moderation():
+def test_real_mode_requires_openai_key_for_openai_moderation(tmp_path):
+    # Every route goes through OpenRouter, so only moderation needs an OpenAI key.
     env = {
         "AI_MODE": "real",
+        "AI_CONFIG_FILE": openrouter_file(tmp_path),
         "AI_OPENROUTER_API_KEY": "sk-or",
         "AI_IMAGE_MODERATION_PROVIDER": "openai",
     }
@@ -109,16 +111,11 @@ def test_default_file_loads_from_any_working_directory(tmp_path, monkeypatch):
 
 
 def test_custom_file_sets_each_feature_provider_and_key(tmp_path):
-    data = example()
+    data = as_openrouter(example(), "guess-gpt-4-1-mini")
     data["deployments"]["translation-gpt-4o-mini"].update(
         adapter="gemini", api="generateContent", model="gem-translate",
-        credentials=["gemini"],
+        credentials=["gemini-1"],
     )
-    del data["deployments"]["translation-gpt-4o-mini"]["upstream_fallback"]
-    data["deployments"]["guess-gpt-4-1-mini"].update(
-        adapter="openai", model="gpt-guess", credentials=["openai"],
-    )
-    del data["deployments"]["guess-gpt-4-1-mini"]["upstream_fallback"]
     settings = load_ai_settings(
         env={
             "AI_MODE": "real",
@@ -131,9 +128,11 @@ def test_custom_file_sets_each_feature_provider_and_key(tmp_path):
     assert settings.scene_translation.provider is AiProvider.GEMINI
     assert settings.scene_translation.model_name == "gem-translate"
     assert settings.secret_for(settings.scene_translation) == "gem-key"
-    assert settings.ispy_guess.provider is AiProvider.OPENAI
-    assert settings.secret_for(settings.ispy_guess) == "sk-openai"
-    assert settings.learning_task.provider is AiProvider.OPENROUTER
+    assert settings.ispy_guess.provider is AiProvider.OPENROUTER
+    assert settings.ispy_guess.model_name == "openai/gpt-4.1-mini"
+    assert settings.secret_for(settings.ispy_guess) == "sk-or"
+    assert settings.learning_task.provider is AiProvider.OPENAI
+    assert settings.secret_for(settings.learning_task) == "sk-openai"
     assert all(
         settings.is_configured(settings.feature(feature)) for feature in AiFeature
     )
@@ -146,12 +145,18 @@ def test_invalid_mode_raises_configuration_error():
 
 def test_real_mode_requires_a_secret_for_every_enabled_route():
     with pytest.raises(AiConfigurationError) as excinfo:
-        load_ai_settings(env={"AI_MODE": "real", "AI_OPENAI_API_KEY": "sk-openai"})
+        load_ai_settings(env={"AI_MODE": "real", "AI_OPENROUTER_API_KEY": "sk-or"})
     message = str(excinfo.value)
     for feature in AiFeature:
         assert feature.value in message
-    assert "AI_OPENROUTER_API_KEY" in message
-    assert "sk-openai" not in message
+    assert "AI_OPENAI_API_KEY" in message
+    assert "AI_GEMINI_API_KEY" in message
+    assert "sk-or" not in message
+
+    settings = load_ai_settings(
+        env={"AI_MODE": "real", "AI_OPENAI_API_KEY_2": "sk-2", "AI_GEMINI_API_KEY_3": "g-3"}
+    )
+    assert all(settings.is_configured(settings.feature(feature)) for feature in AiFeature)
 
 
 def test_demo_mode_with_no_keys_uses_deterministic_fallback():
@@ -168,30 +173,31 @@ def test_default_file_holds_the_measured_defaults():
     assert settings.mode is AiMode.DEMO
 
     scene = settings.scene_analysis
-    assert scene.provider is AiProvider.OPENROUTER
-    assert scene.model_name == "anthropic/claude-haiku-4.5"
+    assert scene.provider is AiProvider.OPENAI
+    assert scene.model_name == "gpt-4.1-mini"
     assert scene.timeout_seconds == 120
+    assert scene.max_output_tokens == 5000
 
     translation = settings.scene_translation
-    assert translation.provider is AiProvider.OPENROUTER
-    assert translation.model_name == "openai/gpt-4o-mini"
+    assert translation.provider is AiProvider.OPENAI
+    assert translation.model_name == "gpt-5.4-mini"
     assert translation.timeout_seconds == 60
 
     learning = settings.learning_task
-    assert learning.provider is AiProvider.OPENROUTER
-    assert learning.model_name == "openai/gpt-5.4-mini"
+    assert learning.provider is AiProvider.OPENAI
+    assert learning.model_name == "gpt-5.4-mini"
     assert learning.timeout_seconds == 60
     assert learning.max_retries == 1
     assert learning.max_output_tokens == 4000
 
     clue = settings.ispy_clue
-    assert clue.provider is AiProvider.OPENROUTER
-    assert clue.model_name == "google/gemini-3.1-flash-lite"
+    assert clue.provider is AiProvider.GEMINI
+    assert clue.model_name == "gemini-3.1-flash-lite"
     assert clue.max_retries == 1
 
     guess = settings.ispy_guess
-    assert guess.provider is AiProvider.OPENROUTER
-    assert guess.model_name == "openai/gpt-4.1-mini"
+    assert guess.provider is AiProvider.OPENAI
+    assert guess.model_name == "gpt-4.1-mini"
     assert guess.max_retries == 0
 
     for config in (clue, guess):

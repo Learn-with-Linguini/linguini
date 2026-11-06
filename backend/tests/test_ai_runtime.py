@@ -20,7 +20,7 @@ def test_uploaded_scene_analyzer_logs_unconfigured_state_once(caplog):
     assert any(
         record.name == "app.ai.registry"
         and record.levelno == logging.WARNING
-        and "AI_OPENROUTER_API_KEY" in record.getMessage()
+        and "AI_OPENAI_API_KEY" in record.getMessage()
         for record in caplog.records
     )
     assert any(
@@ -39,7 +39,7 @@ def test_uploaded_scene_analyzer_logs_construction_without_secret(caplog):
     caplog.set_level(logging.INFO, logger="app.ai.runtime")
     runtime = AiRuntime(
         load_ai_settings(
-            env={"AI_MODE": "demo", "AI_OPENROUTER_API_KEY": "sk-test"}
+            env={"AI_MODE": "demo", "AI_OPENAI_API_KEY": "sk-test"}
         ),
         NoOpAITracer(),
         storage=MagicMock(),
@@ -50,7 +50,7 @@ def test_uploaded_scene_analyzer_logs_construction_without_secret(caplog):
         record.name == "app.ai.runtime"
         and record.levelno == logging.INFO
         and "constructed" in record.getMessage()
-        and "provider=openrouter" in record.getMessage()
+        and "provider=openai" in record.getMessage()
         for record in caplog.records
     )
     assert not any(

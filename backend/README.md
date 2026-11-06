@@ -858,9 +858,10 @@ Validation runs at startup and makes no network calls. It checks:
 With `AI_MODE=real`, every enabled route must also resolve a secret; with
 `demo`, a route without one falls back to deterministic behaviour.
 
-Uploaded-image analysis runs on the `sceneAnalysis` route, which uses OpenRouter
-in the default `ai.toml`; `AI_OPENROUTER_API_KEY` is required. In `demo` mode,
-missing this secret does not prevent startup, but uploaded photos fail analysis
+Uploaded-image analysis runs on the `sceneAnalysis` route, which calls OpenAI
+(`gpt-4.1-mini`) directly in the default `ai.toml`; an OpenAI key
+(`AI_OPENAI_API_KEY` or `AI_OPENAI_API_KEY_1` to `_3`) is required. In `demo`
+mode, missing this secret does not prevent startup, but uploaded photos fail analysis
 with a retryable “We couldn't analyse that photo” error instead of receiving
 placeholder objects. The backend warning names the missing variable, and this
 failure is logged with `code=analysisUnavailable`. Curated scenes are unaffected.
@@ -979,8 +980,9 @@ the budget counts every attempt we make. `httpx` never retries, Gemini pins
 
 **OpenRouter upstream fallback:** OpenRouter deployments must set
 `upstream_fallback`, sent as `provider.allow_fallbacks` (plus `models` when
-fallback models are listed). The default keeps OpenRouter's fallback on, as
-before. OpenRouter's internal attempts on other hosts or models happen inside
+fallback models are listed). The default `ai.toml` has no OpenRouter
+deployments, but keeps the `openrouter` credential so a custom file can add
+one. OpenRouter's internal attempts on other hosts or models happen inside
 one HTTP request, so `max_model_calls` counts them as one call and cannot
 see or limit them; only the deadline bounds them.
 
