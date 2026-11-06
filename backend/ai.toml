@@ -46,11 +46,23 @@ env = ["AI_OPENAI_API_KEY_3"]
 quota_group = "openai-3"
 billing_group = "openai-3"
 
-[credentials.gemini]
+[credentials.gemini-1]
 adapter = "gemini"
-env = ["AI_GEMINI_API_KEY"]
-quota_group = "gemini"
-billing_group = "gemini"
+env = ["AI_GEMINI_API_KEY_1", "AI_GEMINI_API_KEY"]
+quota_group = "gemini-1"
+billing_group = "gemini-1"
+
+[credentials.gemini-2]
+adapter = "gemini"
+env = ["AI_GEMINI_API_KEY_2"]
+quota_group = "gemini-2"
+billing_group = "gemini-2"
+
+[credentials.gemini-3]
+adapter = "gemini"
+env = ["AI_GEMINI_API_KEY_3"]
+quota_group = "gemini-3"
+billing_group = "gemini-3"
 
 [deployments.scene-gpt-4-1-mini]
 adapter = "openai"
@@ -81,7 +93,7 @@ adapter = "gemini"
 api = "generateContent"
 model = "gemini-3.1-flash-lite"
 capabilities = ["text", "jsonSchema"]
-credentials = ["gemini"]
+credentials = ["gemini-1", "gemini-2", "gemini-3"]
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.guess-gpt-4-1-mini]
@@ -114,7 +126,7 @@ max_model_calls = 2
 deployments = ["clues-gemini-flash-lite"]
 policy = "priority"
 deadline_seconds = 120
-max_model_calls = 2
+max_model_calls = 3
 
 [routes.ispyGuess]
 deployments = ["guess-gpt-4-1-mini"]

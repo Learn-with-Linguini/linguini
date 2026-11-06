@@ -467,28 +467,48 @@ def test_normalized_403_never_disables_credentials(body):
     assert not credentials.health(HealthScope.CREDENTIAL, "a").disabled
 
 
-def _default_openai_pool(env: dict[str, str]) -> tuple[CredentialPool, list[str]]:
+POOLED_PROVIDERS = ("openai", "gemini")
+
+
+def _default_pool(provider: str, env: dict[str, str]) -> tuple[CredentialPool, list[str]]:
     settings = load_ai_settings({"AI_CONFIG_FILE": "", **env})
     deployments = [
         deployment_id
         for deployment_id, deployment in settings.ai_config.deployments.items()
-        if deployment.adapter.value == "openai"
+        if deployment.adapter.value == provider
     ]
+    assert deployments, f"default ai.toml has no {provider} deployment"
     return CredentialPool(settings.ai_config, settings.credential_secrets), deployments
 
 
-def test_default_config_spreads_openai_calls_over_three_keys():
-    credentials, deployments = _default_openai_pool(
-        {f"AI_OPENAI_API_KEY_{n}": f"sk-{n}" for n in (1, 2, 3)}
+@pytest.mark.parametrize("provider", POOLED_PROVIDERS)
+@pytest.mark.parametrize("keys", [(1,), (1, 2), (1, 2, 3), (1, 3), (2, 3)])
+def test_default_config_spreads_calls_over_whichever_keys_are_set(provider, keys):
+    prefix = f"AI_{provider.upper()}_API_KEY"
+    credentials, deployments = _default_pool(
+        provider, {f"{prefix}_{n}": f"sk-{n}" for n in keys}
     )
-    assert deployments
     for deployment_id in deployments:
-        chosen = [credentials.acquire(deployment_id).secret for _ in range(6)]
-        assert Counter(chosen) == {"sk-1": 2, "sk-2": 2, "sk-3": 2}, deployment_id
+        chosen = [credentials.acquire(deployment_id).secret for _ in range(6 * len(keys))]
+        assert Counter(chosen) == {f"sk-{n}": 6 for n in keys}, deployment_id
 
 
-def test_default_config_still_runs_on_the_single_legacy_key():
-    credentials, deployments = _default_openai_pool({"AI_OPENAI_API_KEY": "sk-only"})
+@pytest.mark.parametrize("provider", POOLED_PROVIDERS)
+def test_default_config_still_runs_on_the_single_legacy_key(provider):
+    credentials, deployments = _default_pool(
+        provider, {f"AI_{provider.upper()}_API_KEY": "sk-only"}
+    )
     for deployment_id in deployments:
         lease = credentials.acquire(deployment_id)
-        assert (lease.credential_id, lease.secret) == ("openai-1", "sk-only")
+        assert (lease.credential_id, lease.secret) == (f"{provider}-1", "sk-only")
+
+
+@pytest.mark.parametrize("provider", POOLED_PROVIDERS)
+def test_default_config_pools_the_legacy_key_with_extra_keys(provider):
+    prefix = f"AI_{provider.upper()}_API_KEY"
+    credentials, deployments = _default_pool(
+        provider, {prefix: "sk-legacy", f"{prefix}_2": "sk-2"}
+    )
+    for deployment_id in deployments:
+        chosen = [credentials.acquire(deployment_id).secret for _ in range(4)]
+        assert chosen == ["sk-legacy", "sk-2", "sk-legacy", "sk-2"], deployment_id
