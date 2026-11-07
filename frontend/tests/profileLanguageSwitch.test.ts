@@ -143,7 +143,9 @@ const chooseLanguage = async (code: string) => {
   await flush();
 };
 const click = async (label: string) => {
-  const button = [...dom.window.document.querySelectorAll("button")].find(element => element.textContent?.trim() === label);
+  const find = () => [...dom.window.document.querySelectorAll("button")].find(element => element.textContent?.trim() === label);
+  await waitFor(() => Boolean(find()));
+  const button = find();
   assert.ok(button, `button "${label}" is on screen`);
   await act(async () => { button.click(); });
   await flush();
@@ -179,6 +181,9 @@ async function withProfilePage(run: () => Promise<void>) {
       );
     });
     await flush();
+    // The language picker renders once the profiles load; wait for it, not one fixed tick,
+    // so a slower CI runner sees the same screen before the test interacts with it.
+    await waitFor(() => [...dom.window.document.querySelectorAll("select")].some(element => element.textContent?.includes("Spanish")));
     await run();
   } finally {
     await act(async () => { root.unmount(); });
