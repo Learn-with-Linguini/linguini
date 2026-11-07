@@ -1,0 +1,24 @@
+construction_id = "order-confirmation"
+version = 1
+summary = "Confirm a correct order."
+guidance = "Use 对, 没错. or 对, 就这样. Do not introduce unbound quantity, size, colour or item facts. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "order-confirmation"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = {  }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "confirmation"
+message = "Confirm rather than correct."
+must_contain = ["^对,"]
+must_not_contain = ["^不对"]

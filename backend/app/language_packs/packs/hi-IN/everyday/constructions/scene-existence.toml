@@ -1,0 +1,25 @@
+construction_id = "scene-existence"
+version = 2
+summary = "State a selected object's presence or explicit absence."
+guidance = "Use a noun phrase + है: लाल कप है. For a deliberately absent item use घड़ी नहीं है. Singular existence uses है; counted/plural subjects use हैं. Assert only confirmed/explicitly absent scene facts, never detector omission. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "scene-existence"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = ["touch-object"]
+roles = { "object" = "noun", "attribute" = "adjective" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "absent-object"
+message = "An explicitly absent object needs नहीं."
+must_contain = ["नहीं"]
+truth = false
+except_uses = ["falseFirst"]

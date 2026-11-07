@@ -1,0 +1,18 @@
+construction_id = "owned-description"
+version = 1
+summary = "Describe or locate an owned object."
+guidance = "Use 我的 N 是 红色的. or 我的 N 在 reference relation. Named owners use 安娜 的. Realize only the bound detail/relation, preserving owner and object. A colour predicate is 是 + colour + 的; scalar adjectives need their own appropriate frame. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "owned-description"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun", "owner" = "determiner", "attribute" = "adjective", "relation" = "preposition", "reference" = "noun" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]

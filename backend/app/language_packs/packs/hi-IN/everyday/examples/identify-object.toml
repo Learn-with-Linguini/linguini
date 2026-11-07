@@ -1,0 +1,250 @@
+construction_id = "identify-object"
+
+[[examples]]
+example_id = "name-book"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the book (vocabulary label)"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }] }
+bindings = { "object" = "object:book" }
+truth = true
+labels = []
+sentence = "किताब"
+translation = "the book (vocabulary label)"
+chunks = [{ "text" = "किताब", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "name-cup"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the cup (vocabulary label)"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:cup" }
+truth = true
+labels = []
+sentence = "कप"
+translation = "the cup (vocabulary label)"
+chunks = [{ "text" = "कप", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "name-clock"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the clock (vocabulary label)"
+scene = { "objects" = [{ "fact_id" = "object:clock", "concept" = "clock" }] }
+bindings = { "object" = "object:clock" }
+truth = true
+labels = []
+sentence = "घड़ी"
+translation = "the clock (vocabulary label)"
+chunks = [{ "text" = "घड़ी", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "identify-cup"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:cup" }
+truth = true
+labels = []
+sentence = "यह कप है."
+translation = "This is a cup."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "कप", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "identify-book"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a book."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }] }
+bindings = { "object" = "object:book" }
+truth = true
+labels = []
+sentence = "यह किताब है."
+translation = "This is a book."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "किताब", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "identify-chair"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a chair."
+scene = { "objects" = [{ "fact_id" = "object:chair", "concept" = "chair" }] }
+bindings = { "object" = "object:chair" }
+truth = true
+labels = []
+sentence = "यह कुर्सी है."
+translation = "This is a chair."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "कुर्सी", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "identify-bottle"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a bottle."
+scene = { "objects" = [{ "fact_id" = "object:bottle", "concept" = "bottle" }] }
+bindings = { "object" = "object:bottle" }
+truth = true
+labels = []
+sentence = "यह बोतल है."
+translation = "This is a bottle."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "बोतल", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "identify-ball"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a ball."
+scene = { "objects" = [{ "fact_id" = "object:ball", "concept" = "ball" }] }
+bindings = { "object" = "object:ball" }
+truth = true
+labels = []
+sentence = "यह गेंद है."
+translation = "This is a ball."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "गेंद", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "identify-bag"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a bag."
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+labels = []
+sentence = "यह बैग है."
+translation = "This is a bag."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "बैग", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "m02-name-lamp"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+meaning = "the lamp (vocabulary label)"
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }] }
+bindings = { "object" = "object:lamp" }
+truth = true
+labels = []
+sentence = "लैंप"
+translation = "the lamp (vocabulary label)"
+chunks = [{ "text" = "लैंप", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "name-book-format"
+levels = ["A0"]
+purposes = ["matchName"]
+sentence = "किताब."
+correction = "किताब"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "name-cup-format"
+levels = ["A0"]
+purposes = ["matchName"]
+sentence = "कप."
+correction = "कप"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "name-clock-format"
+levels = ["A0"]
+purposes = ["matchName"]
+sentence = "घड़ी."
+correction = "घड़ी"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "identify-cup-format"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह कप है"
+correction = "यह कप है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "identify-book-format"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह किताब है"
+correction = "यह किताब है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "identify-chair-format"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह कुर्सी है"
+correction = "यह कुर्सी है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "identify-bottle-format"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह बोतल है"
+correction = "यह बोतल है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "identify-ball-format"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह गेंद है"
+correction = "यह गेंद है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "identify-bag-format"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह बैग है"
+correction = "यह बैग है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "m02-name-lamp-format"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+sentence = "लैंप."
+correction = "लैंप"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-identify-object"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "यह कप हैं."
+correction = "यह कप है."
+note = "A single inanimate object in this identification takes है."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

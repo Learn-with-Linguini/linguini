@@ -1,0 +1,73 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "other-object" = "object:book", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "赤い コップが あります. そして 本も あります."
+translation = "There is a red cup and there is also a book."
+chunks = [{ "text" = "赤い", "join" = "none" }, { "text" = "コップが", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }, { "text" = "そして", "join" = "space" }, { "text" = "本も", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also an apple."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "other-object" = "object:apple", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "白い 皿が あります. そして りんごも あります."
+translation = "There is a white plate and there is also an apple."
+chunks = [{ "text" = "白い", "join" = "none" }, { "text" = "皿が", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }, { "text" = "そして", "join" = "space" }, { "text" = "りんごも", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "connect-location-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair. There is a bottle."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }, { "fact_id" = "object:bottle", "concept" = "bottle" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe", "reference" = "object:chair", "other-object" = "object:bottle", "relation" = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "靴は 椅子の 下に あります. そして 瓶も あります."
+translation = "The shoe is under the chair. There is a bottle."
+chunks = [{ "text" = "靴は", "join" = "none" }, { "text" = "椅子の", "join" = "space" }, { "text" = "下に", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }, { "text" = "そして", "join" = "space" }, { "text" = "瓶も", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-cup-book-form"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "赤い コップが あります. そして 本も あります"
+correction = "赤い コップが あります. そして 本も あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-plate-apple-form"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "白い 皿が あります. そして りんごも あります"
+correction = "白い 皿が あります. そして りんごも あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-location-existence-form"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "靴は 椅子の 下に あります. そして 瓶も あります"
+correction = "靴は 椅子の 下に あります. そして 瓶も あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

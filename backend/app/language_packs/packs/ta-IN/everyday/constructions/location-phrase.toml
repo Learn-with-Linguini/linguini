@@ -1,0 +1,14 @@
+construction_id = "location-phrase"
+version = 1
+summary = "Give a position phrase with its reference object."
+guidance = "Give only the reference noun (with -க்கு where the position needs it) and the position word, no subject, verb or final punctuation: மேசை மேல, நாற்காலிக்குக் கீழே, ஜன்னலுக்குப் பக்கத்துல."
+features = ["phrase", "position-phrase"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "phrase-without-punctuation"
+message = "A position phrase is a choice, not a sentence: no final punctuation."
+must_not_contain = ["[.?!]$"]

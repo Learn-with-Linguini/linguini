@@ -1,0 +1,112 @@
+format_version = 1
+pack_id = "ta-in-everyday"
+pack_version = 2
+instruction_language = "en"
+
+[language]
+articles = "none"
+grammatical_gender = "none"
+phrase_boundaries = ["ஆனால்"]
+romanization_required = true
+inflection = "suffixing"
+stem_endings = ["ம்", "்", "ு"]
+romanization_convention = "Consistent Latin transliteration of the written spoken-Tamil forms, using long-vowel macrons and distinguishing retroflex/consonant letters with diacritics (for example ā, ī, ū, ē, ō, ṭ, ṇ, ḷ, ḻ, ṟ, ṉ). Preserve word boundaries and punctuation. Do not replace this with English-sound phonetics. Transcribe each new sentence and support in aligned spans."
+code = "ta"
+locale = "ta-IN"
+script = "Taml"
+direction = "ltr"
+word_separator = "space"
+
+[language.speech]
+synthesis_locale = "ta-IN"
+synthesis = "browserVoice"
+recognition = false
+
+[variety]
+variety_id = "ta-in"
+description = "Broad Tamil Nadu everyday spoken Tamil, represented in Tamil script"
+
+[register]
+register_id = "everyday"
+description = "Everyday spoken Tamil with courteous -ங்க instructions. Uses இருக்கு, மேல and பக்கத்துல consistently; not formal written Tamil or a claim to cover every regional variety."
+
+[provenance]
+source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements."
+review_status = "generated"
+
+[files]
+labels = "labels.toml"
+numbers = "numbers.toml"
+possessives = "possessives.toml"
+constructions = [
+  "constructions/target-location.toml",
+  "constructions/target-clue.toml",
+  "constructions/location-phrase.toml",
+  "constructions/where-question.toml",
+  "constructions/find-object.toml",
+  "constructions/identify-object.toml",
+  "constructions/yes-no-identification.toml",
+  "constructions/describe-attribute.toml",
+  "constructions/scene-existence.toml",
+  "constructions/scene-location.toml",
+  "constructions/connected-description.toml",
+  "constructions/how-many-question.toml",
+  "constructions/quantity-chunk.toml",
+  "constructions/quantity-statement.toml",
+  "constructions/quantity-comparison.toml",
+  "constructions/quantity-pair.toml",
+  "constructions/ownership-question.toml",
+  "constructions/ownership-statement.toml",
+  "constructions/owned-object.toml",
+  "constructions/possessive-statement.toml",
+  "constructions/whose-question.toml",
+  "constructions/owned-description.toml",
+  "constructions/my-preference.toml",
+  "constructions/their-preference.toml",
+  "constructions/preference-question.toml",
+  "constructions/choice-statement.toml",
+]
+examples = [
+  "examples/target-location.toml",
+  "examples/target-clue.toml",
+  "examples/location-phrase.toml",
+  "examples/where-question.toml",
+  "examples/find-object.toml",
+  "examples/identify-object.toml",
+  "examples/yes-no-identification.toml",
+  "examples/describe-attribute.toml",
+  "examples/scene-existence.toml",
+  "examples/scene-location.toml",
+  "examples/connected-description.toml",
+  "examples/how-many-question.toml",
+  "examples/quantity-chunk.toml",
+  "examples/quantity-statement.toml",
+  "examples/quantity-comparison.toml",
+  "examples/quantity-pair.toml",
+  "examples/ownership-question.toml",
+  "examples/ownership-statement.toml",
+  "examples/owned-object.toml",
+  "examples/possessive-statement.toml",
+  "examples/whose-question.toml",
+  "examples/owned-description.toml",
+  "examples/my-preference.toml",
+  "examples/their-preference.toml",
+  "examples/preference-question.toml",
+  "examples/choice-statement.toml",
+]
+evaluations = [
+  "evaluations/M01-A0.toml",
+  "evaluations/M01-A1.toml",
+  "evaluations/M01-A2.toml",
+  "evaluations/M03-A0.toml",
+  "evaluations/M03-A1.toml",
+  "evaluations/M03-A2.toml",
+  "evaluations/M02-A0.toml",
+  "evaluations/M02-A1.toml",
+  "evaluations/M02-A2.toml",
+  "evaluations/M04-A0.toml",
+  "evaluations/M04-A1.toml",
+  "evaluations/M04-A2.toml",
+  "evaluations/M05-A0.toml",
+  "evaluations/M05-A1.toml",
+]

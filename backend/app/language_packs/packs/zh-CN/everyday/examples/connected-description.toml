@@ -1,0 +1,73 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "other-object" = "object:book", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "有 红色的 杯子, 还有 书."
+translation = "There is a red cup and there is also a book."
+chunks = [{ "text" = "有", "join" = "none" }, { "text" = "红色的", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "还有", "join" = "space" }, { "text" = "书", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also an apple."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "other-object" = "object:apple", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "有 白色的 盘子, 还有 苹果."
+translation = "There is a white plate and there is also an apple."
+chunks = [{ "text" = "有", "join" = "none" }, { "text" = "白色的", "join" = "space" }, { "text" = "盘子", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "还有", "join" = "space" }, { "text" = "苹果", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "connect-location-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair. There is a bottle."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }, { "fact_id" = "object:bottle", "concept" = "bottle" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe", "reference" = "object:chair", "other-object" = "object:bottle", "relation" = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "鞋 在 椅子 下面, 还有 瓶子."
+translation = "The shoe is under the chair. There is a bottle."
+chunks = [{ "text" = "鞋", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "椅子", "join" = "space" }, { "text" = "下面", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "还有", "join" = "space" }, { "text" = "瓶子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-cup-book-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "有 红色的 杯子, 还有 书"
+correction = "有 红色的 杯子, 还有 书."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-plate-apple-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "有 白色的 盘子, 还有 苹果"
+correction = "有 白色的 盘子, 还有 苹果."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-location-existence-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "鞋 在 椅子 下面, 还有 瓶子"
+correction = "鞋 在 椅子 下面, 还有 瓶子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

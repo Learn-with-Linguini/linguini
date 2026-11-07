@@ -1,0 +1,24 @@
+construction_id = "target-location"
+version = 1
+summary = "Name an object with its detail and location."
+guidance = "Name the object with its detail and say where it is: colour + noun + reference + position + இருக்கு.: சிவப்பு கோப்பை ஜன்னலுக்குப் பக்கத்துல இருக்கு."
+features = ["located-description"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Say where it is with the taught verb."
+must_contain = ["இருக்கு[.]$"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது"]

@@ -1,0 +1,82 @@
+construction_id = "polite-request"
+
+[[examples]]
+example_id = "order-two-small-coffees"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "I would like two small coffees, please."
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "quantity" = "request:quantity", "size" = "request:size" }
+truth = true
+labels = []
+sentence = "请 给我 两 杯 小杯 咖啡."
+translation = "I would like two small coffees, please."
+chunks = [{ "text" = "请", "join" = "none" }, { "text" = "给我", "join" = "space" }, { "text" = "两", "join" = "space" }, { "text" = "杯", "join" = "space" }, { "text" = "小杯", "join" = "space" }, { "text" = "咖啡", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "borrow-a-pen"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you lend me a pen, please?"
+scene = { "objects" = [{ "fact_id" = "object:pen", "concept" = "pen" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:pen", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:pen", "field" = "colour", "value" = "blue" }] }
+bindings = { "object" = "object:pen", "quantity" = "request:quantity" }
+truth = true
+labels = []
+sentence = "请 借给我 一 支 笔."
+translation = "Can you lend me a pen, please?"
+chunks = [{ "text" = "请", "join" = "none" }, { "text" = "借给我", "join" = "space" }, { "text" = "一", "join" = "space" }, { "text" = "支", "join" = "space" }, { "text" = "笔", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "pass-a-cup"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you pass me a cup, please?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:cup", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:cup", "field" = "colour", "value" = "red" }] }
+bindings = { "object" = "object:cup", "quantity" = "request:quantity" }
+truth = true
+labels = []
+sentence = "请 递给我 一 个 杯子."
+translation = "Can you pass me a cup, please?"
+chunks = [{ "text" = "请", "join" = "none" }, { "text" = "递给我", "join" = "space" }, { "text" = "一", "join" = "space" }, { "text" = "个", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "order-two-small-coffees-format"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "请 给我 两 杯 小杯 咖啡"
+correction = "请 给我 两 杯 小杯 咖啡."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "borrow-a-pen-format"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "请 借给我 一 支 笔"
+correction = "请 借给我 一 支 笔."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "pass-a-cup-format"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "请 递给我 一 个 杯子"
+correction = "请 递给我 一 个 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "zh-grammar-polite-request"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "我 有 两 杯 咖啡."
+correction = "请 给我 两 杯 咖啡."
+note = "An existence/possession statement is not a request."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

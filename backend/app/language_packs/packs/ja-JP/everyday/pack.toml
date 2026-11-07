@@ -1,0 +1,125 @@
+format_version = 1
+pack_id = "ja-jp-everyday"
+pack_version = 1
+instruction_language = "en"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[language]
+articles = "none"
+grammatical_gender = "none"
+phrase_boundaries = ["そして", "でも"]
+romanization_required = true
+inflection = "suffixing"
+romanization_convention = "Modified Hepburn with macrons (ā ī ū ē ō), shi/chi/tsu/fu/ji, n before consonants and n' before a vowel or y when needed. Particles は/へ/を are wa/e/o. Read kanji in context, including irregular number-counter readings (一本 ippon, 三本 sanbon, 一杯 ippai, 一冊 issatsu); never infer readings from characters independently. Phrase-unit learning spaces and ASCII punctuation are intentional. Align each complete native sentence in native/Latin spans; a number and counter may share a span when their reading fuses. Retain conventional ei/ii sequences in words such as tokei, kiiroi and midoriiro; the style is Hepburn-based learner romanization."
+code = "ja"
+locale = "ja-JP"
+script = "Jpan"
+direction = "ltr"
+word_separator = "space"
+
+[language.speech]
+synthesis_locale = "ja-JP"
+synthesis = "browserVoice"
+recognition = false
+
+[variety]
+variety_id = "ja-jp"
+description = "Contemporary standard Japanese as used in Japan; common daily-life vocabulary."
+
+[register]
+register_id = "everyday"
+description = "Everyday polite present です/ます Japanese. Learner-display spacing between phrase units, attached particles/copulas, separated number/counter tokens and ASCII punctuation for dev compatibility. These spaces are not ordinary written Japanese."
+
+[files]
+labels = "labels.toml"
+numbers = "numbers.toml"
+possessives = "possessives.toml"
+requests = "requests.toml"
+pairs = "pairs.toml"
+constructions = [
+  "constructions/target-location.toml",
+  "constructions/target-clue.toml",
+  "constructions/location-phrase.toml",
+  "constructions/where-question.toml",
+  "constructions/find-object.toml",
+  "constructions/identify-object.toml",
+  "constructions/yes-no-identification.toml",
+  "constructions/describe-attribute.toml",
+  "constructions/scene-existence.toml",
+  "constructions/scene-location.toml",
+  "constructions/connected-description.toml",
+  "constructions/how-many-question.toml",
+  "constructions/quantity-chunk.toml",
+  "constructions/quantity-statement.toml",
+  "constructions/quantity-comparison.toml",
+  "constructions/quantity-pair.toml",
+  "constructions/ownership-question.toml",
+  "constructions/ownership-statement.toml",
+  "constructions/owned-object.toml",
+  "constructions/possessive-statement.toml",
+  "constructions/whose-question.toml",
+  "constructions/owned-description.toml",
+  "constructions/my-preference.toml",
+  "constructions/their-preference.toml",
+  "constructions/preference-question.toml",
+  "constructions/choice-statement.toml",
+  "constructions/polite-request.toml",
+  "constructions/order-phrase.toml",
+  "constructions/detail-question.toml",
+  "constructions/detail-reply.toml",
+  "constructions/order-repeat.toml",
+  "constructions/order-confirmation.toml",
+  "constructions/order-repair.toml",
+]
+examples = [
+  "examples/target-location.toml",
+  "examples/target-clue.toml",
+  "examples/location-phrase.toml",
+  "examples/where-question.toml",
+  "examples/find-object.toml",
+  "examples/identify-object.toml",
+  "examples/yes-no-identification.toml",
+  "examples/describe-attribute.toml",
+  "examples/scene-existence.toml",
+  "examples/scene-location.toml",
+  "examples/connected-description.toml",
+  "examples/how-many-question.toml",
+  "examples/quantity-chunk.toml",
+  "examples/quantity-statement.toml",
+  "examples/quantity-comparison.toml",
+  "examples/quantity-pair.toml",
+  "examples/ownership-question.toml",
+  "examples/ownership-statement.toml",
+  "examples/owned-object.toml",
+  "examples/possessive-statement.toml",
+  "examples/whose-question.toml",
+  "examples/owned-description.toml",
+  "examples/my-preference.toml",
+  "examples/their-preference.toml",
+  "examples/preference-question.toml",
+  "examples/choice-statement.toml",
+  "examples/polite-request.toml",
+  "examples/order-phrase.toml",
+  "examples/detail-question.toml",
+  "examples/detail-reply.toml",
+  "examples/order-repeat.toml",
+  "examples/order-confirmation.toml",
+  "examples/order-repair.toml",
+]
+evaluations = [
+  "evaluations/M01-A0.toml",
+  "evaluations/M01-A1.toml",
+  "evaluations/M01-A2.toml",
+  "evaluations/M03-A0.toml",
+  "evaluations/M03-A1.toml",
+  "evaluations/M03-A2.toml",
+  "evaluations/M02-A0.toml",
+  "evaluations/M02-A1.toml",
+  "evaluations/M02-A2.toml",
+  "evaluations/M04-A0.toml",
+  "evaluations/M04-A1.toml",
+  "evaluations/M04-A2.toml",
+  "evaluations/M05-A0.toml",
+  "evaluations/M05-A1.toml",
+  "evaluations/M06-A2.toml",
+]

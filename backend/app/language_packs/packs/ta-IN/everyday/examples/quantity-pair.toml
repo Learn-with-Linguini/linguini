@@ -1,0 +1,25 @@
+construction_id = "quantity-pair"
+
+[[examples]]
+example_id = "five-books-two-cups"
+levels = ["A2"]
+purposes = ["buildComparison"]
+meaning = "There are five books and two cups."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { first = "object:book", first-count = "count:book", second = "object:cup", second-count = "count:cup" }
+truth = true
+labels = []
+sentence = "அஞ்சு புத்தகமும் ரெண்டு கோப்பையும் இருக்கு."
+translation = "There are five books and two cups."
+chunks = [{ text = "அஞ்சு", join = "none" }, { text = "புத்தகமும்", join = "space" }, { text = "ரெண்டு", join = "space" }, { text = "கோப்பையும்", join = "space" }, { text = "இருக்கு", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "five-books-two-cups-form"
+levels = ["A2"]
+purposes = ["buildComparison"]
+sentence = "அஞ்சு புத்தகம் ரெண்டு கோப்பை இருக்கு."
+correction = "அஞ்சு புத்தகமும் ரெண்டு கோப்பையும் இருக்கு."
+note = "Add -உம் to each counted noun."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

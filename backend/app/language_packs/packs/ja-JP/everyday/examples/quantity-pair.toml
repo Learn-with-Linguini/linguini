@@ -1,0 +1,25 @@
+construction_id = "quantity-pair"
+
+[[examples]]
+example_id = "five-books-two-cups"
+levels = ["A2"]
+purposes = ["buildComparison"]
+meaning = "There are five books and two cups."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "first" = "object:book", "first-count" = "count:book", "second" = "object:cup", "second-count" = "count:cup" }
+truth = true
+labels = []
+sentence = "本が 五 冊, コップが 二 個 あります."
+translation = "There are five books and two cups."
+chunks = [{ "text" = "本が", "join" = "none" }, { "text" = "五", "join" = "space" }, { "text" = "冊", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "コップが", "join" = "space" }, { "text" = "二", "join" = "space" }, { "text" = "個", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "five-books-two-cups-form"
+levels = ["A2"]
+purposes = ["buildComparison"]
+sentence = "本が 五 冊, コップが 二 個 あります"
+correction = "本が 五 冊, コップが 二 個 あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

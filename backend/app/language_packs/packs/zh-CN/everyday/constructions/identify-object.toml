@@ -1,0 +1,26 @@
+construction_id = "identify-object"
+version = 2
+summary = "Name or identify an object."
+guidance = "A name use is the bare noun without punctuation: 书. A sentence is 这是 杯子. (This is a cup.) Chinese has no articles or noun gender. Do not add a classifier to a bare vocabulary label. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "identify-object"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = ["what-is-this"]
+roles = { "object" = "noun" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+templates = { "find" = "请 找到 {name}." }
+
+[[checks]]
+check_id = "identify-frame"
+message = "Complete identity sentences use 这是 and final punctuation."
+must_contain = ["^这是\\s", "[.]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "bare-name"
+message = "A vocabulary label has no final punctuation."
+must_not_contain = ["[.?!]$"]
+uses = ["name"]

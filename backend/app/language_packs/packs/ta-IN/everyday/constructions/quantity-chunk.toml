@@ -1,0 +1,14 @@
+construction_id = "quantity-chunk"
+version = 1
+summary = "Name a number of objects: number and noun, no sentence."
+guidance = "Write only the bound count's number word and the noun, with no verb or final punctuation: ரெண்டு ஆப்பிள். Use ஒரு for one."
+features = ["phrase", "number-noun-chunk"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", count = "determiner" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "chunk-not-sentence"
+message = "A number and noun, not a sentence."
+must_not_contain = ["[.?!]$", "இருக்கு"]

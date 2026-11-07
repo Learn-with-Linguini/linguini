@@ -1,0 +1,295 @@
+[[labels]]
+semantic = "yes"
+text = "ஆமாம்"
+romanization = "āmām"
+meaning = "yes"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "இல்லை"
+romanization = "illai"
+meaning = "no"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "ஆமாம்."
+romanization = "āmām."
+meaning = "Yes."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "இல்லை."
+romanization = "illai."
+meaning = "No."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "இது என்ன?"
+romanization = "itu eṉṉa?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "இது என்ன நிறம்?"
+romanization = "itu eṉṉa niṟam?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "இந்தப் பொருளைப் பத்திச் சொல்லுங்க."
+romanization = "intap poruḷaip pattic colluṅka."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "இந்த வாக்கியத்துக்கு ஏற்ற பொருளைத் தொடுங்க: «{f['first']}»."
+romanization = "inta vākkiyattukku ēṟṟa poruḷait toṭuṅka: «{f['first']}»."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "இரண்டாவது வாக்கியத்தை உருவாக்குங்க."
+romanization = "iraṇṭāvatu vākkiyattai uruvākkuṅka."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "எந்த விளக்கம் படத்துக்கு ஏத்த மாதிரி இருக்கு?"
+romanization = "enta viḷakkam paṭattukku ētta mātiri irukku?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "இந்த வாக்கியங்களைப் பயன்படுத்திப் படத்தை விவரிங்க."
+romanization = "inta vākkiyaṅkaḷaip payaṉpaṭuttip paṭattai vivariṅka."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "ஆனால்"
+romanization = "āṉāl"
+meaning = "but"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "இந்தப் பொருள் எப்படி இருக்கு?"
+romanization = "intap poruḷ eppaṭi irukku?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "இந்தப் பொருள் எதால செஞ்சது?"
+romanization = "intap poruḷ etāla ceñcatu?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "தெரியலை"
+romanization = "teriyalai"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "உறுதியாத் தெரியலை"
+romanization = "uṟutiyāt teriyalai"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "எங்கே இருக்குன்னு கேளுங்க."
+romanization = "eṅkē irukkuṉṉu kēḷuṅka."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "படத்துல இருக்கற இடத்தைச் சொல்லுங்க."
+romanization = "paṭattula irukkaṟa iṭattaic colluṅka."
+meaning = "Say the place the picture shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "இதுக்கு என்ன அர்த்தம்?"
+romanization = "itukku eṉṉa arttam?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "இரண்டாவது குறிப்பை உருவாக்குங்க."
+romanization = "iraṇṭāvatu kuṟippai uruvākkuṅka."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "ரெண்டு குறிப்புக்கும் பொருந்தற பொருளைத் தொடுங்க."
+romanization = "reṇṭu kuṟippukkum poruntaṟa poruḷait toṭuṅka."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "உங்க நண்பர் {marker} குறியைக் காட்டுறாங்க. என்ன சொல்லுவீங்க?"
+romanization = "uṅka naṇpar {marker} kuṟiyaik kāṭṭuṟāṅka. eṉṉa colluvīṅka?"
+meaning = "Your friend points to marker {marker}. What will you say?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "பொருளோட பேரையும் இடத்தையும் சொல்லுங்க."
+romanization = "poruḷōṭa pēraiyum iṭattaiyum colluṅka."
+meaning = "Say the object's name and its place."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "ஒரு வாக்கியத்துல பதில் சொல்லுங்க."
+romanization = "oru vākkiyattula patil colluṅka."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "குறிச்ச குழுவைப் பத்தி ஒரு வாக்கியம் அமைங்க."
+romanization = "kuṟicca kuḻuvaip patti oru vākkiyam amaiṅka."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "சரியான ஒப்பீட்டைத் தேர்ந்தெடுங்க."
+romanization = "cariyāṉa oppīṭṭait tērnteṭuṅka."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "உங்க நண்பர் சொல்றாங்க: \"{statement}\" நீங்க என்ன பதில் சொல்லுவீங்க?"
+romanization = "uṅka naṇpar colṟāṅka: \"{statement}\" nīṅka eṉṉa patil colluvīṅka?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "ஆமா, உங்க நண்பர் சொல்றது சரி."
+romanization = "āmā, uṅka naṇpar colṟatu cari."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "ரெண்டு குழுவையும் விவரிச்சு ஒப்பிடுங்க."
+romanization = "reṇṭu kuḻuvaiyum vivariccu oppiṭuṅka."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "அதிகமா"
+romanization = "atikamā"
+meaning = "more"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "குறைவா"
+romanization = "kuṟaivā"
+meaning = "fewer"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "சரியான வாக்கியத்தைத் தேர்ந்தெடுங்க."
+romanization = "cariyāṉa vākkiyattait tērnteṭuṅka."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "எந்தப் பொருள் உங்களோடது?"
+romanization = "entap poruḷ uṅkaḷōṭatu?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "நீங்க சொல்றீங்க:"
+romanization = "nīṅka colṟīṅka:"
+meaning = "You say:"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "உங்க பொருளை ஒரு விவரத்தோட சொல்லுங்க."
+romanization = "uṅka poruḷai oru vivarattōṭa colluṅka."
+meaning = "Describe your object with a detail."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "எந்தப் பொருள் உங்களோடதுன்னு சொல்லி, அதை விவரிங்க."
+romanization = "entap poruḷ uṅkaḷōṭatuṉṉu colli, atai vivariṅka."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "நீங்க எதை எடுப்பீங்க?"
+romanization = "nīṅka etai eṭuppīṅka?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

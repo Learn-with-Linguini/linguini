@@ -1,0 +1,58 @@
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[quantities]]
+value = 1
+forms = ["一"]
+
+[[quantities]]
+value = 2
+forms = ["二"]
+
+[[quantities]]
+value = 3
+forms = ["三"]
+
+[[details]]
+detail = "size:small"
+meaning = "small"
+forms = ["小さい", "小さな", "小さめの", "小さいの", "小さめ"]
+
+[[details]]
+detail = "size:large"
+meaning = "large"
+forms = ["大きい", "大きな", "大きめの", "大きいの", "大きめ"]
+
+[[details]]
+detail = "serviceSetting:eatIn"
+meaning = "to have here"
+forms = ["店内で", "ここで"]
+
+[[details]]
+detail = "serviceSetting:takeAway"
+meaning = "to take away"
+forms = ["持ち帰りで", "持ち帰り", "持ち帰り用に"]
+
+[[details]]
+detail = "temperature:hot"
+meaning = "hot"
+forms = ["温かい", "熱い", "ホット"]
+
+[[details]]
+detail = "temperature:cold"
+meaning = "cold"
+forms = ["冷たい", "アイス"]
+
+[[details]]
+detail = "colour:blue"
+meaning = "blue"
+forms = ["青", "青い", "青の"]
+
+[[details]]
+detail = "colour:red"
+meaning = "red"
+forms = ["赤", "赤い", "赤の"]
+
+[[details]]
+detail = "colour:black"
+meaning = "black"
+forms = ["黒", "黒い", "黒の"]

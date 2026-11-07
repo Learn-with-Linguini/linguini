@@ -1,0 +1,25 @@
+construction_id = "ownership-question"
+
+[[examples]]
+example_id = "is-it-yours"
+levels = ["A0"]
+purposes = ["askOwnership"]
+meaning = "Is it yours?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "possessor:second" }
+truth = true
+labels = []
+sentence = "这 是 你的 吗?"
+translation = "Is it yours?"
+chunks = [{ "text" = "这", "join" = "none" }, { "text" = "是", "join" = "space" }, { "text" = "你的", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "is-it-yours-format"
+levels = ["A0"]
+purposes = ["askOwnership"]
+sentence = "这 是 你的 吗"
+correction = "这 是 你的 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

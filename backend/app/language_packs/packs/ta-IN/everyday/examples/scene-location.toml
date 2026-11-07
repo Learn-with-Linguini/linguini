@@ -1,0 +1,103 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "கோப்பை மேசை மேல இருக்கு."
+translation = "The cup is on the table."
+chunks = [{ text = "கோப்பை", join = "none" }, { text = "மேசை", join = "space" }, { text = "மேல", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The shoe is under the chair."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", reference = "object:chair", relation = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "செருப்பு நாற்காலிக்குக் கீழே இருக்கு."
+translation = "The shoe is under the chair."
+chunks = [{ text = "செருப்பு", join = "none" }, { text = "நாற்காலிக்குக்", join = "space" }, { text = "கீழே", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "lamp-next-to-book"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The lamp is next to the book."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }, { fact_id = "object:book", concept = "book" }], relations = [{ fact_id = "relation:lamp-next_to-book", subject = "object:lamp", reference = "object:book", relation = "next_to" }] }
+bindings = { subject = "object:lamp", reference = "object:book", relation = "relation:lamp-next_to-book" }
+truth = true
+labels = []
+sentence = "விளக்கு புத்தகத்துக்குப் பக்கத்துல இருக்கு."
+translation = "The lamp is next to the book."
+chunks = [{ text = "விளக்கு", join = "none" }, { text = "புத்தகத்துக்குப்", join = "space" }, { text = "பக்கத்துல", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "Where is the shoe?"
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe" }
+truth = true
+labels = []
+sentence = "செருப்பு எங்கே இருக்கு?"
+translation = "Where is the shoe?"
+chunks = [{ text = "செருப்பு", join = "none" }, { text = "எங்கே", join = "space" }, { text = "இருக்கு?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-09"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "கோப்பை மேசைக்குக் கீழே இருக்கு."
+correction = "கோப்பை மேசை மேல இருக்கு."
+note = "The cup is on the table, not under it."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-10"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "இருக்கு மேசை மேல கோப்பை."
+correction = "கோப்பை மேசை மேல இருக்கு."
+note = "Use the neutral taught subject + reference/location phrase + predicate order."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "கோப்பை மேசை மேல இருக்கு."
+translation = "The cup is on the table."
+chunks = [{ text = "கோப்பை", join = "none" }, { text = "மேசை", join = "space" }, { text = "மேல", join = "space" }, { text = "இருக்கு", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-location-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "இருக்கு கோப்பை மேசை மேல."
+correction = "கோப்பை மேசை மேல இருக்கு."
+note = "The verb இருக்கு comes last."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

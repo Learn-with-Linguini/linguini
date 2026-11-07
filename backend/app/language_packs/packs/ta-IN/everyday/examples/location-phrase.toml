@@ -1,0 +1,40 @@
+construction_id = "location-phrase"
+
+[[examples]]
+example_id = "phrase-on-table"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "on the table"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { target = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "மேசை மேல"
+translation = "on the table"
+chunks = [{ text = "மேசை", join = "none" }, { text = "மேல", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "phrase-next-window"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "next to the window"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { target = "object:cup", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "ஜன்னலுக்குப் பக்கத்துல"
+translation = "next to the window"
+chunks = [{ text = "ஜன்னலுக்குப்", join = "none" }, { text = "பக்கத்துல", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "phrase-form"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "மேல மேசை"
+correction = "புத்தகத்துக்குப் பக்கத்துல"
+note = "The reference noun comes before the position word: மேசை மேல."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

@@ -1,0 +1,179 @@
+mission_id = "M01"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "a2-phone-next-door"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }, { "fact_id" = "object:door", "concept" = "door" }], "relations" = [{ "fact_id" = "relation:phone-next_to-door", "subject" = "object:phone", "reference" = "object:door", "relation" = "next_to" }] }
+bindings = { "subject" = "object:phone", "reference" = "object:door", "relation" = "relation:phone-next_to-door" }
+truth = true
+labels = []
+input = "Locate the phone next to the door."
+expected_meaning = "The phone is next to the door."
+acceptable = ["电话机 在 门 旁边."]
+reject = [{ "sentence" = "电话机 在 门 旁边", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 门 旁边.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-window-next-phone-form"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }, { "fact_id" = "object:phone", "concept" = "phone" }], "relations" = [{ "fact_id" = "relation:window-next_to-phone", "subject" = "object:window", "reference" = "object:phone", "relation" = "next_to" }] }
+bindings = { "subject" = "object:window", "reference" = "object:phone", "relation" = "relation:window-next_to-phone" }
+truth = true
+labels = []
+input = "Locate the window next to the phone."
+expected_meaning = "The window is next to the phone."
+acceptable = ["窗户 在 电话机 旁边."]
+reject = [{ "sentence" = "窗户 在 电话机 旁边", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 电话机 旁边.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-spoon-under-table"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:spoon-under-table", "subject" = "object:spoon", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "subject" = "object:spoon", "reference" = "object:table", "relation" = "relation:spoon-under-table" }
+truth = true
+labels = []
+input = "Locate the spoon under the table."
+expected_meaning = "The spoon is under the table."
+acceptable = ["勺子 在 桌子 下面."]
+reject = [{ "sentence" = "勺子 在 桌子 下面", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 桌子 下面.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-fork-spoon"
+category = "valid"
+construction_id = "connected-description"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:fork", "concept" = "fork" }, { "fact_id" = "object:spoon", "concept" = "spoon" }], "attributes" = [{ "fact_id" = "attribute:fork-green", "object" = "object:fork", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:fork", "other-object" = "object:spoon", "attribute" = "attribute:fork-green" }
+truth = true
+labels = []
+input = "Describe the green fork and the spoon."
+expected_meaning = "There is a green fork and there is also a spoon."
+acceptable = ["有 绿色的 叉子, 还有 勺子."]
+reject = [{ "sentence" = "有 绿色的 叉子, 还有 勺子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-absent-phone"
+category = "valid"
+construction_id = "scene-existence"
+construction_version = 2
+scene = { "objects" = [], "absent" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone" }
+truth = false
+labels = []
+input = "The phone is explicitly absent. State its absence."
+expected_meaning = "There is no phone in the scene."
+acceptable = ["没有 电话机."]
+reject = [{ "sentence" = "没有 电话机", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "不有 电话机.", "category" = "verbChoice", "reason" = "Negate existential 有 with 没有." }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-blue-bag"
+category = "valid"
+construction_id = "scene-existence"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "attributes" = [{ "fact_id" = "attribute:bag-blue", "object" = "object:bag", "kind" = "color", "value" = "blue" }] }
+bindings = { "object" = "object:bag", "attribute" = "attribute:bag-blue" }
+truth = true
+labels = []
+input = "State that a blue bag is present."
+expected_meaning = "There is a blue bag in the scene."
+acceptable = ["有 蓝色的 包."]
+reject = [{ "sentence" = "有 蓝色的 包", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-door-colour-question"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "attributes" = [{ "fact_id" = "attribute:door-yellow", "object" = "object:door", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:door", "attribute" = "attribute:door-yellow" }
+truth = true
+labels = []
+input = "Ask the colour of the highlighted door, without answering it."
+expected_meaning = "What colour is the door?"
+acceptable = ["门 是 什么 颜色 的?"]
+reject = [{ "sentence" = "门 是 什么 颜色 的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "followup"
+
+[[cases]]
+case_id = "a2-key-on-table"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:key-on-table", "subject" = "object:key", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:key", "reference" = "object:table", "relation" = "relation:key-on-table" }
+truth = true
+labels = []
+input = "Locate the key on the table."
+expected_meaning = "The key is on the table."
+acceptable = ["钥匙 在 桌子 上面."]
+reject = [{ "sentence" = "钥匙 在 桌子 上面", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 桌子 上面.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-held-bag-under-table"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:bag-under-table", "subject" = "object:bag", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "subject" = "object:bag", "reference" = "object:table", "relation" = "relation:bag-under-table" }
+truth = true
+labels = []
+input = "Locate the bag under the table."
+expected_meaning = "The bag is under the table."
+acceptable = ["包 在 桌子 下面."]
+reject = [{ "sentence" = "包 在 桌子 下面", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 桌子 下面.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a2-held-plate-colour-question"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-yellow", "object" = "object:plate", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-yellow" }
+truth = true
+labels = []
+input = "Ask the colour of the highlighted plate, without answering it."
+expected_meaning = "What colour is the plate?"
+acceptable = ["盘子 是 什么 颜色 的?"]
+reject = [{ "sentence" = "盘子 是 什么 颜色 的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "followup"
+
+[[cases]]
+case_id = "a2-held-absent-window"
+category = "valid"
+construction_id = "scene-existence"
+construction_version = 2
+scene = { "objects" = [], "absent" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window" }
+truth = false
+labels = []
+input = "The window is explicitly absent. State its absence."
+expected_meaning = "There is no window."
+acceptable = ["没有 窗户."]
+reject = [{ "sentence" = "没有 窗户", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "不有 窗户.", "category" = "verbChoice", "reason" = "Negate existential 有 with 没有." }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

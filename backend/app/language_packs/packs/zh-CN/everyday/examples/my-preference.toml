@@ -1,0 +1,106 @@
+construction_id = "my-preference"
+
+[[examples]]
+example_id = "i-like-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = true
+labels = []
+sentence = "我 喜欢 杯子."
+translation = "I like the cup."
+chunks = [{ "text" = "我", "join" = "none" }, { "text" = "喜欢", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I don't like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = false
+labels = []
+sentence = "我 不 喜欢 杯子."
+translation = "I don't like the cup."
+chunks = [{ "text" = "我", "join" = "none" }, { "text" = "不", "join" = "space" }, { "text" = "喜欢", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "i-like-cup-answer"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = true
+labels = []
+sentence = "我 喜欢 杯子."
+translation = "I like the cup."
+chunks = [{ "text" = "我", "join" = "none" }, { "text" = "喜欢", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup-contrast"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I don't like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = false
+labels = []
+sentence = "我 不 喜欢 杯子."
+translation = "I don't like the cup."
+chunks = [{ "text" = "我", "join" = "none" }, { "text" = "不", "join" = "space" }, { "text" = "喜欢", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-format"
+levels = ["A0"]
+purposes = ["sayPreference"]
+sentence = "我 喜欢 杯子"
+correction = "我 喜欢 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-dislike-cup-format"
+levels = ["A0"]
+purposes = ["sayPreference"]
+sentence = "我 不 喜欢 杯子"
+correction = "我 不 喜欢 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-answer-format"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "我 喜欢 杯子"
+correction = "我 喜欢 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-dislike-cup-contrast-format"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "我 不 喜欢 杯子"
+correction = "我 不 喜欢 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "zh-grammar-my-preference"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "我 不有 喜欢 杯子."
+correction = "我 不 喜欢 杯子."
+note = "Negate the preference verb with 不, without 有."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

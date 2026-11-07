@@ -1,0 +1,49 @@
+construction_id = "order-repeat"
+
+[[examples]]
+example_id = "repeat-two-small-coffees"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "So, two small coffees, to take away, right?"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "quantity" = "request:quantity", "size" = "request:size", "detail" = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "两 杯 小杯 咖啡, 打包, 对吗?"
+translation = "So, two small coffees, to take away, right?"
+chunks = [{ "text" = "两", "join" = "none" }, { "text" = "杯", "join" = "space" }, { "text" = "小杯", "join" = "space" }, { "text" = "咖啡", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "打包", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "对吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "repeat-three-coffees-wrong"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "So, three small coffees, to take away, right? (the server's mistake)"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "size" = "request:size", "detail" = "request:serviceSetting", "quantity" = "number:3" }
+truth = false
+labels = []
+sentence = "三 杯 小杯 咖啡, 打包, 对吗?"
+translation = "So, three small coffees, to take away, right?"
+chunks = [{ "text" = "三", "join" = "none" }, { "text" = "杯", "join" = "space" }, { "text" = "小杯", "join" = "space" }, { "text" = "咖啡", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "打包", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "对吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "repeat-two-small-coffees-format"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "两 杯 小杯 咖啡, 打包, 对吗"
+correction = "两 杯 小杯 咖啡, 打包, 对吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "repeat-three-coffees-wrong-format"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "三 杯 小杯 咖啡, 打包, 对吗"
+correction = "三 杯 小杯 咖啡, 打包, 对吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

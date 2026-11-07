@@ -1,0 +1,632 @@
+{
+  "terms": [
+    {
+      "term_id": "cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "கோப்பை",
+      "forms": [
+        "கோப்பை",
+        "கோப்பையா",
+        "கோப்பையும்",
+        "கோப்பைக்குப்",
+        "கோப்பைக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "கோப்பை",
+        "definite": "கோப்பை",
+        "question": "கோப்பையா",
+        "also": "கோப்பையும்",
+        "dative_before_p": "கோப்பைக்குப்",
+        "dative_before_k": "கோப்பைக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kōppai"
+    },
+    {
+      "term_id": "book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "புத்தகம்",
+      "forms": [
+        "புத்தகம்",
+        "புத்தகமா",
+        "புத்தகமும்",
+        "புத்தகத்துக்குப்",
+        "புத்தகத்துக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "புத்தகம்",
+        "definite": "புத்தகம்",
+        "question": "புத்தகமா",
+        "also": "புத்தகமும்",
+        "dative_before_p": "புத்தகத்துக்குப்",
+        "dative_before_k": "புத்தகத்துக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "puttakam"
+    },
+    {
+      "term_id": "table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "மேசை",
+      "forms": [
+        "மேசை",
+        "மேசையா",
+        "மேசையும்",
+        "மேசைக்குப்",
+        "மேசைக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "மேசை",
+        "definite": "மேசை",
+        "question": "மேசையா",
+        "also": "மேசையும்",
+        "dative_before_p": "மேசைக்குப்",
+        "dative_before_k": "மேசைக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "mēcai"
+    },
+    {
+      "term_id": "fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "முள்கரண்டி",
+      "forms": [
+        "முள்கரண்டி",
+        "முள்கரண்டியா",
+        "முள்கரண்டியும்",
+        "முள்கரண்டிக்குப்",
+        "முள்கரண்டிக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "முள்கரண்டி",
+        "definite": "முள்கரண்டி",
+        "question": "முள்கரண்டியா",
+        "also": "முள்கரண்டியும்",
+        "dative_before_p": "முள்கரண்டிக்குப்",
+        "dative_before_k": "முள்கரண்டிக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "muḷkaraṇṭi"
+    },
+    {
+      "term_id": "spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "கரண்டி",
+      "forms": [
+        "கரண்டி",
+        "கரண்டியா",
+        "கரண்டியும்",
+        "கரண்டிக்குப்",
+        "கரண்டிக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "கரண்டி",
+        "definite": "கரண்டி",
+        "question": "கரண்டியா",
+        "also": "கரண்டியும்",
+        "dative_before_p": "கரண்டிக்குப்",
+        "dative_before_k": "கரண்டிக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "karaṇṭi"
+    },
+    {
+      "term_id": "door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "கதவு",
+      "forms": [
+        "கதவு",
+        "கதவா",
+        "கதவும்",
+        "கதவுக்குப்",
+        "கதவுக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "கதவு",
+        "definite": "கதவு",
+        "question": "கதவா",
+        "also": "கதவும்",
+        "dative_before_p": "கதவுக்குப்",
+        "dative_before_k": "கதவுக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "katavu"
+    },
+    {
+      "term_id": "window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "ஜன்னல்",
+      "forms": [
+        "ஜன்னல்",
+        "ஜன்னலா",
+        "ஜன்னலும்",
+        "ஜன்னலுக்குப்",
+        "ஜன்னலுக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "ஜன்னல்",
+        "definite": "ஜன்னல்",
+        "question": "ஜன்னலா",
+        "also": "ஜன்னலும்",
+        "dative_before_p": "ஜன்னலுக்குப்",
+        "dative_before_k": "ஜன்னலுக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "jaṉṉal"
+    },
+    {
+      "term_id": "phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "போன்",
+      "forms": [
+        "போன்",
+        "போனா",
+        "போனும்",
+        "போனுக்குப்",
+        "போனுக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "போன்",
+        "definite": "போன்",
+        "question": "போனா",
+        "also": "போனும்",
+        "dative_before_p": "போனுக்குப்",
+        "dative_before_k": "போனுக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pōṉ"
+    },
+    {
+      "term_id": "key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "சாவி",
+      "forms": [
+        "சாவி",
+        "சாவியா",
+        "சாவியும்",
+        "சாவிக்குப்",
+        "சாவிக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "சாவி",
+        "definite": "சாவி",
+        "question": "சாவியா",
+        "also": "சாவியும்",
+        "dative_before_p": "சாவிக்குப்",
+        "dative_before_k": "சாவிக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "cāvi"
+    },
+    {
+      "term_id": "bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "பை",
+      "forms": [
+        "பை",
+        "பையா",
+        "பையும்",
+        "பைக்குப்",
+        "பைக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "பை",
+        "definite": "பை",
+        "question": "பையா",
+        "also": "பையும்",
+        "dative_before_p": "பைக்குப்",
+        "dative_before_k": "பைக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pai"
+    },
+    {
+      "term_id": "plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "தட்டு",
+      "forms": [
+        "தட்டு",
+        "தட்டா",
+        "தட்டும்",
+        "தட்டுக்குப்",
+        "தட்டுக்குக்"
+      ],
+      "forms_by_key": {
+        "bare": "தட்டு",
+        "definite": "தட்டு",
+        "question": "தட்டா",
+        "also": "தட்டும்",
+        "dative_before_p": "தட்டுக்குப்",
+        "dative_before_k": "தட்டுக்குக்"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "taṭṭu"
+    },
+    {
+      "term_id": "red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "சிவப்பு",
+      "forms": [
+        "சிவப்பு",
+        "சிவப்பா"
+      ],
+      "forms_by_key": {
+        "default": "சிவப்பு",
+        "modifier": "சிவப்பு",
+        "predicative": "சிவப்பு"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "பச்சை",
+      "forms": [
+        "பச்சை",
+        "பச்சையா"
+      ],
+      "forms_by_key": {
+        "default": "பச்சை",
+        "modifier": "பச்சை",
+        "predicative": "பச்சை"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "சிவப்பு",
+      "forms": [
+        "சிவப்பு",
+        "சிவப்பா"
+      ],
+      "forms_by_key": {
+        "default": "சிவப்பு",
+        "modifier": "சிவப்பு",
+        "predicative": "சிவப்பு"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "சிவப்பு",
+      "forms": [
+        "சிவப்பு",
+        "சிவப்பா"
+      ],
+      "forms_by_key": {
+        "default": "சிவப்பு",
+        "modifier": "சிவப்பு",
+        "predicative": "சிவப்பு"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "நீலம்",
+      "forms": [
+        "நீலம்",
+        "நீல",
+        "நீலமா"
+      ],
+      "forms_by_key": {
+        "default": "நீலம்",
+        "modifier": "நீல",
+        "predicative": "நீலம்"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "மஞ்சள்",
+      "forms": [
+        "மஞ்சள்",
+        "மஞ்சளா"
+      ],
+      "forms_by_key": {
+        "default": "மஞ்சள்",
+        "modifier": "மஞ்சள்",
+        "predicative": "மஞ்சள்"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "மஞ்சள்",
+      "forms": [
+        "மஞ்சள்",
+        "மஞ்சளா"
+      ],
+      "forms_by_key": {
+        "default": "மஞ்சள்",
+        "modifier": "மஞ்சள்",
+        "predicative": "மஞ்சள்"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "பச்சை",
+      "forms": [
+        "பச்சை",
+        "பச்சையா"
+      ],
+      "forms_by_key": {
+        "default": "பச்சை",
+        "modifier": "பச்சை",
+        "predicative": "பச்சை"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "நீலம்",
+      "forms": [
+        "நீலம்",
+        "நீல",
+        "நீலமா"
+      ],
+      "forms_by_key": {
+        "default": "நீலம்",
+        "modifier": "நீல",
+        "predicative": "நீலம்"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "பச்சை",
+      "forms": [
+        "பச்சை",
+        "பச்சையா"
+      ],
+      "forms_by_key": {
+        "default": "பச்சை",
+        "modifier": "பச்சை",
+        "predicative": "பச்சை"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "சிவப்பு",
+      "forms": [
+        "சிவப்பு",
+        "சிவப்பா"
+      ],
+      "forms_by_key": {
+        "default": "சிவப்பு",
+        "modifier": "சிவப்பு",
+        "predicative": "சிவப்பு"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "மஞ்சள்",
+      "forms": [
+        "மஞ்சள்",
+        "மஞ்சளா"
+      ],
+      "forms_by_key": {
+        "default": "மஞ்சள்",
+        "modifier": "மஞ்சள்",
+        "predicative": "மஞ்சள்"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "மேல",
+      "forms": [
+        "மேல"
+      ],
+      "forms_by_key": {
+        "phrase": "மேல"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "மேல",
+      "forms": [
+        "மேல"
+      ],
+      "forms_by_key": {
+        "phrase": "மேல"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "கீழே",
+      "forms": [
+        "கீழே"
+      ],
+      "forms_by_key": {
+        "phrase": "கீழே"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next to",
+      "target_text": "பக்கத்துல",
+      "forms": [
+        "பக்கத்துல"
+      ],
+      "forms_by_key": {
+        "phrase": "பக்கத்துல"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next to",
+      "target_text": "பக்கத்துல",
+      "forms": [
+        "பக்கத்துல"
+      ],
+      "forms_by_key": {
+        "phrase": "பக்கத்துல"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "கீழே",
+      "forms": [
+        "கீழே"
+      ],
+      "forms_by_key": {
+        "phrase": "கீழே"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "மேல",
+      "forms": [
+        "மேல"
+      ],
+      "forms_by_key": {
+        "phrase": "மேல"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    }
+  ]
+}

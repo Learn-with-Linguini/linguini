@@ -1,0 +1,24 @@
+construction_id = "describe-attribute"
+version = 2
+summary = "Describe a confirmed colour or material and ask about it."
+guidance = "Use an i-adjective before a noun: 赤い コップです. A colour noun takes の: 緑色の 本です. Predicates are コップは 赤いです. or 本は 緑色です. Ask Nは 何色ですか? or Nは 何で できていますか? for followup; never leak the bound answer. ChooseAttribute options are bare colour names, not sentences. Do not add な to i-adjectives or の after 赤い. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels. "
+features = ["polite-japanese", "learner-spacing", "describe-attribute"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = ["attribute-prompt-colour", "describe-object"]
+roles = { "object" = "noun", "attribute" = "adjective" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "detail-followup"
+message = "Ask about colour or material without giving the answer."
+must_contain = ["(何色|何で|どんな)[^?]*ですか[?]$"]
+uses = ["followup"]

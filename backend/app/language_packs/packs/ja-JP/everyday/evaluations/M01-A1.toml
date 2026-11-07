@@ -1,0 +1,163 @@
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "a1-phone-red"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "attributes" = [{ "fact_id" = "attribute:phone-red", "object" = "object:phone", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:phone", "attribute" = "attribute:phone-red" }
+truth = true
+labels = []
+input = "Describe the highlighted phone as red."
+expected_meaning = "This is a red phone."
+acceptable = ["赤い 電話です."]
+reject = [{ "sentence" = "赤い 電話です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-door-red-form"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "attributes" = [{ "fact_id" = "attribute:door-red", "object" = "object:door", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:door", "attribute" = "attribute:door-red" }
+truth = true
+labels = []
+input = "Describe one red door."
+expected_meaning = "This is a red door."
+acceptable = ["赤い ドアです."]
+reject = [{ "sentence" = "赤い ドアです", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-spoon-yellow-order"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }], "attributes" = [{ "fact_id" = "attribute:spoon-yellow", "object" = "object:spoon", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:spoon", "attribute" = "attribute:spoon-yellow" }
+truth = true
+labels = []
+input = "Describe a yellow spoon in the neutral taught frame."
+expected_meaning = "This is a yellow spoon."
+acceptable = ["黄色い スプーンです."]
+reject = [{ "sentence" = "黄色い スプーンです", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-door-blue-describe"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "attributes" = [{ "fact_id" = "attribute:door-blue", "object" = "object:door", "kind" = "color", "value" = "blue" }] }
+bindings = { "object" = "object:door", "attribute" = "attribute:door-blue" }
+truth = true
+labels = []
+input = "Describe the highlighted door as blue."
+expected_meaning = "This is a blue door."
+acceptable = ["青い ドアです."]
+reject = [{ "sentence" = "青い ドアです", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-key-positive-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }] }
+bindings = { "object" = "object:key", "shown" = "object:key" }
+truth = true
+labels = []
+input = "Ask whether the highlighted key is a key."
+expected_meaning = "Is this a key?"
+acceptable = ["鍵ですか?"]
+reject = [{ "sentence" = "鍵ですか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "a1-phone-yes"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone", "shown" = "object:phone" }
+truth = true
+labels = ["yes"]
+input = "The question asks whether the shown phone is a phone. Answer yes and name it."
+expected_meaning = "Yes, it is a phone."
+acceptable = ["はい, 電話です."]
+reject = [{ "sentence" = "はい, 電話です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-spoon-no"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:spoon", "shown" = "object:spoon" }
+truth = false
+labels = ["no"]
+input = "A spoon is shown; the positive question proposes a fork. Answer no and name the spoon."
+expected_meaning = "No, it is a spoon."
+acceptable = ["いいえ, スプーンです."]
+reject = [{ "sentence" = "いいえ, スプーンです", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-held-window-yes"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window", "shown" = "object:window" }
+truth = true
+labels = ["yes"]
+input = "The question asks whether the shown window is a window. Answer yes and name it."
+expected_meaning = "Yes, it is a window."
+acceptable = ["はい, 窓です."]
+reject = [{ "sentence" = "はい, 窓です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-held-book-red"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-red", "object" = "object:book", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-red" }
+truth = true
+labels = []
+input = "Describe the highlighted book as red."
+expected_meaning = "This is a red book."
+acceptable = ["赤い 本です."]
+reject = [{ "sentence" = "赤い 本です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-held-plate-yellow"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-yellow", "object" = "object:plate", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-yellow" }
+truth = true
+labels = []
+input = "Describe the highlighted plate as yellow."
+expected_meaning = "This is a yellow plate."
+acceptable = ["黄色い 皿です."]
+reject = [{ "sentence" = "黄色い 皿です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

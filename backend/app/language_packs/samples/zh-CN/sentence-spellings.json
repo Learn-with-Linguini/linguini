@@ -1,0 +1,4773 @@
+{
+  "purpose": "Offline lexical-tone pinyin reference readings, not provider responses or release evidence. Native Hanzi learning spaces are intentional. New sentences require their own aligned pinyin.",
+  "sentences": {
+    "我 选 书.": {
+      "romanization": "wǒ xuǎn shū.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 选",
+          "latin": " xuǎn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 红色的 杯子, 还有 书.": {
+      "romanization": "yǒu hóngsè de bēizi, hái yǒu shū.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 白色的 盘子, 还有 苹果.": {
+      "romanization": "yǒu báisè de pánzi, hái yǒu píngguǒ.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 白色的",
+          "latin": " báisè de"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鞋 在 椅子 下面, 还有 瓶子.": {
+      "romanization": "xié zài yǐzi xiàmiàn, hái yǒu píngzi.",
+      "spans": [
+        {
+          "native": "鞋",
+          "latin": "xié"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 椅子",
+          "latin": " yǐzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 瓶子",
+          "latin": " píngzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 红色的 杯子.": {
+      "romanization": "zhè shì hóngsè de bēizi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 绿色的 书.": {
+      "romanization": "zhè shì lǜsè de shū.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 绿色的",
+          "latin": " lǜsè de"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 黑色的 鞋.": {
+      "romanization": "zhè shì hēisè de xié.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 黑色的",
+          "latin": " hēisè de"
+        },
+        {
+          "native": " 鞋",
+          "latin": " xié"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 蓝色的 台灯.": {
+      "romanization": "zhè shì lánsè de táidēng.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 蓝色的",
+          "latin": " lánsè de"
+        },
+        {
+          "native": " 台灯",
+          "latin": " táidēng"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 白色的 盘子.": {
+      "romanization": "zhè shì báisè de pánzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 白色的",
+          "latin": " báisè de"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 黄色的 苹果.": {
+      "romanization": "zhè shì huángsè de píngguǒ.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 黄色的",
+          "latin": " huángsè de"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "红色": {
+      "romanization": "hóngsè",
+      "spans": [
+        {
+          "native": "红色",
+          "latin": "hóngsè"
+        }
+      ]
+    },
+    "绿色": {
+      "romanization": "lǜsè",
+      "spans": [
+        {
+          "native": "绿色",
+          "latin": "lǜsè"
+        }
+      ]
+    },
+    "杯子 是 什么 颜色 的?": {
+      "romanization": "bēizi shì shénme yánsè de?",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 什么",
+          "latin": " shénme"
+        },
+        {
+          "native": " 颜色",
+          "latin": " yánsè"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "书 是 什么 颜色 的?": {
+      "romanization": "shū shì shénme yánsè de?",
+      "spans": [
+        {
+          "native": "书",
+          "latin": "shū"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 什么",
+          "latin": " shénme"
+        },
+        {
+          "native": " 颜色",
+          "latin": " yánsè"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "在这里吃 还是 打包?": {
+      "romanization": "zài zhèlǐ chī háishi dǎbāo?",
+      "spans": [
+        {
+          "native": "在这里吃",
+          "latin": "zài zhèlǐ chī"
+        },
+        {
+          "native": " 还是",
+          "latin": " háishi"
+        },
+        {
+          "native": " 打包",
+          "latin": " dǎbāo"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "要 什么 颜色 的?": {
+      "romanization": "yào shénme yánsè de?",
+      "spans": [
+        {
+          "native": "要",
+          "latin": "yào"
+        },
+        {
+          "native": " 什么",
+          "latin": " shénme"
+        },
+        {
+          "native": " 颜色",
+          "latin": " yánsè"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "请 打包.": {
+      "romanization": "qǐng dǎbāo.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 打包",
+          "latin": " dǎbāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 给我 蓝色的.": {
+      "romanization": "qǐng gěi wǒ lánsè de.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 蓝色的",
+          "latin": " lánsè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 找到 杯子.": {
+      "romanization": "qǐng zhǎodào bēizi.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 找到",
+          "latin": " zhǎodào"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 几 个 苹果?": {
+      "romanization": "yǒu jǐ ge píngguǒ?",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 几",
+          "latin": " jǐ"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "有 几 本 书?": {
+      "romanization": "yǒu jǐ běn shū?",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 几",
+          "latin": " jǐ"
+        },
+        {
+          "native": " 本",
+          "latin": " běn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "书": {
+      "romanization": "shū",
+      "spans": [
+        {
+          "native": "书",
+          "latin": "shū"
+        }
+      ]
+    },
+    "杯子": {
+      "romanization": "bēizi",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        }
+      ]
+    },
+    "钟": {
+      "romanization": "zhōng",
+      "spans": [
+        {
+          "native": "钟",
+          "latin": "zhōng"
+        }
+      ]
+    },
+    "这是 杯子.": {
+      "romanization": "zhè shì bēizi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 书.": {
+      "romanization": "zhè shì shū.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 椅子.": {
+      "romanization": "zhè shì yǐzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 椅子",
+          "latin": " yǐzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 瓶子.": {
+      "romanization": "zhè shì píngzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 瓶子",
+          "latin": " píngzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 球.": {
+      "romanization": "zhè shì qiú.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 球",
+          "latin": " qiú"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 包.": {
+      "romanization": "zhè shì bāo.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "台灯": {
+      "romanization": "táidēng",
+      "spans": [
+        {
+          "native": "台灯",
+          "latin": "táidēng"
+        }
+      ]
+    },
+    "在 桌子 上面": {
+      "romanization": "zài zhuōzi shàngmiàn",
+      "spans": [
+        {
+          "native": "在",
+          "latin": "zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 上面",
+          "latin": " shàngmiàn"
+        }
+      ]
+    },
+    "在 窗户 旁边": {
+      "romanization": "zài chuānghu pángbiān",
+      "spans": [
+        {
+          "native": "在",
+          "latin": "zài"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        }
+      ]
+    },
+    "我 喜欢 杯子.": {
+      "romanization": "wǒ xǐhuan bēizi.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 不 喜欢 杯子.": {
+      "romanization": "wǒ bù xǐhuan bēizi.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 不",
+          "latin": " bù"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 杯子": {
+      "romanization": "zhè shì bēizi",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        }
+      ]
+    },
+    "这是 桌子": {
+      "romanization": "zhè shì zhuōzi",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        }
+      ]
+    },
+    "对, 没错.": {
+      "romanization": "duì, méi cuò.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 没错",
+          "latin": " méi cuò"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "两 杯 小杯 咖啡": {
+      "romanization": "liǎng bēi xiǎo bēi kāfēi",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 小杯",
+          "latin": " xiǎo bēi"
+        },
+        {
+          "native": " 咖啡",
+          "latin": " kāfēi"
+        }
+      ]
+    },
+    "一 支 笔": {
+      "romanization": "yī zhī bǐ",
+      "spans": [
+        {
+          "native": "一",
+          "latin": "yī"
+        },
+        {
+          "native": " 支",
+          "latin": " zhī"
+        },
+        {
+          "native": " 笔",
+          "latin": " bǐ"
+        }
+      ]
+    },
+    "三 杯 小杯 咖啡": {
+      "romanization": "sān bēi xiǎo bēi kāfēi",
+      "spans": [
+        {
+          "native": "三",
+          "latin": "sān"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 小杯",
+          "latin": " xiǎo bēi"
+        },
+        {
+          "native": " 咖啡",
+          "latin": " kāfēi"
+        }
+      ]
+    },
+    "不对, 请 给我 三 杯.": {
+      "romanization": "bù duì, qǐng gěi wǒ sān bēi.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 请",
+          "latin": " qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 三",
+          "latin": " sān"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 请 打包.": {
+      "romanization": "bù duì, qǐng dǎbāo.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 请",
+          "latin": " qǐng"
+        },
+        {
+          "native": " 打包",
+          "latin": " dǎbāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "两 杯 小杯 咖啡, 打包, 对吗?": {
+      "romanization": "liǎng bēi xiǎo bēi kāfēi, dǎbāo, duì ma?",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 小杯",
+          "latin": " xiǎo bēi"
+        },
+        {
+          "native": " 咖啡",
+          "latin": " kāfēi"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 打包",
+          "latin": " dǎbāo"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 对吗",
+          "latin": " duì ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "三 杯 小杯 咖啡, 打包, 对吗?": {
+      "romanization": "sān bēi xiǎo bēi kāfēi, dǎbāo, duì ma?",
+      "spans": [
+        {
+          "native": "三",
+          "latin": "sān"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 小杯",
+          "latin": " xiǎo bēi"
+        },
+        {
+          "native": " 咖啡",
+          "latin": " kāfēi"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 打包",
+          "latin": " dǎbāo"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 对吗",
+          "latin": " duì ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "我的 杯子 是 红色的.": {
+      "romanization": "wǒ de bēizi shì hóngsè de.",
+      "spans": [
+        {
+          "native": "我的",
+          "latin": "wǒ de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我的 杯子 在 桌子 上面.": {
+      "romanization": "wǒ de bēizi zài zhuōzi shàngmiàn.",
+      "spans": [
+        {
+          "native": "我的",
+          "latin": "wǒ de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 上面",
+          "latin": " shàngmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "杯子 是 我的.": {
+      "romanization": "bēizi shì wǒ de.",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "杯子 是 你的.": {
+      "romanization": "bēizi shì nǐ de.",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 你的",
+          "latin": " nǐ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "书 是 安娜 的.": {
+      "romanization": "shū shì Ānnà de.",
+      "spans": [
+        {
+          "native": "书",
+          "latin": "shū"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 安娜",
+          "latin": " Ānnà"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 书 是 安娜 的.": {
+      "romanization": "bù duì, shū shì Ānnà de.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 安娜",
+          "latin": " Ānnà"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这 是 你的 吗?": {
+      "romanization": "zhè shì nǐ de ma?",
+      "spans": [
+        {
+          "native": "这",
+          "latin": "zhè"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 你的",
+          "latin": " nǐ de"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "是 我的.": {
+      "romanization": "shì wǒ de.",
+      "spans": [
+        {
+          "native": "是",
+          "latin": "shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不是 我的.": {
+      "romanization": "bù shì wǒ de.",
+      "spans": [
+        {
+          "native": "不是",
+          "latin": "bù shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 给我 两 杯 小杯 咖啡.": {
+      "romanization": "qǐng gěi wǒ liǎng bēi xiǎo bēi kāfēi.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 两",
+          "latin": " liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 小杯",
+          "latin": " xiǎo bēi"
+        },
+        {
+          "native": " 咖啡",
+          "latin": " kāfēi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 借给我 一 支 笔.": {
+      "romanization": "qǐng jiè gěi wǒ yī zhī bǐ.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 借给我",
+          "latin": " jiè gěi wǒ"
+        },
+        {
+          "native": " 一",
+          "latin": " yī"
+        },
+        {
+          "native": " 支",
+          "latin": " zhī"
+        },
+        {
+          "native": " 笔",
+          "latin": " bǐ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 递给我 一 个 杯子.": {
+      "romanization": "qǐng dì gěi wǒ yī ge bēizi.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 递给我",
+          "latin": " dì gěi wǒ"
+        },
+        {
+          "native": " 一",
+          "latin": " yī"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 我的 杯子.": {
+      "romanization": "zhè shì wǒ de bēizi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 安娜 的 书.": {
+      "romanization": "zhè shì Ānnà de shū.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 安娜",
+          "latin": " Ānnà"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 利奥 的 钥匙.": {
+      "romanization": "zhè shì Lì'ào de yàoshi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 利奥",
+          "latin": " Lì'ào"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "对, 这是 我的 杯子.": {
+      "romanization": "duì, zhè shì wǒ de bēizi.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "你 喜欢 杯子 吗?": {
+      "romanization": "nǐ xǐhuan bēizi ma?",
+      "spans": [
+        {
+          "native": "你",
+          "latin": "nǐ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "安娜 喜欢 书 吗?": {
+      "romanization": "Ānnà xǐhuan shū ma?",
+      "spans": [
+        {
+          "native": "安娜",
+          "latin": "Ānnà"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "两 个 苹果": {
+      "romanization": "liǎng ge píngguǒ",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        }
+      ]
+    },
+    "一 个 苹果": {
+      "romanization": "yī ge píngguǒ",
+      "spans": [
+        {
+          "native": "一",
+          "latin": "yī"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        }
+      ]
+    },
+    "书 比 杯子 多.": {
+      "romanization": "shū bǐ bēizi duō.",
+      "spans": [
+        {
+          "native": "书",
+          "latin": "shū"
+        },
+        {
+          "native": " 比",
+          "latin": " bǐ"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": " 多",
+          "latin": " duō"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "杯子 比 书 少.": {
+      "romanization": "bēizi bǐ shū shǎo.",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 比",
+          "latin": " bǐ"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": " 少",
+          "latin": " shǎo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 五 本 书, 还有 两 个 杯子.": {
+      "romanization": "yǒu wǔ běn shū, hái yǒu liǎng ge bēizi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 五",
+          "latin": " wǔ"
+        },
+        {
+          "native": " 本",
+          "latin": " běn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 两",
+          "latin": " liǎng"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 五 本 书.": {
+      "romanization": "yǒu wǔ běn shū.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 五",
+          "latin": " wǔ"
+        },
+        {
+          "native": " 本",
+          "latin": " běn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 有 五 本 书.": {
+      "romanization": "bù duì, yǒu wǔ běn shū.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 有",
+          "latin": " yǒu"
+        },
+        {
+          "native": " 五",
+          "latin": " wǔ"
+        },
+        {
+          "native": " 本",
+          "latin": " běn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 黄色的 苹果.": {
+      "romanization": "yǒu huángsè de píngguǒ.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 黄色的",
+          "latin": " huángsè de"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 白色的 盘子.": {
+      "romanization": "yǒu báisè de pánzi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 白色的",
+          "latin": " báisè de"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 椅子.": {
+      "romanization": "yǒu yǐzi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 椅子",
+          "latin": " yǐzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "没有 钟.": {
+      "romanization": "méiyǒu zhōng.",
+      "spans": [
+        {
+          "native": "没有",
+          "latin": "méiyǒu"
+        },
+        {
+          "native": " 钟",
+          "latin": " zhōng"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "杯子 在 桌子 上面.": {
+      "romanization": "bēizi zài zhuōzi shàngmiàn.",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 上面",
+          "latin": " shàngmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鞋 在 椅子 下面.": {
+      "romanization": "xié zài yǐzi xiàmiàn.",
+      "spans": [
+        {
+          "native": "鞋",
+          "latin": "xié"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 椅子",
+          "latin": " yǐzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "台灯 在 书 旁边.": {
+      "romanization": "táidēng zài shū pángbiān.",
+      "spans": [
+        {
+          "native": "台灯",
+          "latin": "táidēng"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鞋 在 哪里?": {
+      "romanization": "xié zài nǎlǐ?",
+      "spans": [
+        {
+          "native": "鞋",
+          "latin": "xié"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 哪里",
+          "latin": " nǎlǐ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "是 红色的.": {
+      "romanization": "shì hóngsè de.",
+      "spans": [
+        {
+          "native": "是",
+          "latin": "shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "在 窗户 旁边.": {
+      "romanization": "zài chuānghu pángbiān.",
+      "spans": [
+        {
+          "native": "在",
+          "latin": "zài"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 在 窗户 旁边.": {
+      "romanization": "bù duì, zài chuānghu pángbiān.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "红色的 杯子 在 窗户 旁边.": {
+      "romanization": "hóngsè de bēizi zài chuānghu pángbiān.",
+      "spans": [
+        {
+          "native": "红色的",
+          "latin": "hóngsè de"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "利奥 喜欢 钥匙.": {
+      "romanization": "Lì'ào xǐhuan yàoshi.",
+      "spans": [
+        {
+          "native": "利奥",
+          "latin": "Lì'ào"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "安娜 不 喜欢 书.": {
+      "romanization": "Ānnà bù xǐhuan shū.",
+      "spans": [
+        {
+          "native": "安娜",
+          "latin": "Ānnà"
+        },
+        {
+          "native": " 不",
+          "latin": " bù"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "安娜 喜欢 书.": {
+      "romanization": "Ānnà xǐhuan shū.",
+      "spans": [
+        {
+          "native": "安娜",
+          "latin": "Ānnà"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "杯子 在 哪里?": {
+      "romanization": "bēizi zài nǎlǐ?",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 哪里",
+          "latin": " nǎlǐ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "杯子 是 谁 的?": {
+      "romanization": "bēizi shì shéi de?",
+      "spans": [
+        {
+          "native": "杯子",
+          "latin": "bēizi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 谁",
+          "latin": " shéi"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这是 杯子 吗?": {
+      "romanization": "zhè shì bēizi ma?",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这是 盘子 吗?": {
+      "romanization": "zhè shì pánzi ma?",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这是 瓶子 吗?": {
+      "romanization": "zhè shì píngzi ma?",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 瓶子",
+          "latin": " píngzi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "对, 这是 书.": {
+      "romanization": "duì, zhè shì shū.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "对, 这是 椅子.": {
+      "romanization": "duì, zhè shì yǐzi.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 椅子",
+          "latin": " yǐzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 这是 钟.": {
+      "romanization": "bù duì, zhè shì zhōng.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 钟",
+          "latin": " zhōng"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 叉子.": {
+      "romanization": "zhè shì chāzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 叉子",
+          "latin": " chāzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 勺子.": {
+      "romanization": "zhè shì sháozi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 门.": {
+      "romanization": "zhè shì mén.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 窗户 吗?": {
+      "romanization": "zhè shì chuānghu ma?",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这是 电话机.": {
+      "romanization": "zhè shì diànhuàjī.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 钥匙.": {
+      "romanization": "zhè shì yàoshi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "窗户": {
+      "romanization": "chuānghu",
+      "spans": [
+        {
+          "native": "窗户",
+          "latin": "chuānghu"
+        }
+      ]
+    },
+    "这是 桌子.": {
+      "romanization": "zhè shì zhuōzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 包 吗?": {
+      "romanization": "zhè shì bāo ma?",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这是 红色的 电话机.": {
+      "romanization": "zhè shì hóngsè de diànhuàjī.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 红色的 门.": {
+      "romanization": "zhè shì hóngsè de mén.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 黄色的 勺子.": {
+      "romanization": "zhè shì huángsè de sháozi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 黄色的",
+          "latin": " huángsè de"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 蓝色的 门.": {
+      "romanization": "zhè shì lánsè de mén.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 蓝色的",
+          "latin": " lánsè de"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 钥匙 吗?": {
+      "romanization": "zhè shì yàoshi ma?",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "对, 这是 电话机.": {
+      "romanization": "duì, zhè shì diànhuàjī.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 这是 勺子.": {
+      "romanization": "bù duì, zhè shì sháozi.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "对, 这是 窗户.": {
+      "romanization": "duì, zhè shì chuānghu.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 红色的 书.": {
+      "romanization": "zhè shì hóngsè de shū.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 黄色的 盘子.": {
+      "romanization": "zhè shì huángsè de pánzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 黄色的",
+          "latin": " huángsè de"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "电话机 在 门 旁边.": {
+      "romanization": "diànhuàjī zài mén pángbiān.",
+      "spans": [
+        {
+          "native": "电话机",
+          "latin": "diànhuàjī"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "窗户 在 电话机 旁边.": {
+      "romanization": "chuānghu zài diànhuàjī pángbiān.",
+      "spans": [
+        {
+          "native": "窗户",
+          "latin": "chuānghu"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "勺子 在 桌子 下面.": {
+      "romanization": "sháozi zài zhuōzi xiàmiàn.",
+      "spans": [
+        {
+          "native": "勺子",
+          "latin": "sháozi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 绿色的 叉子, 还有 勺子.": {
+      "romanization": "yǒu lǜsè de chāzi, hái yǒu sháozi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 绿色的",
+          "latin": " lǜsè de"
+        },
+        {
+          "native": " 叉子",
+          "latin": " chāzi"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "没有 电话机.": {
+      "romanization": "méiyǒu diànhuàjī.",
+      "spans": [
+        {
+          "native": "没有",
+          "latin": "méiyǒu"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 蓝色的 包.": {
+      "romanization": "yǒu lánsè de bāo.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 蓝色的",
+          "latin": " lánsè de"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "门 是 什么 颜色 的?": {
+      "romanization": "mén shì shénme yánsè de?",
+      "spans": [
+        {
+          "native": "门",
+          "latin": "mén"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 什么",
+          "latin": " shénme"
+        },
+        {
+          "native": " 颜色",
+          "latin": " yánsè"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "钥匙 在 桌子 上面.": {
+      "romanization": "yàoshi zài zhuōzi shàngmiàn.",
+      "spans": [
+        {
+          "native": "钥匙",
+          "latin": "yàoshi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 上面",
+          "latin": " shàngmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "包 在 桌子 下面.": {
+      "romanization": "bāo zài zhuōzi xiàmiàn.",
+      "spans": [
+        {
+          "native": "包",
+          "latin": "bāo"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "盘子 是 什么 颜色 的?": {
+      "romanization": "pánzi shì shénme yánsè de?",
+      "spans": [
+        {
+          "native": "盘子",
+          "latin": "pánzi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 什么",
+          "latin": " shénme"
+        },
+        {
+          "native": " 颜色",
+          "latin": " yánsè"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "没有 窗户.": {
+      "romanization": "méiyǒu chuānghu.",
+      "spans": [
+        {
+          "native": "没有",
+          "latin": "méiyǒu"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 找到 包.": {
+      "romanization": "qǐng zhǎodào bāo.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 找到",
+          "latin": " zhǎodào"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "门": {
+      "romanization": "mén",
+      "spans": [
+        {
+          "native": "门",
+          "latin": "mén"
+        }
+      ]
+    },
+    "请 找到 电话机.": {
+      "romanization": "qǐng zhǎodào diànhuàjī.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 找到",
+          "latin": " zhǎodào"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "在 桌子 下面": {
+      "romanization": "zài zhuōzi xiàmiàn",
+      "spans": [
+        {
+          "native": "在",
+          "latin": "zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        }
+      ]
+    },
+    "在 门 旁边": {
+      "romanization": "zài mén pángbiān",
+      "spans": [
+        {
+          "native": "在",
+          "latin": "zài"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        }
+      ]
+    },
+    "钥匙 在 哪里?": {
+      "romanization": "yàoshi zài nǎlǐ?",
+      "spans": [
+        {
+          "native": "钥匙",
+          "latin": "yàoshi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 哪里",
+          "latin": " nǎlǐ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "盘子 在 哪里?": {
+      "romanization": "pánzi zài nǎlǐ?",
+      "spans": [
+        {
+          "native": "盘子",
+          "latin": "pánzi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 哪里",
+          "latin": " nǎlǐ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "是 绿色的.": {
+      "romanization": "shì lǜsè de.",
+      "spans": [
+        {
+          "native": "是",
+          "latin": "shì"
+        },
+        {
+          "native": " 绿色的",
+          "latin": " lǜsè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "在 桌子 下面.": {
+      "romanization": "zài zhuōzi xiàmiàn.",
+      "spans": [
+        {
+          "native": "在",
+          "latin": "zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 在 桌子 下面.": {
+      "romanization": "bù duì, zài zhuōzi xiàmiàn.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黄色的 盘子 在 桌子 上面.": {
+      "romanization": "huángsè de pánzi zài zhuōzi shàngmiàn.",
+      "spans": [
+        {
+          "native": "黄色的",
+          "latin": "huángsè de"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 上面",
+          "latin": " shàngmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "绿色的 包 在 桌子 下面.": {
+      "romanization": "lǜsè de bāo zài zhuōzi xiàmiàn.",
+      "spans": [
+        {
+          "native": "绿色的",
+          "latin": "lǜsè de"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 下面",
+          "latin": " xiàmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "红色的 电话机 在 门 旁边.": {
+      "romanization": "hóngsè de diànhuàjī zài mén pángbiān.",
+      "spans": [
+        {
+          "native": "红色的",
+          "latin": "hóngsè de"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": " 旁边",
+          "latin": " pángbiān"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 几 个 盘子?": {
+      "romanization": "yǒu jǐ ge pánzi?",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 几",
+          "latin": " jǐ"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "三 个 盘子": {
+      "romanization": "sān ge pánzi",
+      "spans": [
+        {
+          "native": "三",
+          "latin": "sān"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        }
+      ]
+    },
+    "两 把 勺子": {
+      "romanization": "liǎng bǎ sháozi",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        }
+      ]
+    },
+    "三 把 叉子": {
+      "romanization": "sān bǎ chāzi",
+      "spans": [
+        {
+          "native": "三",
+          "latin": "sān"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 叉子",
+          "latin": " chāzi"
+        }
+      ]
+    },
+    "一 把 钥匙": {
+      "romanization": "yī bǎ yàoshi",
+      "spans": [
+        {
+          "native": "一",
+          "latin": "yī"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        }
+      ]
+    },
+    "有 几 个 包?": {
+      "romanization": "yǒu jǐ ge bāo?",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 几",
+          "latin": " jǐ"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "两 台 电话机": {
+      "romanization": "liǎng tái diànhuàjī",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 台",
+          "latin": " tái"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        }
+      ]
+    },
+    "两 个 杯子": {
+      "romanization": "liǎng ge bēizi",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 杯子",
+          "latin": " bēizi"
+        }
+      ]
+    },
+    "有 四 个 盘子.": {
+      "romanization": "yǒu sì ge pánzi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 四",
+          "latin": " sì"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 六 把 钥匙.": {
+      "romanization": "yǒu liù bǎ yàoshi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 六",
+          "latin": " liù"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 七 把 叉子.": {
+      "romanization": "yǒu qī bǎ chāzi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 七",
+          "latin": " qī"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 叉子",
+          "latin": " chāzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 几 把 勺子?": {
+      "romanization": "yǒu jǐ bǎ sháozi?",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 几",
+          "latin": " jǐ"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "有 十 台 电话机.": {
+      "romanization": "yǒu shí tái diànhuàjī.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 十",
+          "latin": " shí"
+        },
+        {
+          "native": " 台",
+          "latin": " tái"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 五 扇 门.": {
+      "romanization": "yǒu wǔ shàn mén.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 五",
+          "latin": " wǔ"
+        },
+        {
+          "native": " 扇",
+          "latin": " shàn"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 三 本 书.": {
+      "romanization": "yǒu sān běn shū.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 三",
+          "latin": " sān"
+        },
+        {
+          "native": " 本",
+          "latin": " běn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 几 扇 门?": {
+      "romanization": "yǒu jǐ shàn mén?",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 几",
+          "latin": " jǐ"
+        },
+        {
+          "native": " 扇",
+          "latin": " shàn"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "有 三 扇 窗户.": {
+      "romanization": "yǒu sān shàn chuānghu.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 三",
+          "latin": " sān"
+        },
+        {
+          "native": " 扇",
+          "latin": " shàn"
+        },
+        {
+          "native": " 窗户",
+          "latin": " chuānghu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "盘子 比 勺子 多.": {
+      "romanization": "pánzi bǐ sháozi duō.",
+      "spans": [
+        {
+          "native": "盘子",
+          "latin": "pánzi"
+        },
+        {
+          "native": " 比",
+          "latin": " bǐ"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": " 多",
+          "latin": " duō"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "勺子 比 盘子 少.": {
+      "romanization": "sháozi bǐ pánzi shǎo.",
+      "spans": [
+        {
+          "native": "勺子",
+          "latin": "sháozi"
+        },
+        {
+          "native": " 比",
+          "latin": " bǐ"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": " 少",
+          "latin": " shǎo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 有 四 把 钥匙.": {
+      "romanization": "bù duì, yǒu sì bǎ yàoshi.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 有",
+          "latin": " yǒu"
+        },
+        {
+          "native": " 四",
+          "latin": " sì"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 两 把 钥匙.": {
+      "romanization": "yǒu liǎng bǎ yàoshi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 两",
+          "latin": " liǎng"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 六 个 盘子, 还有 两 把 勺子.": {
+      "romanization": "yǒu liù ge pánzi, hái yǒu liǎng bǎ sháozi.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 六",
+          "latin": " liù"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 两",
+          "latin": " liǎng"
+        },
+        {
+          "native": " 把",
+          "latin": " bǎ"
+        },
+        {
+          "native": " 勺子",
+          "latin": " sháozi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "有 五 个 包, 还有 三 台 电话机.": {
+      "romanization": "yǒu wǔ ge bāo, hái yǒu sān tái diànhuàjī.",
+      "spans": [
+        {
+          "native": "有",
+          "latin": "yǒu"
+        },
+        {
+          "native": " 五",
+          "latin": " wǔ"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 还有",
+          "latin": " hái yǒu"
+        },
+        {
+          "native": " 三",
+          "latin": " sān"
+        },
+        {
+          "native": " 台",
+          "latin": " tái"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "包 比 电话机 多.": {
+      "romanization": "bāo bǐ diànhuàjī duō.",
+      "spans": [
+        {
+          "native": "包",
+          "latin": "bāo"
+        },
+        {
+          "native": " 比",
+          "latin": " bǐ"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": " 多",
+          "latin": " duō"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这个 是 你的 吗?": {
+      "romanization": "zhège shì nǐ de ma?",
+      "spans": [
+        {
+          "native": "这个",
+          "latin": "zhège"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 你的",
+          "latin": " nǐ de"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这 不是 我的.": {
+      "romanization": "zhè bù shì wǒ de.",
+      "spans": [
+        {
+          "native": "这",
+          "latin": "zhè"
+        },
+        {
+          "native": " 不是",
+          "latin": " bù shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这 是 我的.": {
+      "romanization": "zhè shì wǒ de.",
+      "spans": [
+        {
+          "native": "这",
+          "latin": "zhè"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "盘子 是 我的.": {
+      "romanization": "pánzi shì wǒ de.",
+      "spans": [
+        {
+          "native": "盘子",
+          "latin": "pánzi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "钥匙 是 我的.": {
+      "romanization": "yàoshi shì wǒ de.",
+      "spans": [
+        {
+          "native": "钥匙",
+          "latin": "yàoshi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "电话机 是 我的.": {
+      "romanization": "diànhuàjī shì wǒ de.",
+      "spans": [
+        {
+          "native": "电话机",
+          "latin": "diànhuàjī"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 我的 盘子.": {
+      "romanization": "zhè shì wǒ de pánzi.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 安娜 的 包.": {
+      "romanization": "zhè shì Ānnà de bāo.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 安娜",
+          "latin": " Ānnà"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 利奥 的 门.": {
+      "romanization": "zhè shì Lì'ào de mén.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 利奥",
+          "latin": " Lì'ào"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "书 是 谁 的?": {
+      "romanization": "shū shì shéi de?",
+      "spans": [
+        {
+          "native": "书",
+          "latin": "shū"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 谁",
+          "latin": " shéi"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "这是 我的 电话机.": {
+      "romanization": "zhè shì wǒ de diànhuàjī.",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我的 包 是 绿色的.": {
+      "romanization": "wǒ de bāo shì lǜsè de.",
+      "spans": [
+        {
+          "native": "我的",
+          "latin": "wǒ de"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 绿色的",
+          "latin": " lǜsè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我的 钥匙 在 桌子 上面.": {
+      "romanization": "wǒ de yàoshi zài zhuōzi shàngmiàn.",
+      "spans": [
+        {
+          "native": "我的",
+          "latin": "wǒ de"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": " 在",
+          "latin": " zài"
+        },
+        {
+          "native": " 桌子",
+          "latin": " zhuōzi"
+        },
+        {
+          "native": " 上面",
+          "latin": " shàngmiàn"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 盘子 是 安娜 的.": {
+      "romanization": "bù duì, pánzi shì Ānnà de.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 安娜",
+          "latin": " Ānnà"
+        },
+        {
+          "native": " 的",
+          "latin": " de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "对, 这是 我的 门.": {
+      "romanization": "duì, zhè shì wǒ de mén.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 这是",
+          "latin": " zhè shì"
+        },
+        {
+          "native": " 我的",
+          "latin": " wǒ de"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "门 是 你的.": {
+      "romanization": "mén shì nǐ de.",
+      "spans": [
+        {
+          "native": "门",
+          "latin": "mén"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 你的",
+          "latin": " nǐ de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我的 电话机 是 红色的.": {
+      "romanization": "wǒ de diànhuàjī shì hóngsè de.",
+      "spans": [
+        {
+          "native": "我的",
+          "latin": "wǒ de"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": " 是",
+          "latin": " shì"
+        },
+        {
+          "native": " 红色的",
+          "latin": " hóngsè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 喜欢 盘子.": {
+      "romanization": "wǒ xǐhuan pánzi.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 不 喜欢 包.": {
+      "romanization": "wǒ bù xǐhuan bāo.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 不",
+          "latin": " bù"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 不 喜欢 盘子.": {
+      "romanization": "wǒ bù xǐhuan pánzi.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 不",
+          "latin": " bù"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "你 喜欢 门 吗?": {
+      "romanization": "nǐ xǐhuan mén ma?",
+      "spans": [
+        {
+          "native": "你",
+          "latin": "nǐ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "我 选 钥匙.": {
+      "romanization": "wǒ xuǎn yàoshi.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 选",
+          "latin": " xuǎn"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 喜欢 电话机.": {
+      "romanization": "wǒ xǐhuan diànhuàjī.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "安娜 不 喜欢 盘子.": {
+      "romanization": "Ānnà bù xǐhuan pánzi.",
+      "spans": [
+        {
+          "native": "安娜",
+          "latin": "Ānnà"
+        },
+        {
+          "native": " 不",
+          "latin": " bù"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "利奥 喜欢 门.": {
+      "romanization": "Lì'ào xǐhuan mén.",
+      "spans": [
+        {
+          "native": "利奥",
+          "latin": "Lì'ào"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 喜欢 包.": {
+      "romanization": "wǒ xǐhuan bāo.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "安娜 喜欢 钥匙 吗?": {
+      "romanization": "Ānnà xǐhuan yàoshi ma?",
+      "spans": [
+        {
+          "native": "安娜",
+          "latin": "Ānnà"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "你 喜欢 盘子 吗?": {
+      "romanization": "nǐ xǐhuan pánzi ma?",
+      "spans": [
+        {
+          "native": "你",
+          "latin": "nǐ"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": " 吗",
+          "latin": " ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "安娜 不 喜欢 电话机.": {
+      "romanization": "Ānnà bù xǐhuan diànhuàjī.",
+      "spans": [
+        {
+          "native": "安娜",
+          "latin": "Ānnà"
+        },
+        {
+          "native": " 不",
+          "latin": " bù"
+        },
+        {
+          "native": " 喜欢",
+          "latin": " xǐhuan"
+        },
+        {
+          "native": " 电话机",
+          "latin": " diànhuàjī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 给我 两 杯 大杯 茶.": {
+      "romanization": "qǐng gěi wǒ liǎng bēi dà bēi chá.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 两",
+          "latin": " liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 大杯",
+          "latin": " dà bēi"
+        },
+        {
+          "native": " 茶",
+          "latin": " chá"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 给我 三 个 苹果.": {
+      "romanization": "qǐng gěi wǒ sān ge píngguǒ.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 三",
+          "latin": " sān"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 借给我 一 本 书.": {
+      "romanization": "qǐng jiè gěi wǒ yī běn shū.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 借给我",
+          "latin": " jiè gěi wǒ"
+        },
+        {
+          "native": " 一",
+          "latin": " yī"
+        },
+        {
+          "native": " 本",
+          "latin": " běn"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "请 递给我 一 个 盘子.": {
+      "romanization": "qǐng dì gěi wǒ yī ge pánzi.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 递给我",
+          "latin": " dì gěi wǒ"
+        },
+        {
+          "native": " 一",
+          "latin": " yī"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "两 杯 大杯 茶": {
+      "romanization": "liǎng bēi dà bēi chá",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 大杯",
+          "latin": " dà bēi"
+        },
+        {
+          "native": " 茶",
+          "latin": " chá"
+        }
+      ]
+    },
+    "要 热的 还是 冰的?": {
+      "romanization": "yào rè de háishi bīng de?",
+      "spans": [
+        {
+          "native": "要",
+          "latin": "yào"
+        },
+        {
+          "native": " 热的",
+          "latin": " rè de"
+        },
+        {
+          "native": " 还是",
+          "latin": " háishi"
+        },
+        {
+          "native": " 冰的",
+          "latin": " bīng de"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "请 给我 热的.": {
+      "romanization": "qǐng gěi wǒ rè de.",
+      "spans": [
+        {
+          "native": "请",
+          "latin": "qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 热的",
+          "latin": " rè de"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "我 在这里吃.": {
+      "romanization": "wǒ zài zhèlǐ chī.",
+      "spans": [
+        {
+          "native": "我",
+          "latin": "wǒ"
+        },
+        {
+          "native": " 在这里吃",
+          "latin": " zài zhèlǐ chī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "三 个 苹果, 要 大的, 对吗?": {
+      "romanization": "sān ge píngguǒ, yào dà de, duì ma?",
+      "spans": [
+        {
+          "native": "三",
+          "latin": "sān"
+        },
+        {
+          "native": " 个",
+          "latin": " ge"
+        },
+        {
+          "native": " 苹果",
+          "latin": " píngguǒ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 要",
+          "latin": " yào"
+        },
+        {
+          "native": " 大的",
+          "latin": " dà de"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 对吗",
+          "latin": " duì ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "两 杯 小杯 茶, 要 热的, 对吗?": {
+      "romanization": "liǎng bēi xiǎo bēi chá, yào rè de, duì ma?",
+      "spans": [
+        {
+          "native": "两",
+          "latin": "liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": " 小杯",
+          "latin": " xiǎo bēi"
+        },
+        {
+          "native": " 茶",
+          "latin": " chá"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 要",
+          "latin": " yào"
+        },
+        {
+          "native": " 热的",
+          "latin": " rè de"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 对吗",
+          "latin": " duì ma"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "对, 就这样.": {
+      "romanization": "duì, jiù zhèyàng.",
+      "spans": [
+        {
+          "native": "对",
+          "latin": "duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 就这样",
+          "latin": " jiù zhèyàng"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 请 给我 两 杯.": {
+      "romanization": "bù duì, qǐng gěi wǒ liǎng bēi.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 请",
+          "latin": " qǐng"
+        },
+        {
+          "native": " 给我",
+          "latin": " gěi wǒ"
+        },
+        {
+          "native": " 两",
+          "latin": " liǎng"
+        },
+        {
+          "native": " 杯",
+          "latin": " bēi"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "不对, 我 在这里吃.": {
+      "romanization": "bù duì, wǒ zài zhèlǐ chī.",
+      "spans": [
+        {
+          "native": "不对",
+          "latin": "bù duì"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 我",
+          "latin": " wǒ"
+        },
+        {
+          "native": " 在这里吃",
+          "latin": " zài zhèlǐ chī"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "这是 书": {
+      "romanization": "zhè shì shū",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 书",
+          "latin": " shū"
+        }
+      ]
+    },
+    "这是 门": {
+      "romanization": "zhè shì mén",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 门",
+          "latin": " mén"
+        }
+      ]
+    },
+    "这是 叉子": {
+      "romanization": "zhè shì chāzi",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 叉子",
+          "latin": " chāzi"
+        }
+      ]
+    },
+    "这是 盘子": {
+      "romanization": "zhè shì pánzi",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 盘子",
+          "latin": " pánzi"
+        }
+      ]
+    },
+    "这是 包": {
+      "romanization": "zhè shì bāo",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 包",
+          "latin": " bāo"
+        }
+      ]
+    },
+    "这是 钥匙": {
+      "romanization": "zhè shì yàoshi",
+      "spans": [
+        {
+          "native": "这是",
+          "latin": "zhè shì"
+        },
+        {
+          "native": " 钥匙",
+          "latin": " yàoshi"
+        }
+      ]
+    }
+  }
+}

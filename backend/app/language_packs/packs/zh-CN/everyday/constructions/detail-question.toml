@@ -1,0 +1,23 @@
+construction_id = "detail-question"
+version = 1
+summary = "Ask for the missing transaction detail."
+guidance = "Ask 在这里吃 还是 打包? for serviceSetting, 要 热的 还是 冰的? for temperature, 要 小的 还是 大的? for size, or 要 什么 颜色 的? for colour. Keep the target contextual rather than adding an unbound item. The use identifies which field to ask about. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "detail-question"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = {  }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "question-punctuation"
+message = "A question ends in ?."
+must_contain = ["[?]$"]

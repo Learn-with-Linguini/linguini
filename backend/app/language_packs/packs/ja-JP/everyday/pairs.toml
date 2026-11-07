@@ -1,0 +1,14 @@
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+explanation = "In this present-tense polite Japanese lesson, attach です to the noun. だ is the plain form and is not the answer in this polite-register exercise. The choice does not depend on the noun's gender or final sound."
+
+[[words]]
+text = "です"
+position = "after"
+meaning = "is / it is (polite present)"
+romanization = "desu"
+
+[[words]]
+text = "だ"
+position = "after"
+meaning = "is / it is (plain; register contrast only)"
+romanization = "da"

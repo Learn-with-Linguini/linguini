@@ -1,0 +1,73 @@
+construction_id = "preference-question"
+
+[[examples]]
+example_id = "do-you-like-cup"
+levels = ["A0"]
+purposes = ["askPreference"]
+meaning = "Do you like the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup" }
+truth = true
+labels = []
+sentence = "你 喜欢 杯子 吗?"
+translation = "Do you like the cup?"
+chunks = [{ "text" = "你", "join" = "none" }, { "text" = "喜欢", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "do-you-like-cup-build"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "Do you like the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup" }
+truth = true
+labels = []
+sentence = "你 喜欢 杯子 吗?"
+translation = "Do you like the cup?"
+chunks = [{ "text" = "你", "join" = "none" }, { "text" = "喜欢", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "does-ana-like-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+meaning = "Does Ana like the book?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book", "preference" = "preference:book" }
+truth = true
+labels = []
+sentence = "安娜 喜欢 书 吗?"
+translation = "Does Ana like the book?"
+chunks = [{ "text" = "安娜", "join" = "none" }, { "text" = "喜欢", "join" = "space" }, { "text" = "书", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "do-you-like-cup-format"
+levels = ["A0"]
+purposes = ["askPreference"]
+sentence = "你 喜欢 杯子 吗"
+correction = "你 喜欢 杯子 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "do-you-like-cup-build-format"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "你 喜欢 杯子 吗"
+correction = "你 喜欢 杯子 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "does-ana-like-book-format"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+sentence = "安娜 喜欢 书 吗"
+correction = "安娜 喜欢 书 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

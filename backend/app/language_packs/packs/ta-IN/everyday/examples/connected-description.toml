@@ -1,0 +1,64 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", other-object = "object:book", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "இங்கே ஒரு சிவப்பு கோப்பை இருக்கு. புத்தகமும் இருக்கு."
+translation = "There is a red cup and there is also a book."
+chunks = [{ text = "இங்கே", join = "none" }, { text = "ஒரு", join = "space" }, { text = "சிவப்பு", join = "space" }, { text = "கோப்பை", join = "space" }, { text = "இருக்கு.", join = "space" }, { text = "புத்தகமும்", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also a apple."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", other-object = "object:apple", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "இங்கே ஒரு வெள்ளை தட்டு இருக்கு. ஆப்பிளும் இருக்கு."
+translation = "There is a white plate and there is also a apple."
+chunks = [{ text = "இங்கே", join = "none" }, { text = "ஒரு", join = "space" }, { text = "வெள்ளை", join = "space" }, { text = "தட்டு", join = "space" }, { text = "இருக்கு.", join = "space" }, { text = "ஆப்பிளும்", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "connect-location-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair. There is a bottle."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }, { fact_id = "object:bottle", concept = "bottle" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", reference = "object:chair", other-object = "object:bottle", relation = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "செருப்பு நாற்காலிக்குக் கீழே இருக்கு. இங்கே ஒரு பாட்டில் இருக்கு."
+translation = "The shoe is under the chair. There is a bottle."
+chunks = [{ text = "செருப்பு", join = "none" }, { text = "நாற்காலிக்குக்", join = "space" }, { text = "கீழே", join = "space" }, { text = "இருக்கு.", join = "space" }, { text = "இங்கே", join = "space" }, { text = "ஒரு", join = "space" }, { text = "பாட்டில்", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-11"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "இங்கே ஒரு நீல கோப்பை இருக்கு. புத்தகமும் இருக்கு."
+correction = "இங்கே ஒரு சிவப்பு கோப்பை இருக்கு. புத்தகமும் இருக்கு."
+note = "Preserve the red cup colour in the first fact."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-12"
+levels = ["A2"]
+purposes = ["buildSceneDescription"]
+sentence = "செருப்பு நாற்காலிக்குக் கீழே இருக்கு. இங்கே ஒரு ஆப்பிள் இருக்கு."
+correction = "செருப்பு நாற்காலிக்குக் கீழே இருக்கு. இங்கே ஒரு பாட்டில் இருக்கு."
+note = "The second selected object is a bottle, not an apple."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

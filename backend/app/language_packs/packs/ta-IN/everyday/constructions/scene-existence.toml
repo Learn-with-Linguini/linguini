@@ -1,0 +1,33 @@
+construction_id = "scene-existence"
+version = 2
+summary = "State presence or explicitly established absence."
+guidance = "Use இங்கே ஒரு … இருக்கு. to introduce a singular inanimate item in the selected spoken register. A colour modifier stays before the noun. Use இல்லை for explicit absence: இங்கே கடிகாரம் இல்லை. Do not attach an article-like definite marker merely to mirror English. இருக்கு is the spoken form chosen here, not a spelling mistake to be automatically replaced with literary இருக்கிறது. Never equate omission by scene detection with confirmed absence; negative examples require an explicit absent fact."
+features = ["spoken-irukku", "absence-illai", "inanimate-singular"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["touch-object"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது|இருக்கின்றன"]
+
+[[checks]]
+check_id = "existence-verb-final"
+message = "Scene existence ends with இருக்கு or இல்லை."
+must_contain = ["(இருக்கு|இல்லை)[.?!]$"]
+
+[[checks]]
+check_id = "negated-existence"
+message = "A false existence statement ends with இல்லை."
+must_contain = ["இல்லை[.?!]$"]
+except_uses = ["falseFirst"]
+truth = false

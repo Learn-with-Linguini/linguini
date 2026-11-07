@@ -1,0 +1,108 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m02-a0-find-bag"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["かばんを 探してください."]
+reject = [{ "sentence" = "かばんを 探してください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナを 探してください.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a0-find-punctuation"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["かばんを 探してください."]
+reject = [{ "sentence" = "かばんを 探してください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナを 探してください.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a0-find-article"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["かばんを 探してください."]
+reject = [{ "sentence" = "かばんを 探してください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナを 探してください.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a0-name-door"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["ドア"]
+reject = [{ "sentence" = "ドアです.", "reason" = "The vocabulary-name task requires a bare noun.", "category" = "meaning" }, { "sentence" = "バナナ", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a0-name-punctuation"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["ドア"]
+reject = [{ "sentence" = "ドアです.", "reason" = "The vocabulary-name task requires a bare noun.", "category" = "meaning" }, { "sentence" = "バナナ", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a0-name-article"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["ドア"]
+reject = [{ "sentence" = "ドアです.", "reason" = "The vocabulary-name task requires a bare noun.", "category" = "meaning" }, { "sentence" = "バナナ", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a0-held-find-unicode"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone" }
+truth = true
+input = "Tell the learner to find the phone."
+expected_meaning = "Find the phone."
+acceptable = ["電話を 探してください."]
+reject = [{ "sentence" = "電話を 探してください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナを 探してください.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

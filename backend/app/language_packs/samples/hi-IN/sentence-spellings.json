@@ -1,0 +1,5044 @@
+{
+  "purpose": "Offline reference Hindi/Latin readings. Not provider responses or release evidence. New sentences must supply their own aligned transliteration.",
+  "sentences": {
+    "मैंने किताब चुनी है.": {
+      "romanization": "maiṃne kitāb cunī hai.",
+      "spans": [
+        {
+          "native": "मैंने",
+          "latin": "maiṃne"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " चुनी",
+          "latin": " cunī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लाल कप है और किताब भी है.": {
+      "romanization": "lāl kap hai aur kitāb bhī hai.",
+      "spans": [
+        {
+          "native": "लाल",
+          "latin": "lāl"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " भी",
+          "latin": " bhī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "सफ़ेद प्लेट है और सेब भी है.": {
+      "romanization": "safed pleṭ hai aur seb bhī hai.",
+      "spans": [
+        {
+          "native": "सफ़ेद",
+          "latin": "safed"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        },
+        {
+          "native": " भी",
+          "latin": " bhī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "जूता कुर्सी के नीचे है और बोतल भी है.": {
+      "romanization": "jūtā kursī ke nīce hai aur botal bhī hai.",
+      "spans": [
+        {
+          "native": "जूता",
+          "latin": "jūtā"
+        },
+        {
+          "native": " कुर्सी",
+          "latin": " kursī"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " बोतल",
+          "latin": " botal"
+        },
+        {
+          "native": " भी",
+          "latin": " bhī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह लाल कप है.": {
+      "romanization": "yah lāl kap hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " लाल",
+          "latin": " lāl"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह हरी किताब है.": {
+      "romanization": "yah harī kitāb hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " हरी",
+          "latin": " harī"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह काला जूता है.": {
+      "romanization": "yah kālā jūtā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " काला",
+          "latin": " kālā"
+        },
+        {
+          "native": " जूता",
+          "latin": " jūtā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह नीला लैंप है.": {
+      "romanization": "yah nīlā laiṃp hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " नीला",
+          "latin": " nīlā"
+        },
+        {
+          "native": " लैंप",
+          "latin": " laiṃp"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह सफ़ेद प्लेट है.": {
+      "romanization": "yah safed pleṭ hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " सफ़ेद",
+          "latin": " safed"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह पीला सेब है.": {
+      "romanization": "yah pīlā seb hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " पीला",
+          "latin": " pīlā"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लाल": {
+      "romanization": "lāl",
+      "spans": [
+        {
+          "native": "लाल",
+          "latin": "lāl"
+        }
+      ]
+    },
+    "हरी": {
+      "romanization": "harī",
+      "spans": [
+        {
+          "native": "हरी",
+          "latin": "harī"
+        }
+      ]
+    },
+    "कप किस रंग का है?": {
+      "romanization": "kap kis raṃg kā hai?",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " किस",
+          "latin": " kis"
+        },
+        {
+          "native": " रंग",
+          "latin": " raṃg"
+        },
+        {
+          "native": " का",
+          "latin": " kā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "किताब किस रंग की है?": {
+      "romanization": "kitāb kis raṃg kī hai?",
+      "spans": [
+        {
+          "native": "किताब",
+          "latin": "kitāb"
+        },
+        {
+          "native": " किस",
+          "latin": " kis"
+        },
+        {
+          "native": " रंग",
+          "latin": " raṃg"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "यहीं के लिए या साथ ले जाने के लिए?": {
+      "romanization": "yahīṃ ke lie yā sāth le jāne ke lie?",
+      "spans": [
+        {
+          "native": "यहीं",
+          "latin": "yahīṃ"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " लिए",
+          "latin": " lie"
+        },
+        {
+          "native": " या",
+          "latin": " yā"
+        },
+        {
+          "native": " साथ",
+          "latin": " sāth"
+        },
+        {
+          "native": " ले",
+          "latin": " le"
+        },
+        {
+          "native": " जाने",
+          "latin": " jāne"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " लिए",
+          "latin": " lie"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "कौन-सा रंग चाहिए?": {
+      "romanization": "kaun-sā raṃg cāhie?",
+      "spans": [
+        {
+          "native": "कौन-सा",
+          "latin": "kaun-sā"
+        },
+        {
+          "native": " रंग",
+          "latin": " raṃg"
+        },
+        {
+          "native": " चाहिए",
+          "latin": " cāhie"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "पैक कर दीजिए.": {
+      "romanization": "paik kar dījie.",
+      "spans": [
+        {
+          "native": "पैक",
+          "latin": "paik"
+        },
+        {
+          "native": " कर",
+          "latin": " kar"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया नीली वाली दीजिए.": {
+      "romanization": "kr̥payā nīlī vālī dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " नीली",
+          "latin": " nīlī"
+        },
+        {
+          "native": " वाली",
+          "latin": " vālī"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कप ढूँढ़िए.": {
+      "romanization": "kap ḍhūṃṛhie.",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " ढूँढ़िए",
+          "latin": " ḍhūṃṛhie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कितने सेब हैं?": {
+      "romanization": "kitne seb haiṃ?",
+      "spans": [
+        {
+          "native": "कितने",
+          "latin": "kitne"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "कितनी किताबें हैं?": {
+      "romanization": "kitnī kitābeṃ haiṃ?",
+      "spans": [
+        {
+          "native": "कितनी",
+          "latin": "kitnī"
+        },
+        {
+          "native": " किताबें",
+          "latin": " kitābeṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "किताब": {
+      "romanization": "kitāb",
+      "spans": [
+        {
+          "native": "किताब",
+          "latin": "kitāb"
+        }
+      ]
+    },
+    "कप": {
+      "romanization": "kap",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        }
+      ]
+    },
+    "घड़ी": {
+      "romanization": "ghaṛī",
+      "spans": [
+        {
+          "native": "घड़ी",
+          "latin": "ghaṛī"
+        }
+      ]
+    },
+    "यह कप है.": {
+      "romanization": "yah kap hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह किताब है.": {
+      "romanization": "yah kitāb hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह कुर्सी है.": {
+      "romanization": "yah kursī hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " कुर्सी",
+          "latin": " kursī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह बोतल है.": {
+      "romanization": "yah botal hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " बोतल",
+          "latin": " botal"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह गेंद है.": {
+      "romanization": "yah geṃd hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " गेंद",
+          "latin": " geṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह बैग है.": {
+      "romanization": "yah baig hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लैंप": {
+      "romanization": "laiṃp",
+      "spans": [
+        {
+          "native": "लैंप",
+          "latin": "laiṃp"
+        }
+      ]
+    },
+    "मेज़ पर": {
+      "romanization": "mez par",
+      "spans": [
+        {
+          "native": "मेज़",
+          "latin": "mez"
+        },
+        {
+          "native": " पर",
+          "latin": " par"
+        }
+      ]
+    },
+    "खिड़की के पास": {
+      "romanization": "khiṛkī ke pās",
+      "spans": [
+        {
+          "native": "खिड़की",
+          "latin": "khiṛkī"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        }
+      ]
+    },
+    "मुझे कप पसंद है.": {
+      "romanization": "mujhe kap pasaṃd hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मुझे कप पसंद नहीं है.": {
+      "romanization": "mujhe kap pasaṃd nahīṃ hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "एक कप": {
+      "romanization": "ek kap",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        }
+      ]
+    },
+    "एक मेज़": {
+      "romanization": "ek mez",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        }
+      ]
+    },
+    "हाँ, सही है.": {
+      "romanization": "hāṃ, sahī hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " सही",
+          "latin": " sahī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दो छोटी कॉफ़ी": {
+      "romanization": "do choṭī kôfī",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " छोटी",
+          "latin": " choṭī"
+        },
+        {
+          "native": " कॉफ़ी",
+          "latin": " kôfī"
+        }
+      ]
+    },
+    "एक कलम": {
+      "romanization": "ek kalam",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " कलम",
+          "latin": " kalam"
+        }
+      ]
+    },
+    "तीन छोटी कॉफ़ी": {
+      "romanization": "tīn choṭī kôfī",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " छोटी",
+          "latin": " choṭī"
+        },
+        {
+          "native": " कॉफ़ी",
+          "latin": " kôfī"
+        }
+      ]
+    },
+    "नहीं, तीन चाहिए.": {
+      "romanization": "nahīṃ, tīn cāhie.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " तीन",
+          "latin": " tīn"
+        },
+        {
+          "native": " चाहिए",
+          "latin": " cāhie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, पैक कर दीजिए.": {
+      "romanization": "nahīṃ, paik kar dījie.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " पैक",
+          "latin": " paik"
+        },
+        {
+          "native": " कर",
+          "latin": " kar"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दो छोटी कॉफ़ी, पैक, सही है?": {
+      "romanization": "do choṭī kôfī, paik, sahī hai?",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " छोटी",
+          "latin": " choṭī"
+        },
+        {
+          "native": " कॉफ़ी",
+          "latin": " kôfī"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " पैक",
+          "latin": " paik"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " सही",
+          "latin": " sahī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "तीन छोटी कॉफ़ी, पैक, सही है?": {
+      "romanization": "tīn choṭī kôfī, paik, sahī hai?",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " छोटी",
+          "latin": " choṭī"
+        },
+        {
+          "native": " कॉफ़ी",
+          "latin": " kôfī"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " पैक",
+          "latin": " paik"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " सही",
+          "latin": " sahī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "मेरा कप लाल है.": {
+      "romanization": "merā kap lāl hai.",
+      "spans": [
+        {
+          "native": "मेरा",
+          "latin": "merā"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " लाल",
+          "latin": " lāl"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेरा कप मेज़ पर है.": {
+      "romanization": "merā kap mez par hai.",
+      "spans": [
+        {
+          "native": "मेरा",
+          "latin": "merā"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " पर",
+          "latin": " par"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कप मेरा है.": {
+      "romanization": "kap merā hai.",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कप आपका है.": {
+      "romanization": "kap āpkā hai.",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " आपका",
+          "latin": " āpkā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "किताब अना की है.": {
+      "romanization": "kitāb Anā kī hai.",
+      "spans": [
+        {
+          "native": "किताब",
+          "latin": "kitāb"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, किताब अना की है.": {
+      "romanization": "nahīṃ, kitāb Anā kī hai.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या यह आपका है?": {
+      "romanization": "kyā yah āpkā hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " आपका",
+          "latin": " āpkā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "यह मेरा है.": {
+      "romanization": "yah merā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह मेरा नहीं है.": {
+      "romanization": "yah merā nahīṃ hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे दो छोटी कॉफ़ी दीजिए.": {
+      "romanization": "kr̥payā mujhe do choṭī kôfī dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " दो",
+          "latin": " do"
+        },
+        {
+          "native": " छोटी",
+          "latin": " choṭī"
+        },
+        {
+          "native": " कॉफ़ी",
+          "latin": " kôfī"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे एक कलम उधार दीजिए.": {
+      "romanization": "kr̥payā mujhe ek kalam udhār dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " एक",
+          "latin": " ek"
+        },
+        {
+          "native": " कलम",
+          "latin": " kalam"
+        },
+        {
+          "native": " उधार",
+          "latin": " udhār"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे एक कप पकड़ा दीजिए.": {
+      "romanization": "kr̥payā mujhe ek kap pakṛā dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " एक",
+          "latin": " ek"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " पकड़ा",
+          "latin": " pakṛā"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह मेरा कप है.": {
+      "romanization": "yah merā kap hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह अना की किताब है.": {
+      "romanization": "yah Anā kī kitāb hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह लियो की चाबी है.": {
+      "romanization": "yah Liyo kī cābī hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " लियो",
+          "latin": " Liyo"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "हाँ, यह मेरा कप है.": {
+      "romanization": "hāṃ, yah merā kap hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या आपको कप पसंद है?": {
+      "romanization": "kyā āpko kap pasaṃd hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " आपको",
+          "latin": " āpko"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "क्या अना को किताब पसंद है?": {
+      "romanization": "kyā Anā ko kitāb pasaṃd hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "दो सेब": {
+      "romanization": "do seb",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        }
+      ]
+    },
+    "एक सेब": {
+      "romanization": "ek seb",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        }
+      ]
+    },
+    "किताबें कपों से ज़्यादा हैं.": {
+      "romanization": "kitābeṃ kapoṃ se zyādā haiṃ.",
+      "spans": [
+        {
+          "native": "किताबें",
+          "latin": "kitābeṃ"
+        },
+        {
+          "native": " कपों",
+          "latin": " kapoṃ"
+        },
+        {
+          "native": " से",
+          "latin": " se"
+        },
+        {
+          "native": " ज़्यादा",
+          "latin": " zyādā"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कप किताबों से कम हैं.": {
+      "romanization": "kap kitāboṃ se kam haiṃ.",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " किताबों",
+          "latin": " kitāboṃ"
+        },
+        {
+          "native": " से",
+          "latin": " se"
+        },
+        {
+          "native": " कम",
+          "latin": " kam"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "पाँच किताबें और दो कप हैं.": {
+      "romanization": "pāṃc kitābeṃ aur do kap haiṃ.",
+      "spans": [
+        {
+          "native": "पाँच",
+          "latin": "pāṃc"
+        },
+        {
+          "native": " किताबें",
+          "latin": " kitābeṃ"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " दो",
+          "latin": " do"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "पाँच किताबें हैं.": {
+      "romanization": "pāṃc kitābeṃ haiṃ.",
+      "spans": [
+        {
+          "native": "पाँच",
+          "latin": "pāṃc"
+        },
+        {
+          "native": " किताबें",
+          "latin": " kitābeṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, पाँच किताबें हैं.": {
+      "romanization": "nahīṃ, pāṃc kitābeṃ haiṃ.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " पाँच",
+          "latin": " pāṃc"
+        },
+        {
+          "native": " किताबें",
+          "latin": " kitābeṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "पीला सेब है.": {
+      "romanization": "pīlā seb hai.",
+      "spans": [
+        {
+          "native": "पीला",
+          "latin": "pīlā"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "सफ़ेद प्लेट है.": {
+      "romanization": "safed pleṭ hai.",
+      "spans": [
+        {
+          "native": "सफ़ेद",
+          "latin": "safed"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कुर्सी है.": {
+      "romanization": "kursī hai.",
+      "spans": [
+        {
+          "native": "कुर्सी",
+          "latin": "kursī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "घड़ी नहीं है.": {
+      "romanization": "ghaṛī nahīṃ hai.",
+      "spans": [
+        {
+          "native": "घड़ी",
+          "latin": "ghaṛī"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कप मेज़ पर है.": {
+      "romanization": "kap mez par hai.",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " पर",
+          "latin": " par"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "जूता कुर्सी के नीचे है.": {
+      "romanization": "jūtā kursī ke nīce hai.",
+      "spans": [
+        {
+          "native": "जूता",
+          "latin": "jūtā"
+        },
+        {
+          "native": " कुर्सी",
+          "latin": " kursī"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लैंप किताब के पास है.": {
+      "romanization": "laiṃp kitāb ke pās hai.",
+      "spans": [
+        {
+          "native": "लैंप",
+          "latin": "laiṃp"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "जूता कहाँ है?": {
+      "romanization": "jūtā kahāṃ hai?",
+      "spans": [
+        {
+          "native": "जूता",
+          "latin": "jūtā"
+        },
+        {
+          "native": " कहाँ",
+          "latin": " kahāṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "लाल है.": {
+      "romanization": "lāl hai.",
+      "spans": [
+        {
+          "native": "लाल",
+          "latin": "lāl"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "खिड़की के पास है.": {
+      "romanization": "khiṛkī ke pās hai.",
+      "spans": [
+        {
+          "native": "खिड़की",
+          "latin": "khiṛkī"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, खिड़की के पास है.": {
+      "romanization": "nahīṃ, khiṛkī ke pās hai.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " खिड़की",
+          "latin": " khiṛkī"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लाल कप खिड़की के पास है.": {
+      "romanization": "lāl kap khiṛkī ke pās hai.",
+      "spans": [
+        {
+          "native": "लाल",
+          "latin": "lāl"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " खिड़की",
+          "latin": " khiṛkī"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लियो को चाबी पसंद है.": {
+      "romanization": "Liyo ko cābī pasaṃd hai.",
+      "spans": [
+        {
+          "native": "लियो",
+          "latin": "Liyo"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "अना को किताब पसंद नहीं है.": {
+      "romanization": "Anā ko kitāb pasaṃd nahīṃ hai.",
+      "spans": [
+        {
+          "native": "अना",
+          "latin": "Anā"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "अना को किताब पसंद है.": {
+      "romanization": "Anā ko kitāb pasaṃd hai.",
+      "spans": [
+        {
+          "native": "अना",
+          "latin": "Anā"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कप कहाँ है?": {
+      "romanization": "kap kahāṃ hai?",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " कहाँ",
+          "latin": " kahāṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "कप किसका है?": {
+      "romanization": "kap kiskā hai?",
+      "spans": [
+        {
+          "native": "कप",
+          "latin": "kap"
+        },
+        {
+          "native": " किसका",
+          "latin": " kiskā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "क्या यह कप है?": {
+      "romanization": "kyā yah kap hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "क्या यह प्लेट है?": {
+      "romanization": "kyā yah pleṭ hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "क्या यह बोतल है?": {
+      "romanization": "kyā yah botal hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " बोतल",
+          "latin": " botal"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "हाँ, यह किताब है.": {
+      "romanization": "hāṃ, yah kitāb hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "हाँ, यह कुर्सी है.": {
+      "romanization": "hāṃ, yah kursī hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " कुर्सी",
+          "latin": " kursī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, यह घड़ी है.": {
+      "romanization": "nahīṃ, yah ghaṛī hai.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " घड़ी",
+          "latin": " ghaṛī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह काँटा है.": {
+      "romanization": "yah kāṃṭā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " काँटा",
+          "latin": " kāṃṭā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह चम्मच है.": {
+      "romanization": "yah cammac hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह दरवाज़ा है.": {
+      "romanization": "yah darvāzā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या यह खिड़की है?": {
+      "romanization": "kyā yah khiṛkī hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " खिड़की",
+          "latin": " khiṛkī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "यह फ़ोन है.": {
+      "romanization": "yah fon hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह चाबी है.": {
+      "romanization": "yah cābī hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "खिड़की": {
+      "romanization": "khiṛkī",
+      "spans": [
+        {
+          "native": "खिड़की",
+          "latin": "khiṛkī"
+        }
+      ]
+    },
+    "यह मेज़ है.": {
+      "romanization": "yah mez hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या यह बैग है?": {
+      "romanization": "kyā yah baig hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "यह लाल फ़ोन है.": {
+      "romanization": "yah lāl fon hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " लाल",
+          "latin": " lāl"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह लाल दरवाज़ा है.": {
+      "romanization": "yah lāl darvāzā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " लाल",
+          "latin": " lāl"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह पीला चम्मच है.": {
+      "romanization": "yah pīlā cammac hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " पीला",
+          "latin": " pīlā"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह नीला दरवाज़ा है.": {
+      "romanization": "yah nīlā darvāzā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " नीला",
+          "latin": " nīlā"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या यह चाबी है?": {
+      "romanization": "kyā yah cābī hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "हाँ, यह फ़ोन है.": {
+      "romanization": "hāṃ, yah fon hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, यह चम्मच है.": {
+      "romanization": "nahīṃ, yah cammac hai.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "हाँ, यह खिड़की है.": {
+      "romanization": "hāṃ, yah khiṛkī hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " खिड़की",
+          "latin": " khiṛkī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह लाल किताब है.": {
+      "romanization": "yah lāl kitāb hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " लाल",
+          "latin": " lāl"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह पीली प्लेट है.": {
+      "romanization": "yah pīlī pleṭ hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " पीली",
+          "latin": " pīlī"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "फ़ोन दरवाज़े के पास है.": {
+      "romanization": "fon darvāze ke pās hai.",
+      "spans": [
+        {
+          "native": "फ़ोन",
+          "latin": "fon"
+        },
+        {
+          "native": " दरवाज़े",
+          "latin": " darvāze"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "खिड़की फ़ोन के पास है.": {
+      "romanization": "khiṛkī fon ke pās hai.",
+      "spans": [
+        {
+          "native": "खिड़की",
+          "latin": "khiṛkī"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "चम्मच मेज़ के नीचे है.": {
+      "romanization": "cammac mez ke nīce hai.",
+      "spans": [
+        {
+          "native": "चम्मच",
+          "latin": "cammac"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "हरा काँटा है और चम्मच भी है.": {
+      "romanization": "harā kāṃṭā hai aur cammac bhī hai.",
+      "spans": [
+        {
+          "native": "हरा",
+          "latin": "harā"
+        },
+        {
+          "native": " काँटा",
+          "latin": " kāṃṭā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        },
+        {
+          "native": " भी",
+          "latin": " bhī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "फ़ोन नहीं है.": {
+      "romanization": "fon nahīṃ hai.",
+      "spans": [
+        {
+          "native": "फ़ोन",
+          "latin": "fon"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नीला बैग है.": {
+      "romanization": "nīlā baig hai.",
+      "spans": [
+        {
+          "native": "नीला",
+          "latin": "nīlā"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दरवाज़ा किस रंग का है?": {
+      "romanization": "darvāzā kis raṃg kā hai?",
+      "spans": [
+        {
+          "native": "दरवाज़ा",
+          "latin": "darvāzā"
+        },
+        {
+          "native": " किस",
+          "latin": " kis"
+        },
+        {
+          "native": " रंग",
+          "latin": " raṃg"
+        },
+        {
+          "native": " का",
+          "latin": " kā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "चाबी मेज़ पर है.": {
+      "romanization": "cābī mez par hai.",
+      "spans": [
+        {
+          "native": "चाबी",
+          "latin": "cābī"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " पर",
+          "latin": " par"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "बैग मेज़ के नीचे है.": {
+      "romanization": "baig mez ke nīce hai.",
+      "spans": [
+        {
+          "native": "बैग",
+          "latin": "baig"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "प्लेट किस रंग की है?": {
+      "romanization": "pleṭ kis raṃg kī hai?",
+      "spans": [
+        {
+          "native": "प्लेट",
+          "latin": "pleṭ"
+        },
+        {
+          "native": " किस",
+          "latin": " kis"
+        },
+        {
+          "native": " रंग",
+          "latin": " raṃg"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "खिड़की नहीं है.": {
+      "romanization": "khiṛkī nahīṃ hai.",
+      "spans": [
+        {
+          "native": "खिड़की",
+          "latin": "khiṛkī"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "बैग ढूँढ़िए.": {
+      "romanization": "baig ḍhūṃṛhie.",
+      "spans": [
+        {
+          "native": "बैग",
+          "latin": "baig"
+        },
+        {
+          "native": " ढूँढ़िए",
+          "latin": " ḍhūṃṛhie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दरवाज़ा": {
+      "romanization": "darvāzā",
+      "spans": [
+        {
+          "native": "दरवाज़ा",
+          "latin": "darvāzā"
+        }
+      ]
+    },
+    "फ़ोन ढूँढ़िए.": {
+      "romanization": "fon ḍhūṃṛhie.",
+      "spans": [
+        {
+          "native": "फ़ोन",
+          "latin": "fon"
+        },
+        {
+          "native": " ढूँढ़िए",
+          "latin": " ḍhūṃṛhie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेज़ के नीचे": {
+      "romanization": "mez ke nīce",
+      "spans": [
+        {
+          "native": "मेज़",
+          "latin": "mez"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        }
+      ]
+    },
+    "दरवाज़े के पास": {
+      "romanization": "darvāze ke pās",
+      "spans": [
+        {
+          "native": "दरवाज़े",
+          "latin": "darvāze"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        }
+      ]
+    },
+    "चाबी कहाँ है?": {
+      "romanization": "cābī kahāṃ hai?",
+      "spans": [
+        {
+          "native": "चाबी",
+          "latin": "cābī"
+        },
+        {
+          "native": " कहाँ",
+          "latin": " kahāṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "प्लेट कहाँ है?": {
+      "romanization": "pleṭ kahāṃ hai?",
+      "spans": [
+        {
+          "native": "प्लेट",
+          "latin": "pleṭ"
+        },
+        {
+          "native": " कहाँ",
+          "latin": " kahāṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "हरा है.": {
+      "romanization": "harā hai.",
+      "spans": [
+        {
+          "native": "हरा",
+          "latin": "harā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेज़ के नीचे है.": {
+      "romanization": "mez ke nīce hai.",
+      "spans": [
+        {
+          "native": "मेज़",
+          "latin": "mez"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, मेज़ के नीचे है.": {
+      "romanization": "nahīṃ, mez ke nīce hai.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "पीली प्लेट मेज़ पर है.": {
+      "romanization": "pīlī pleṭ mez par hai.",
+      "spans": [
+        {
+          "native": "पीली",
+          "latin": "pīlī"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " पर",
+          "latin": " par"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "हरा बैग मेज़ के नीचे है.": {
+      "romanization": "harā baig mez ke nīce hai.",
+      "spans": [
+        {
+          "native": "हरा",
+          "latin": "harā"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " नीचे",
+          "latin": " nīce"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लाल फ़ोन दरवाज़े के पास है.": {
+      "romanization": "lāl fon darvāze ke pās hai.",
+      "spans": [
+        {
+          "native": "लाल",
+          "latin": "lāl"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " दरवाज़े",
+          "latin": " darvāze"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " पास",
+          "latin": " pās"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कितनी प्लेटें हैं?": {
+      "romanization": "kitnī pleṭeṃ haiṃ?",
+      "spans": [
+        {
+          "native": "कितनी",
+          "latin": "kitnī"
+        },
+        {
+          "native": " प्लेटें",
+          "latin": " pleṭeṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "तीन प्लेटें": {
+      "romanization": "tīn pleṭeṃ",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " प्लेटें",
+          "latin": " pleṭeṃ"
+        }
+      ]
+    },
+    "दो चम्मच": {
+      "romanization": "do cammac",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        }
+      ]
+    },
+    "तीन काँटे": {
+      "romanization": "tīn kāṃṭe",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " काँटे",
+          "latin": " kāṃṭe"
+        }
+      ]
+    },
+    "एक चाबी": {
+      "romanization": "ek cābī",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        }
+      ]
+    },
+    "कितने बैग हैं?": {
+      "romanization": "kitne baig haiṃ?",
+      "spans": [
+        {
+          "native": "कितने",
+          "latin": "kitne"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "दो फ़ोन": {
+      "romanization": "do fon",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        }
+      ]
+    },
+    "दो कप": {
+      "romanization": "do kap",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " कप",
+          "latin": " kap"
+        }
+      ]
+    },
+    "चार प्लेटें हैं.": {
+      "romanization": "cār pleṭeṃ haiṃ.",
+      "spans": [
+        {
+          "native": "चार",
+          "latin": "cār"
+        },
+        {
+          "native": " प्लेटें",
+          "latin": " pleṭeṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "छह चाबियाँ हैं.": {
+      "romanization": "chah cābiyāṃ haiṃ.",
+      "spans": [
+        {
+          "native": "छह",
+          "latin": "chah"
+        },
+        {
+          "native": " चाबियाँ",
+          "latin": " cābiyāṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "सात काँटे हैं.": {
+      "romanization": "sāt kāṃṭe haiṃ.",
+      "spans": [
+        {
+          "native": "सात",
+          "latin": "sāt"
+        },
+        {
+          "native": " काँटे",
+          "latin": " kāṃṭe"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कितने चम्मच हैं?": {
+      "romanization": "kitne cammac haiṃ?",
+      "spans": [
+        {
+          "native": "कितने",
+          "latin": "kitne"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "दस फ़ोन हैं.": {
+      "romanization": "das fon haiṃ.",
+      "spans": [
+        {
+          "native": "दस",
+          "latin": "das"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "पाँच दरवाज़े हैं.": {
+      "romanization": "pāṃc darvāze haiṃ.",
+      "spans": [
+        {
+          "native": "पाँच",
+          "latin": "pāṃc"
+        },
+        {
+          "native": " दरवाज़े",
+          "latin": " darvāze"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "तीन किताबें हैं.": {
+      "romanization": "tīn kitābeṃ haiṃ.",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " किताबें",
+          "latin": " kitābeṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कितने दरवाज़े हैं?": {
+      "romanization": "kitne darvāze haiṃ?",
+      "spans": [
+        {
+          "native": "कितने",
+          "latin": "kitne"
+        },
+        {
+          "native": " दरवाज़े",
+          "latin": " darvāze"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "तीन खिड़कियाँ हैं.": {
+      "romanization": "tīn khiṛkiyāṃ haiṃ.",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " खिड़कियाँ",
+          "latin": " khiṛkiyāṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "प्लेटें चम्मचों से ज़्यादा हैं.": {
+      "romanization": "pleṭeṃ cammacoṃ se zyādā haiṃ.",
+      "spans": [
+        {
+          "native": "प्लेटें",
+          "latin": "pleṭeṃ"
+        },
+        {
+          "native": " चम्मचों",
+          "latin": " cammacoṃ"
+        },
+        {
+          "native": " से",
+          "latin": " se"
+        },
+        {
+          "native": " ज़्यादा",
+          "latin": " zyādā"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "चम्मच प्लेटों से कम हैं.": {
+      "romanization": "cammac pleṭoṃ se kam haiṃ.",
+      "spans": [
+        {
+          "native": "चम्मच",
+          "latin": "cammac"
+        },
+        {
+          "native": " प्लेटों",
+          "latin": " pleṭoṃ"
+        },
+        {
+          "native": " से",
+          "latin": " se"
+        },
+        {
+          "native": " कम",
+          "latin": " kam"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, चार चाबियाँ हैं.": {
+      "romanization": "nahīṃ, cār cābiyāṃ haiṃ.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " चार",
+          "latin": " cār"
+        },
+        {
+          "native": " चाबियाँ",
+          "latin": " cābiyāṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दो चाबियाँ हैं.": {
+      "romanization": "do cābiyāṃ haiṃ.",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " चाबियाँ",
+          "latin": " cābiyāṃ"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "छह प्लेटें और दो चम्मच हैं.": {
+      "romanization": "chah pleṭeṃ aur do cammac haiṃ.",
+      "spans": [
+        {
+          "native": "छह",
+          "latin": "chah"
+        },
+        {
+          "native": " प्लेटें",
+          "latin": " pleṭeṃ"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " दो",
+          "latin": " do"
+        },
+        {
+          "native": " चम्मच",
+          "latin": " cammac"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "पाँच बैग और तीन फ़ोन हैं.": {
+      "romanization": "pāṃc baig aur tīn fon haiṃ.",
+      "spans": [
+        {
+          "native": "पाँच",
+          "latin": "pāṃc"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " और",
+          "latin": " aur"
+        },
+        {
+          "native": " तीन",
+          "latin": " tīn"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "बैग फ़ोनों से ज़्यादा हैं.": {
+      "romanization": "baig fonoṃ se zyādā haiṃ.",
+      "spans": [
+        {
+          "native": "बैग",
+          "latin": "baig"
+        },
+        {
+          "native": " फ़ोनों",
+          "latin": " fonoṃ"
+        },
+        {
+          "native": " से",
+          "latin": " se"
+        },
+        {
+          "native": " ज़्यादा",
+          "latin": " zyādā"
+        },
+        {
+          "native": " हैं",
+          "latin": " haiṃ"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह आपका है क्या?": {
+      "romanization": "yah āpkā hai kyā?",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " आपका",
+          "latin": " āpkā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": " क्या",
+          "latin": " kyā"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "मेरा नहीं है.": {
+      "romanization": "merā nahīṃ hai.",
+      "spans": [
+        {
+          "native": "मेरा",
+          "latin": "merā"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेरा है.": {
+      "romanization": "merā hai.",
+      "spans": [
+        {
+          "native": "मेरा",
+          "latin": "merā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "प्लेट मेरी है.": {
+      "romanization": "pleṭ merī hai.",
+      "spans": [
+        {
+          "native": "प्लेट",
+          "latin": "pleṭ"
+        },
+        {
+          "native": " मेरी",
+          "latin": " merī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "चाबी मेरी है.": {
+      "romanization": "cābī merī hai.",
+      "spans": [
+        {
+          "native": "चाबी",
+          "latin": "cābī"
+        },
+        {
+          "native": " मेरी",
+          "latin": " merī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "फ़ोन मेरा है.": {
+      "romanization": "fon merā hai.",
+      "spans": [
+        {
+          "native": "फ़ोन",
+          "latin": "fon"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह मेरी प्लेट है.": {
+      "romanization": "yah merī pleṭ hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " मेरी",
+          "latin": " merī"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह अना का बैग है.": {
+      "romanization": "yah Anā kā baig hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " का",
+          "latin": " kā"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यह लियो का दरवाज़ा है.": {
+      "romanization": "yah Liyo kā darvāzā hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " लियो",
+          "latin": " Liyo"
+        },
+        {
+          "native": " का",
+          "latin": " kā"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "किताब किसकी है?": {
+      "romanization": "kitāb kiskī hai?",
+      "spans": [
+        {
+          "native": "किताब",
+          "latin": "kitāb"
+        },
+        {
+          "native": " किसकी",
+          "latin": " kiskī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "यह मेरा फ़ोन है.": {
+      "romanization": "yah merā fon hai.",
+      "spans": [
+        {
+          "native": "यह",
+          "latin": "yah"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेरा बैग हरा है.": {
+      "romanization": "merā baig harā hai.",
+      "spans": [
+        {
+          "native": "मेरा",
+          "latin": "merā"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " हरा",
+          "latin": " harā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेरी चाबी मेज़ पर है.": {
+      "romanization": "merī cābī mez par hai.",
+      "spans": [
+        {
+          "native": "मेरी",
+          "latin": "merī"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " मेज़",
+          "latin": " mez"
+        },
+        {
+          "native": " पर",
+          "latin": " par"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, प्लेट अना की है.": {
+      "romanization": "nahīṃ, pleṭ Anā kī hai.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " की",
+          "latin": " kī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "हाँ, यह मेरा दरवाज़ा है.": {
+      "romanization": "hāṃ, yah merā darvāzā hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यह",
+          "latin": " yah"
+        },
+        {
+          "native": " मेरा",
+          "latin": " merā"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दरवाज़ा आपका है.": {
+      "romanization": "darvāzā āpkā hai.",
+      "spans": [
+        {
+          "native": "दरवाज़ा",
+          "latin": "darvāzā"
+        },
+        {
+          "native": " आपका",
+          "latin": " āpkā"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मेरा फ़ोन लाल है.": {
+      "romanization": "merā fon lāl hai.",
+      "spans": [
+        {
+          "native": "मेरा",
+          "latin": "merā"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " लाल",
+          "latin": " lāl"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मुझे प्लेट पसंद है.": {
+      "romanization": "mujhe pleṭ pasaṃd hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मुझे बैग पसंद नहीं है.": {
+      "romanization": "mujhe baig pasaṃd nahīṃ hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मुझे प्लेट पसंद नहीं है.": {
+      "romanization": "mujhe pleṭ pasaṃd nahīṃ hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या आपको दरवाज़ा पसंद है?": {
+      "romanization": "kyā āpko darvāzā pasaṃd hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " आपको",
+          "latin": " āpko"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "मैंने चाबी चुनी है.": {
+      "romanization": "maiṃne cābī cunī hai.",
+      "spans": [
+        {
+          "native": "मैंने",
+          "latin": "maiṃne"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " चुनी",
+          "latin": " cunī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मुझे फ़ोन पसंद है.": {
+      "romanization": "mujhe fon pasaṃd hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "अना को प्लेट पसंद नहीं है.": {
+      "romanization": "Anā ko pleṭ pasaṃd nahīṃ hai.",
+      "spans": [
+        {
+          "native": "अना",
+          "latin": "Anā"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "लियो को दरवाज़ा पसंद है.": {
+      "romanization": "Liyo ko darvāzā pasaṃd hai.",
+      "spans": [
+        {
+          "native": "लियो",
+          "latin": "Liyo"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "मुझे बैग पसंद है.": {
+      "romanization": "mujhe baig pasaṃd hai.",
+      "spans": [
+        {
+          "native": "मुझे",
+          "latin": "mujhe"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "क्या अना को चाबी पसंद है?": {
+      "romanization": "kyā Anā ko cābī pasaṃd hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " अना",
+          "latin": " Anā"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " चाबी",
+          "latin": " cābī"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "क्या आपको प्लेट पसंद है?": {
+      "romanization": "kyā āpko pleṭ pasaṃd hai?",
+      "spans": [
+        {
+          "native": "क्या",
+          "latin": "kyā"
+        },
+        {
+          "native": " आपको",
+          "latin": " āpko"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "अना को फ़ोन पसंद नहीं है.": {
+      "romanization": "Anā ko fon pasaṃd nahīṃ hai.",
+      "spans": [
+        {
+          "native": "अना",
+          "latin": "Anā"
+        },
+        {
+          "native": " को",
+          "latin": " ko"
+        },
+        {
+          "native": " फ़ोन",
+          "latin": " fon"
+        },
+        {
+          "native": " पसंद",
+          "latin": " pasaṃd"
+        },
+        {
+          "native": " नहीं",
+          "latin": " nahīṃ"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे दो बड़ी चाय दीजिए.": {
+      "romanization": "kr̥payā mujhe do baṛī cāy dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " दो",
+          "latin": " do"
+        },
+        {
+          "native": " बड़ी",
+          "latin": " baṛī"
+        },
+        {
+          "native": " चाय",
+          "latin": " cāy"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे तीन सेब दीजिए.": {
+      "romanization": "kr̥payā mujhe tīn seb dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " तीन",
+          "latin": " tīn"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे एक किताब उधार दीजिए.": {
+      "romanization": "kr̥payā mujhe ek kitāb udhār dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " एक",
+          "latin": " ek"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        },
+        {
+          "native": " उधार",
+          "latin": " udhār"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "कृपया मुझे एक प्लेट पकड़ा दीजिए.": {
+      "romanization": "kr̥payā mujhe ek pleṭ pakṛā dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " मुझे",
+          "latin": " mujhe"
+        },
+        {
+          "native": " एक",
+          "latin": " ek"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        },
+        {
+          "native": " पकड़ा",
+          "latin": " pakṛā"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "दो बड़ी चाय": {
+      "romanization": "do baṛī cāy",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " बड़ी",
+          "latin": " baṛī"
+        },
+        {
+          "native": " चाय",
+          "latin": " cāy"
+        }
+      ]
+    },
+    "गर्म या ठंडी चाहिए?": {
+      "romanization": "garm yā ṭhaṃḍī cāhie?",
+      "spans": [
+        {
+          "native": "गर्म",
+          "latin": "garm"
+        },
+        {
+          "native": " या",
+          "latin": " yā"
+        },
+        {
+          "native": " ठंडी",
+          "latin": " ṭhaṃḍī"
+        },
+        {
+          "native": " चाहिए",
+          "latin": " cāhie"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "कृपया गर्म वाली दीजिए.": {
+      "romanization": "kr̥payā garm vālī dījie.",
+      "spans": [
+        {
+          "native": "कृपया",
+          "latin": "kr̥payā"
+        },
+        {
+          "native": " गर्म",
+          "latin": " garm"
+        },
+        {
+          "native": " वाली",
+          "latin": " vālī"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "यहीं के लिए दीजिए.": {
+      "romanization": "yahīṃ ke lie dījie.",
+      "spans": [
+        {
+          "native": "यहीं",
+          "latin": "yahīṃ"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " लिए",
+          "latin": " lie"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "तीन सेब, बड़े, सही है?": {
+      "romanization": "tīn seb, baṛe, sahī hai?",
+      "spans": [
+        {
+          "native": "तीन",
+          "latin": "tīn"
+        },
+        {
+          "native": " सेब",
+          "latin": " seb"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " बड़े",
+          "latin": " baṛe"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " सही",
+          "latin": " sahī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "दो छोटी चाय, गर्म, सही है?": {
+      "romanization": "do choṭī cāy, garm, sahī hai?",
+      "spans": [
+        {
+          "native": "दो",
+          "latin": "do"
+        },
+        {
+          "native": " छोटी",
+          "latin": " choṭī"
+        },
+        {
+          "native": " चाय",
+          "latin": " cāy"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " गर्म",
+          "latin": " garm"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " सही",
+          "latin": " sahī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "हाँ, बिल्कुल सही है.": {
+      "romanization": "hāṃ, bilkul sahī hai.",
+      "spans": [
+        {
+          "native": "हाँ",
+          "latin": "hāṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " बिल्कुल",
+          "latin": " bilkul"
+        },
+        {
+          "native": " सही",
+          "latin": " sahī"
+        },
+        {
+          "native": " है",
+          "latin": " hai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, दो चाहिए.": {
+      "romanization": "nahīṃ, do cāhie.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " दो",
+          "latin": " do"
+        },
+        {
+          "native": " चाहिए",
+          "latin": " cāhie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "नहीं, यहीं के लिए दीजिए.": {
+      "romanization": "nahīṃ, yahīṃ ke lie dījie.",
+      "spans": [
+        {
+          "native": "नहीं",
+          "latin": "nahīṃ"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " यहीं",
+          "latin": " yahīṃ"
+        },
+        {
+          "native": " के",
+          "latin": " ke"
+        },
+        {
+          "native": " लिए",
+          "latin": " lie"
+        },
+        {
+          "native": " दीजिए",
+          "latin": " dījie"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "एक किताब": {
+      "romanization": "ek kitāb",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " किताब",
+          "latin": " kitāb"
+        }
+      ]
+    },
+    "एक दरवाज़ा": {
+      "romanization": "ek darvāzā",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " दरवाज़ा",
+          "latin": " darvāzā"
+        }
+      ]
+    },
+    "एक काँटा": {
+      "romanization": "ek kāṃṭā",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " काँटा",
+          "latin": " kāṃṭā"
+        }
+      ]
+    },
+    "एक प्लेट": {
+      "romanization": "ek pleṭ",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " प्लेट",
+          "latin": " pleṭ"
+        }
+      ]
+    },
+    "एक बैग": {
+      "romanization": "ek baig",
+      "spans": [
+        {
+          "native": "एक",
+          "latin": "ek"
+        },
+        {
+          "native": " बैग",
+          "latin": " baig"
+        }
+      ]
+    }
+  }
+}

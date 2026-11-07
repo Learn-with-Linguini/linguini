@@ -1,0 +1,25 @@
+construction_id = "where-question"
+
+[[examples]]
+example_id = "where-cup"
+levels = ["A1"]
+purposes = ["askWhere"]
+meaning = "Where is the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "subject" = "object:cup" }
+truth = true
+labels = []
+sentence = "杯子 在 哪里?"
+translation = "Where is the cup?"
+chunks = [{ "text" = "杯子", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "哪里", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "where-cup-format"
+levels = ["A1"]
+purposes = ["askWhere"]
+sentence = "杯子 在 哪里"
+correction = "杯子 在 哪里?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

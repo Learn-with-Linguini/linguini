@@ -1,0 +1,23 @@
+construction_id = "target-location"
+version = 1
+summary = "Name the target with its detail and position."
+guidance = "Use modifier subject 在 reference relation.: 红色的 杯子 在 窗户 旁边. Preserve the subject, detail, relation and reference bindings. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "target-location"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = { "subject" = "noun", "attribute" = "adjective", "relation" = "preposition", "reference" = "noun" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Location uses 在 with the reference or question."
+must_contain = ["\\s在\\s"]

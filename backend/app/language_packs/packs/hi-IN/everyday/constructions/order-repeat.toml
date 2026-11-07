@@ -1,0 +1,23 @@
+construction_id = "order-repeat"
+version = 1
+summary = "Repeat the order to check it."
+guidance = "Use the exact bound order phrase, the bound detail, then सही है? A deliberately wrong repeat must realize the specified mistaken value, not silently repair it. सही है? asks whether the order is correct, even when its item count is plural. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "order-repeat"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "object" = "noun", "quantity" = "determiner", "size" = "phrase", "detail" = "phrase" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "question-mark"
+message = "A question ends in ?."
+must_contain = ["[?]$"]

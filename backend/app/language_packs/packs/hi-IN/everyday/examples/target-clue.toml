@@ -1,0 +1,97 @@
+construction_id = "target-clue"
+
+[[examples]]
+example_id = "clue-red"
+levels = ["A2"]
+purposes = ["readAttributeClue"]
+meaning = "It is red."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "target" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "लाल है."
+translation = "It is red."
+chunks = [{ "text" = "लाल", "join" = "none" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "clue-next-window"
+levels = ["A2"]
+purposes = ["buildLocationClue"]
+meaning = "It is next to the window."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:window", "concept" = "window" }], "relations" = [{ "fact_id" = "relation:cup-next_to-window", "subject" = "object:cup", "reference" = "object:window", "relation" = "next_to" }] }
+bindings = { "target" = "object:cup", "reference" = "object:window", "relation" = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "खिड़की के पास है."
+translation = "It is next to the window."
+chunks = [{ "text" = "खिड़की", "join" = "none" }, { "text" = "के", "join" = "space" }, { "text" = "पास", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "clarify-next-window"
+levels = ["A2"]
+purposes = ["clarifyDistractor"]
+meaning = "No, it is next to the window."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:window", "concept" = "window" }], "relations" = [{ "fact_id" = "relation:cup-next_to-window", "subject" = "object:cup", "reference" = "object:window", "relation" = "next_to" }] }
+bindings = { "target" = "object:cup", "reference" = "object:window", "relation" = "relation:cup-next_to-window" }
+truth = true
+labels = ["no"]
+sentence = "नहीं, खिड़की के पास है."
+translation = "No, it is next to the window."
+chunks = [{ "text" = "नहीं", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "खिड़की", "join" = "space" }, { "text" = "के", "join" = "space" }, { "text" = "पास", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "m04-clue-red"
+levels = ["A2"]
+purposes = ["chooseAssignedObject"]
+meaning = "It is red."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "target" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "लाल है."
+translation = "It is red."
+chunks = [{ "text" = "लाल", "join" = "none" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "clue-red-format"
+levels = ["A2"]
+purposes = ["readAttributeClue"]
+sentence = "लाल है"
+correction = "लाल है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "clue-next-window-format"
+levels = ["A2"]
+purposes = ["buildLocationClue"]
+sentence = "खिड़की के पास है"
+correction = "खिड़की के पास है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "clarify-next-window-format"
+levels = ["A2"]
+purposes = ["clarifyDistractor"]
+sentence = "नहीं, खिड़की के पास है"
+correction = "नहीं, खिड़की के पास है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "m04-clue-red-format"
+levels = ["A2"]
+purposes = ["chooseAssignedObject"]
+sentence = "लाल है"
+correction = "लाल है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
