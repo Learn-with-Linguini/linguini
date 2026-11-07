@@ -327,8 +327,8 @@ test("A2 rounds play the clue before showing its text", async () => {
   await mount("ispy", levelled({ learnerLevel: "A2", listenFirst: true }));
   assert.ok(dom.window.document.querySelector('[data-testid="listen-first"]'));
   assert.doesNotMatch(body(), /es roja/, "the clue text waits until it is heard");
-  const play = [...dom.window.document.querySelectorAll<HTMLButtonElement>("button")]
-    .find(button => button.textContent?.includes("Play the clue"));
+  // The speaker beside Linguini plays the clue; hearing it reveals the text.
+  const play = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Hear the clue"]') ?? undefined;
   await click(play);
   assert.match(body(), /es roja/);
   assert.equal(dom.window.document.querySelector('[data-testid="listen-first"]'), null);

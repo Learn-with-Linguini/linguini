@@ -251,6 +251,28 @@ function TaskSkipPill({ task, disabled = false, onSkipped }: { task: SessionTask
   </>;
 }
 
+type VocabularyStep = { stage: "quiz" | "typing"; index: number };
+const vocabularyStepKey = (taskId: string) => `linguini:vocabulary-step:${taskId}`;
+
+/** The learner's last exercise step for a word review task, kept per device. */
+function readVocabularyStep(taskId: string): VocabularyStep | null {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(vocabularyStepKey(taskId)) ?? "null") as VocabularyStep | null;
+    return value && (value.stage === "quiz" || value.stage === "typing") && Number.isInteger(value.index) && value.index >= 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeVocabularyStep(taskId: string, step: VocabularyStep | null) {
+  try {
+    if (step) window.localStorage.setItem(vocabularyStepKey(taskId), JSON.stringify(step));
+    else window.localStorage.removeItem(vocabularyStepKey(taskId));
+  } catch {
+    // Storage can be unavailable (private mode); resuming then falls back to saved answers.
+  }
+}
+
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, revisiting = false }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void; revisiting?: boolean }) {
   const refreshBasil = useRefreshBasil();
   const { nativeProps, speak, speechAvailable } = useTargetLanguage();
@@ -291,15 +313,37 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     setBasilByQuestion(value => ({ ...value, ...Object.fromEntries(checks.map(item => [item.questionId, item.basilEarned])) }));
     if (!restoredNavigation.current) {
       restoredNavigation.current = true;
-      if (!checks.length) return;
       const questions = task.publicContent.kind === "vocabularyIntroduction" ? task.publicContent.questions : [];
-      const first = questions.findIndex(item => !checks.some(check => check.questionId === item.questionId));
-      // Typing progress is local, so resume from the second recognition answer
-      // before continuing through the interleaved recognition/typing sequence.
-      setQuestionIndex(first === 0 ? 0 : Math.min(1, Math.max(0, questions.length - 1)));
+      const wordCount = task.publicContent.kind === "vocabularyIntroduction" ? task.publicContent.words.length : 0;
+      if (!checks.length) return;
+      const answered = (index: number) => checks.some(check => check.questionId === questions[index]?.questionId);
+      const first = questions.findIndex((_, index) => !answered(index));
+      const reached = first < 0 ? questions.length : first;
+      // Resume at the exact step last reached on this device, when the saved answers back
+      // it up: question i follows question i - 1, and typing word k follows question k + 1.
+      const saved = readVocabularyStep(task.id);
+      const savedValid = saved && (saved.stage === "quiz"
+        ? saved.index < questions.length && saved.index <= reached
+        : saved.index < wordCount && Math.min(saved.index + 2, questions.length) <= reached);
+      if (saved && savedValid) {
+        if (saved.stage === "quiz") setQuestionIndex(saved.index);
+        else setTypingIndex(saved.index);
+        setStage(saved.stage);
+        return;
+      }
+      // Typing answers are not saved on the server, so without a saved step resume at the
+      // first unanswered recognition question (or the last one).
+      setQuestionIndex(first < 0 ? Math.max(0, questions.length - 1) : first);
       setStage("quiz");
     }
-  }, [restored.data, revisiting, task.publicContent]);
+  }, [restored.data, revisiting, task.id, task.publicContent]);
+  // Remember the current exercise step so leaving and reopening the task returns here.
+  useEffect(() => {
+    if (revisiting || taskDone(task) || !restoredNavigation.current) return;
+    if (stage === "quiz") writeVocabularyStep(task.id, { stage, index: questionIndex });
+    else if (stage === "typing") writeVocabularyStep(task.id, { stage, index: typingIndex });
+    else if (stage === "complete") writeVocabularyStep(task.id, null);
+  }, [revisiting, task, stage, questionIndex, typingIndex]);
   useEffect(() => {
     if (content.kind !== "vocabularyIntroduction" || stage !== "review") return;
     const words = vocabularyReviewGroups(content.words)[page] ?? [];
