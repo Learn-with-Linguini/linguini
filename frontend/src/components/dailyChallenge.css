@@ -113,12 +113,31 @@
 .daily-challenge-page .daily-challenge__note { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--ink); font-size: var(--text-small); font-weight: 700; }
 .daily-challenge-page .daily-challenge__note svg { color: var(--basil); }
 
-.home-daily-challenge { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--cream); }
-.home-daily-challenge > div { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+/* Home dashboard card: a soft basil tint and border so it stands apart from the cream page without shouting. */
+.home-daily-challenge {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-4) var(--space-5);
+  /* Same border, radius and shadow as the other home cards. */
+  border: 1px solid rgba(217, 210, 195, .8);
+  border-radius: var(--radius-lg);
+  background: var(--basil-surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+.home-daily-challenge__badge { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--paper); color: var(--teal-dark); }
+.home-daily-challenge__copy { display: grid; gap: var(--space-1); min-width: 0; }
 .home-daily-challenge h2 { margin: 0; color: var(--teal-dark); font-size: var(--text-h3); white-space: nowrap; }
-.home-daily-challenge .daily-challenge__timer { padding: 0; background: transparent; }
+.home-daily-challenge__scene { justify-self: start; max-width: 100%; margin: 0; padding: 2px var(--space-3); border-radius: 999px; background: var(--teal-dark); color: var(--paper); font-size: var(--text-small); font-weight: 800; overflow-wrap: anywhere; }
+.home-daily-challenge__title-row { display: flex; align-items: center; gap: var(--space-1) var(--space-2); min-width: 0; }
+.home-daily-challenge .daily-challenge__timer { flex: none; padding: 2px var(--space-2); border-radius: 999px; background: var(--paper); }
+.home-daily-challenge .daily-challenge__timer.is-urgent { background: #ffd2c2; }
 .home-daily-challenge .daily-challenge__drain { display: none; }
-.home-daily-challenge .btn { min-width: 104px; }
+.home-daily-challenge .btn { min-width: 180px; }
 .home-daily-challenge > p { grid-column: 1 / -1; margin: 0; }
 
 @media (max-width: 760px) {
@@ -137,8 +156,9 @@
   .daily-challenge-page { padding-block: 0; }
   .daily-challenge-page .daily-challenge { margin-inline: calc(var(--shell-pad, 0px) * -1); border-radius: 0; box-shadow: none; }
   .daily-challenge__details { grid-template-columns: 1fr; gap: var(--space-5); padding-top: var(--space-5); }
-  .home-daily-challenge { padding: var(--space-3); }
-  .home-daily-challenge > div { display: grid; gap: 0; }
+  .home-daily-challenge { gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-md); }
+  .home-daily-challenge__badge { width: 44px; height: 44px; }
+  .home-daily-challenge .btn { min-width: 116px; padding-inline: var(--space-4); }
 }
 
 @media (prefers-reduced-motion: reduce) {

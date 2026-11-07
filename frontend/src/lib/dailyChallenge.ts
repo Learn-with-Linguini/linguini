@@ -28,12 +28,14 @@ export function timeLeft(dayEndsAt: string, now: number) {
   return { remaining, fraction: Math.min(1, remaining / DAY_MS), urgent: remaining > 0 && remaining <= FINAL_HOURS_MS };
 }
 
-export function countdownText(remaining: number): string {
+/** Time left in the day; `compact` drops the "left" wording for tight spaces such as the home card. */
+export function countdownText(remaining: number, compact = false): string {
   if (remaining <= 0) return "Ended";
-  if (remaining < 60_000) return "Under a minute left";
+  if (remaining < 60_000) return compact ? "<1m" : "Under a minute left";
   const minutes = Math.floor(remaining / 60_000);
   const hours = Math.floor(minutes / 60);
-  return hours ? `${hours}h ${String(minutes % 60).padStart(2, "0")}m left` : `${minutes}m left`;
+  const time = hours ? `${hours}h ${String(minutes % 60).padStart(2, "0")}m` : `${minutes}m`;
+  return compact ? time : `${time} left`;
 }
 
 /** The day's scene changes, so the one-line instruction is built from its title. */

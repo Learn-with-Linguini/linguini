@@ -29,13 +29,13 @@ function useNow(intervalMs = 15_000) {
 }
 
 /** Full-bleed strip across the top of a challenge surface: what it is and how long is left. */
-export function ChallengeTimer({ dayEndsAt, onEnded, label = "Daily challenge" }: { dayEndsAt: string; onEnded?: () => void; label?: string }) {
+export function ChallengeTimer({ dayEndsAt, onEnded, label = "Daily challenge", compact = false }: { dayEndsAt: string; onEnded?: () => void; label?: string; compact?: boolean }) {
   const now = useNow();
   const { remaining, fraction, urgent } = timeLeft(dayEndsAt, now);
   useEffect(() => { if (remaining <= 0) onEnded?.(); }, [remaining, onEnded]);
   return <div className={`daily-challenge__timer${urgent ? " is-urgent" : ""}`}>
     {label ? <span className="daily-challenge__timer-label">{label}</span> : null}
-    <time dateTime={dayEndsAt} className="daily-challenge__countdown"><ClockIcon size={16} />{urgent ? "Last hours · " : ""}{countdownText(remaining)}</time>
+    <time dateTime={dayEndsAt} className="daily-challenge__countdown"><ClockIcon size={16} />{urgent && !compact ? "Last hours · " : ""}{countdownText(remaining, compact)}</time>
     <span className="daily-challenge__drain" aria-hidden="true"><span style={{ transform: `scaleX(${fraction})` }} /></span>
   </div>;
 }
@@ -140,10 +140,17 @@ export function HomeDailyChallenge() {
     if (data.status === "inProgress" && data.sessionId) void resume(data.sessionId);
     else navigate("/ispy/challenge");
   };
+  // A filled teal card so the challenge stands apart from the cream dashboard.
   return <section className="home-daily-challenge" aria-labelledby="home-daily-challenge-title">
-    <div><h2 id="home-daily-challenge-title">Daily challenge</h2>
-      <ChallengeTimer label="" dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} /></div>
-    <Button variant="secondary" onClick={open}>{data.status === "inProgress" ? "Continue" : "Join"}</Button>
+    <span className="home-daily-challenge__badge" aria-hidden="true"><BasilIcon size={26} /></span>
+    <div className="home-daily-challenge__copy">
+      <div className="home-daily-challenge__title-row">
+        <h2 id="home-daily-challenge-title">Daily challenge</h2>
+        <ChallengeTimer label="" compact dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} />
+      </div>
+      {data.sceneTitle ? <p className="home-daily-challenge__scene">{data.sceneTitle}</p> : null}
+    </div>
+    <Button variant="primary" onClick={open}>{data.status === "inProgress" ? "Continue" : "Join"}</Button>
     {resumeError ? <p role="alert">{resumeError}</p> : null}
   </section>;
 }

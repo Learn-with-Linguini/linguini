@@ -4358,7 +4358,7 @@ p[role="alert"]::before { content: "!"; }
   font-weight: 800;
 }
 
-.home-tag--revisit { background: var(--pasta); color: var(--ink); }
+.home-tag--revisit { background: var(--tomato); color: var(--paper); }
 .home-tag--play { background: var(--teal-dark); color: var(--paper); }
 
 .home-streak,
@@ -4541,6 +4541,8 @@ p[role="alert"]::before { content: "!"; }
   .home-dashboard__aside { display: contents; }
   .home-welcome { order: 1; }
   .home-next-step { order: 2; }
+  /* Same order as the practice card, so source order keeps it directly below. */
+  .home-daily-challenge { order: 2; }
   .home-streak, .home-dashboard__loading, .home-dashboard__error { order: 3; }
   .home-explore { order: 4; }
   .home-progress-card { order: 5; }
