@@ -9,6 +9,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { BasilReward, Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
+import { useBackAction } from "../components/BackAction";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle } from "../lib/practiceTasks";
 import type { LearningStep } from "../lib/practiceTasks";
@@ -37,6 +38,8 @@ export function LearningTaskPage() {
   const navigate = useNavigate();
   const scene = useScene();
   const base = `/practice/sessions/${scene.sessionId}`;
+  // Back mid-task returns to this session's task list, not wherever history points.
+  useBackAction(() => { trackAction("task_back_clicked", { taskId }); navigate(`${base}/learn`); }, "Back to tasks");
   if (!session) return null;
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
   const tasks = practiceStages(session.tasks).learning;

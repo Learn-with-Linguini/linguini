@@ -166,6 +166,8 @@ The existing analysis and review routes show this progress; no new page is added
 | `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo; the selection is checked immediately |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
+| `task_back_clicked` | `{ taskId }` | Learner taps the brand-bar back button mid-task and returns to the task list |
+| `task_list_back_clicked` | — | Learner taps the brand-bar back button on the task list and returns to home |
 | `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
 | `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
 | `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
