@@ -29,12 +29,12 @@ function useNow(intervalMs = 15_000) {
 }
 
 /** Full-bleed strip across the top of a challenge surface: what it is and how long is left. */
-export function ChallengeTimer({ dayEndsAt, onEnded, label = "Treasure Hunt" }: { dayEndsAt: string; onEnded?: () => void; label?: string }) {
+export function ChallengeTimer({ dayEndsAt, onEnded, label = "Daily challenge" }: { dayEndsAt: string; onEnded?: () => void; label?: string }) {
   const now = useNow();
   const { remaining, fraction, urgent } = timeLeft(dayEndsAt, now);
   useEffect(() => { if (remaining <= 0) onEnded?.(); }, [remaining, onEnded]);
   return <div className={`daily-challenge__timer${urgent ? " is-urgent" : ""}`}>
-    <span className="daily-challenge__timer-label">{label}</span>
+    {label ? <span className="daily-challenge__timer-label">{label}</span> : null}
     <time dateTime={dayEndsAt} className="daily-challenge__countdown"><ClockIcon size={16} />{urgent ? "Last hours · " : ""}{countdownText(remaining)}</time>
     <span className="daily-challenge__drain" aria-hidden="true"><span style={{ transform: `scaleX(${fraction})` }} /></span>
   </div>;
@@ -90,7 +90,7 @@ export function ChallengeBoard({ challenge }: { challenge: Challenge }) {
         <span className="daily-challenge__count">{word.count}<span className="visually-hidden"> {word.count === 1 ? "learner" : "learners"}</span></span>
       </li>)}</ol>
       {hidden > 0 ? <p className="daily-challenge__more">+{hidden} more {hidden === 1 ? "word" : "words"} found today</p> : null}
-    </> : <p className="daily-challenge__empty">No words yet—yours could be first.</p>}
+    </> : <p className="daily-challenge__empty">No words yet. Yours could be first.</p>}
   </div>;
 }
 
@@ -106,20 +106,44 @@ export function DailyChallenge() {
   if (!data) return <div className="daily-challenge__pad"><p role="alert">We couldn’t load today’s challenge.</p>
     <Button variant="quiet" onClick={() => { trackAction("daily_challenge_retry_clicked"); void query.refetch(); }}>Retry challenge</Button></div>;
   return <section className="daily-challenge" aria-labelledby="daily-challenge-title">
-    <ChallengeTimer label="Today’s challenge" dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} />
+    <ChallengeTimer dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} />
     <div className="daily-challenge__summary">
-      <ChallengeHeadline challenge={data} id="daily-challenge-title" lede={false} />
-      <span className="pill pill--xp daily-challenge__prize"><BasilIcon size={16} />{DAILY_CHALLENGE_PRIZES[0].basil} Basil prize</span>
-      {data.status === "completed" ? <p className="daily-challenge__done"><CheckIcon size={20} /><span>You’re on the board with {data.yourWordCount} {data.yourWordCount === 1 ? "word" : "words"}.</span></p> : null}
+      <div className="daily-challenge__summary-heading">
+        <ChallengeHeadline challenge={data} id="daily-challenge-title" lede={false} />
+        <span className="pill pill--xp daily-challenge__prize"><BasilIcon size={16} />{DAILY_CHALLENGE_PRIZES[0].basil} Basil</span>
+      </div>
       <div className="daily-challenge__actions">
         {data.status === "inProgress" && data.sessionId
           ? <Button onClick={() => void resume(data.sessionId!)}>Continue challenge</Button>
           : data.status !== "completed"
             ? <Button onClick={() => { trackAction("daily_challenge_start_clicked", { sceneKey: data.sceneKey }); navigate("/ispy/challenge"); }}>Join challenge</Button>
             : null}
-        <Button variant="quiet" onClick={() => { trackAction("daily_challenge_details_clicked", { sceneKey: data.sceneKey }); navigate(`/ispy/challenge#${CHALLENGE_DETAILS_ID}`); }}>View details</Button>
+        <Button variant="secondary" onClick={() => { trackAction("daily_challenge_details_clicked", { sceneKey: data.sceneKey }); navigate(`/ispy/challenge#${CHALLENGE_DETAILS_ID}`); }}>View rewards</Button>
       </div>
       {resumeError ? <p role="alert">{resumeError}</p> : null}
     </div>
+    <div className="daily-challenge__play-board"><ChallengeBoard challenge={data} /></div>
+  </section>;
+}
+
+/** A quiet Home reminder; the full challenge and board remain on Play. */
+export function HomeDailyChallenge() {
+  const navigate = useNavigate();
+  const { user } = useAppState();
+  const query = useQuery({ queryKey: dailyChallengeKey(user?.id ?? ""), queryFn: ({ signal }) => getDailyChallenge(signal),
+    enabled: Boolean(user?.id), refetchInterval: 30_000 });
+  const data = query.data;
+  const { resume, resumeError } = useChallengeResume(data?.sceneKey ?? "");
+  if (!data || data.status === "completed") return null;
+  const open = () => {
+    trackAction("home_daily_challenge_clicked", { sceneKey: data.sceneKey, status: data.status });
+    if (data.status === "inProgress" && data.sessionId) void resume(data.sessionId);
+    else navigate("/ispy/challenge");
+  };
+  return <section className="home-daily-challenge" aria-labelledby="home-daily-challenge-title">
+    <div><h2 id="home-daily-challenge-title">Daily challenge</h2>
+      <ChallengeTimer label="" dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} /></div>
+    <Button variant="secondary" onClick={open}>{data.status === "inProgress" ? "Continue" : "Join"}</Button>
+    {resumeError ? <p role="alert">{resumeError}</p> : null}
   </section>;
 }

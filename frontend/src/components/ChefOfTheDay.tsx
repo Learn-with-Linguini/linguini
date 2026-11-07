@@ -6,7 +6,7 @@ import { Button } from "./ui";
 import "./gamification.css";
 import "./leaderboard.css";
 
-export function ChefOfTheDay({ as: Heading = "h2" }: { as?: "h1" | "h2" }) {
+export function ChefOfTheDay({ as: Heading = "h2", compact = false }: { as?: "h1" | "h2"; compact?: boolean }) {
   const query = useChefStandings();
   const data = query.data;
   return <section className="stack" aria-labelledby="chef-day-title">
@@ -16,7 +16,7 @@ export function ChefOfTheDay({ as: Heading = "h2" }: { as?: "h1" | "h2" }) {
       <section className="ispy-chefs__comparison" aria-label="Your leaderboard position">
         <div><span>Your place</span><strong>#{data.currentRank ?? "—"}</strong></div>
         <div><span>Your Basil</span><strong>{data.todayBasil}</strong></div>
-        <p>{data.currentRank === 1 ? "You’re leading today!" : data.currentRank ? `${data.basilToNextRank ?? 0} Basil to reach the next position.` : "Your first Basil today will put you on the board."}</p>
+        {!compact ? <p>{data.currentRank === 1 ? "You’re leading today!" : data.currentRank ? `${data.basilToNextRank ?? 0} Basil to reach the next position.` : "Your first Basil today will put you on the board."}</p> : null}
       </section>
       {data.top.length ? <ol className="ispy-chefs__list" aria-label="Today’s chefs">{data.top.map((entry, index) => <li key={`${entry.rank}:${index}`} className="ispy-chefs__entry">
         <span className="ispy-chefs__rank">{entry.rank}</span><img className="leaderboard-avatar" src={`/pasta-assets/${entry.avatar}.png`} alt="" /><strong>{entry.displayName}</strong>

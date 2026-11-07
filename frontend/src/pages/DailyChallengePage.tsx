@@ -5,7 +5,7 @@ import { CHALLENGE_DETAILS_ID, ChallengeBoard, ChallengeHeadline, ChallengePrize
 import { ImageUpload } from "../components/ImageUpload";
 import { BasilIcon, CheckIcon, TrophyIcon } from "../components/icons";
 import { InlineLoader } from "../components/LoadingScreen";
-import { Button, Card } from "../components/ui";
+import { Button } from "../components/ui";
 import { createPractice } from "../lib/api";
 import { trackAction } from "../lib/analytics.ts";
 import { DAILY_CHALLENGE_FINISHER_BASIL, dailyChallengeKey, getDailyChallenge, lastResultText } from "../lib/dailyChallenge";
@@ -55,8 +55,8 @@ export function DailyChallengePage() {
   if (!data) return <div className="stack"><p role="alert">We couldn’t load today’s challenge.</p>
     <Button variant="quiet" onClick={() => { trackAction("daily_challenge_retry_clicked"); void query.refetch(); }}>Retry challenge</Button></div>;
   const result = lastResultText(data.lastResult);
-  return <div className="daily-challenge-page">
-    <Card lifted className="daily-challenge">
+  return <main className="daily-challenge-page">
+    <section className="daily-challenge">
       <ChallengeTimer dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} />
       <div className="daily-challenge__body">
         <div className="daily-challenge__join">
@@ -75,10 +75,13 @@ export function DailyChallengePage() {
           {result ? <p className="daily-challenge__result"><TrophyIcon size={18} />{result}</p> : null}
         </div>
         <div id={CHALLENGE_DETAILS_ID} className="daily-challenge__details">
-          <ChallengePrizes />
+          <section className="daily-challenge__rewards" aria-labelledby="challenge-rewards-title">
+            <h2 id="challenge-rewards-title">Today’s rewards</h2>
+            <ChallengePrizes />
+          </section>
           <ChallengeBoard challenge={data} />
         </div>
       </div>
-    </Card>
-  </div>;
+    </section>
+  </main>;
 }

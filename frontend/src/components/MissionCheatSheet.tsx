@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMissionCheatSheet, type MissionCheatSheet } from "../lib/api";
 import { trackAction } from "../lib/analytics";
@@ -48,12 +48,14 @@ export function MissionCheatSheetLauncher({
     contentVersion,
     languageCode,
   };
-  const close = (method: "escape" | "backdrop" | "drag") => {
+  const close = useCallback((method: "escape" | "backdrop" | "drag") => {
     setOpen(false);
     setDragging(false);
     setDragOffset(0);
-    trackAction("mission_cheatsheet_closed", { ...tracking, method });
-  };
+    trackAction("mission_cheatsheet_closed", {
+      missionId, practiceLevel, contentVersion, languageCode, method,
+    });
+  }, [missionId, practiceLevel, contentVersion, languageCode]);
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -61,7 +63,7 @@ export function MissionCheatSheetLauncher({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, [open, close]);
 
   const beginDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (window.matchMedia("(min-width: 680px)").matches) return;

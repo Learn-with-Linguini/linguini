@@ -1,4 +1,3 @@
-import { LoadingScreen } from "../components/LoadingScreen";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
@@ -17,6 +16,9 @@ import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 import { gameResourceKeys } from "../lib/gameResources";
 import { canStartNewPractice } from "../lib/practiceAvailability";
+import { AnalysisScan } from "../components/AnalysisScan";
+import { SceneProcessingProgress } from "../components/SceneProcessingProgress";
+import type { SceneSummary } from "../data/types";
 
 export function PracticeSelect() {
   const navigate = useNavigate();
@@ -28,6 +30,7 @@ export function PracticeSelect() {
   const [uploading, setUploading] = useState(false);
   const [selected, setSelected] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startingScene, setStartingScene] = useState<SceneSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissedSessionId, setDismissedSessionId] = useState<string | null>(null);
   const [walkthroughStep, setWalkthroughStep] = useState<2 | 3>(2);
@@ -127,6 +130,13 @@ export function PracticeSelect() {
     && Boolean(user?.onboardingCompleted)
     && needsFirstLessonWalkthrough(user?.walkthroughVersionSeen);
   const chooseAsset = (asset: string) => void start(asset);
+  if (starting && startingScene) return <div className="stack analysis-page">
+    <h1 className="analysis-progress-title">Scene analysis</h1>
+    <section className="analysis-loading">
+      <SceneProcessingProgress />
+      <AnalysisScan scene={startingScene} />
+    </section>
+  </div>;
   return <div className="stack practice-select">
     <h1>Capture a scene</h1>
     {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
@@ -140,16 +150,15 @@ export function PracticeSelect() {
     <div ref={captureRef} className="dashed-capture">
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
-        onBusyChange={setUploading} onUploaded={image => { trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
+        onBusyChange={setUploading} onUploaded={image => { setStartingScene(null); trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
-    {starting ? <LoadingScreen label="Starting analysis" /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     <h2>Or practise with the below</h2>
     <SceneCatalogStatus />
     <div ref={readyScenesRef} className="grid-2">
       {scenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
-        disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => { trackAction("practice_scene_selected", { sceneId: scene.id, title: scene.title }); chooseAsset(scene.mediaAssetId); }}>
+        disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => { setStartingScene(scene); trackAction("practice_scene_selected", { sceneId: scene.id, title: scene.title }); chooseAsset(scene.mediaAssetId); }}>
         <SceneVisual scene={scene} />
         <span className="small items-center justify-center" style={{ fontWeight: 700 }}>{scene.title}</span>
       </button>)}

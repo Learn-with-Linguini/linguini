@@ -16,6 +16,7 @@ import { learningProgress } from "../lib/practiceTasks";
 import { useChefStandings, useGamification } from "../state/gamification";
 import { trackAction } from "../lib/analytics.ts";
 import { HomeQuickPlay } from "../components/HomeQuickPlay";
+import { HomeDailyChallenge } from "../components/DailyChallenge";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -130,6 +131,8 @@ export function Home() {
             }}><PlayIcon size={21} /> {resume ? "Continue practice" : "Begin a new practice"}</Button></div>
           </div>
         </section>
+
+        <HomeDailyChallenge />
 
         <section className="home-explore" aria-labelledby="home-explore-title">
           <div className="home-section-heading"><h2 id="home-explore-title">Continue exploring</h2></div>

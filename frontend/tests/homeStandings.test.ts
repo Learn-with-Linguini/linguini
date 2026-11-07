@@ -167,19 +167,21 @@ test("Basil invalidation refreshes both surfaces through their shared account qu
   assert.equal(calls, 2);
 });
 
-test("Play leads with I-Spy, summarises the challenge and links to the board", async () => {
+test("Play leads with I-Spy and keeps the challenge and leaderboard on the page", async () => {
   const view = await mount(ISpyModes);
   await waitFor(() => assert.match(view.container.textContent ?? "", /Join challenge/));
-  assert.equal(view.container.querySelector("h1")?.textContent, "Play I-Spy");
+  assert.equal(view.container.querySelector("h1")?.textContent, "Games & challenges");
   const sections = [...view.container.querySelector(".ispy-modes")!.children].map(item => item.className);
-  assert.match(sections[0], /play-card/);
-  assert.match(sections[1], /challenge/);
+  assert.match(sections[0], /heading/);
+  assert.match(sections[1], /activities/);
   assert.match(sections[2], /chefs/);
-  assert.match(view.container.textContent ?? "", /50 Basil prize/);
-  assert.doesNotMatch(view.container.textContent ?? "", /Community board|1st/, "details live on the challenge page");
-  await waitFor(() => assert.match(view.container.querySelector(".ispy-modes__chefs")?.textContent ?? "", /#7 · 20 Basil/));
-  await act(async () => view.container.querySelector<HTMLButtonElement>(".ispy-modes__chefs")!.click());
-  assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy/chefs");
+  assert.ok(view.container.querySelector(".ispy-modes__activities > .ispy-modes__challenge"));
+  assert.ok(view.container.querySelector(".ispy-modes__activities > .ispy-modes__play-card"));
+  assert.match(view.container.textContent ?? "", /50 Basil/);
+  assert.match(view.container.textContent ?? "", /Community board/, "the challenge board is visible on Play");
+  await waitFor(() => assert.equal(playStanding(view.container), "#7"));
+  assert.match(view.container.querySelector(".ispy-modes__leaderboard")?.textContent ?? "", /Chefs of the Day/);
+  assert.match(view.container.querySelector(".ispy-modes__leaderboard")?.textContent ?? "", /#7/);
 });
 
 test("the Home standings card opens the board and records the navigation", async () => {
@@ -190,4 +192,15 @@ test("the Home standings card opens the board and records the navigation", async
   await act(async () => link.click());
   assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy/chefs");
   assert.deepEqual(window._uxa, [["trackCustomEvent", "home_chef_standings_clicked", {}]]);
+});
+
+test("Home keeps the daily challenge compact and opens the full challenge", async () => {
+  const view = await mount();
+  await waitFor(() => assert.ok(view.container.querySelector(".home-daily-challenge")));
+  const prompt = view.container.querySelector<HTMLElement>(".home-daily-challenge");
+  assert.ok(prompt);
+  assert.match(prompt.textContent ?? "", /Daily challenge.*Join/);
+  await act(async () => prompt.querySelector<HTMLButtonElement>("button")!.click());
+  assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy/challenge");
+  assert.deepEqual(window._uxa, [["trackCustomEvent", "home_daily_challenge_clicked", { sceneKey: "cafe", status: "notStarted" }]]);
 });

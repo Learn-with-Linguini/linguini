@@ -191,6 +191,7 @@ The existing analysis and review routes show this progress; no new page is added
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
+| `ispy_translation_toggled` | `{ phase, visible }` | Learner shows or hides an I-Spy translation |
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
 | `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker", guess }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages; `guess` is 1–3, since each clue allows three different guesses |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
@@ -199,9 +200,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `ispy_word_bank_word_added` | `{ learnerLevel, kind }` | Learner taps a word bank word on the I-Spy "Your turn" page to add it to their clue; `kind` is `noun`, `adjective`, `preposition` or `unknown` for older word banks |
 | `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
 | `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
-| `ispy_exit_clicked` | `{ phase: "clues" \| "describe" }` | Learner exits an active I-Spy round back to Home |
 | `describe_round_skipped` | `{ mode }` | Session skips the describing round because there is no reflection task and proceeds to results |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
+| `ispy_finish_clicked` | `{ outcome, last }` | Learner taps "Finish I-Spy" on an unconfirmed guess; the object is skipped and the next object (or the summary, when `last`) opens |
 | `room_created` | — | User creates a new multiplayer room |
 | `room_joined` | — | User joins a friend's room using a room code |
 | `room_friend_invited` | — | User creates a friend invitation code/link |
@@ -260,7 +261,8 @@ or private-help content. Private help and audio activity do not enter the shared
 | `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
 | `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
 | `home_chef_standings_clicked` | — | Learner opens the daily Basil leaderboard from the Home standings card |
-| `ispy_chefs_board_clicked` | — | Learner opens the daily Basil leaderboard from the Play page row |
+| `home_daily_challenge_clicked` | `{ sceneKey, status }` | Learner opens or resumes the daily challenge from Home |
+| `play_section_nav_clicked` | `{ section }` | Learner uses the phone Play page section navigation |
 | `daily_challenge_start_clicked` | `{ sceneKey }` | User opens today's daily challenge from the Play tab |
 | `daily_challenge_details_clicked` | `{ sceneKey }` | User opens the prizes and community board from the Play page challenge summary |
 | `daily_challenge_resumed` | `{ sceneKey }` | User continues an unfinished daily challenge session from the Play tab |
