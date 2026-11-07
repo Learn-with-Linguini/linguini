@@ -9,6 +9,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { BasilReward, Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
+import { useBackAction } from "../components/BackAction";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle } from "../lib/practiceTasks";
 import type { LearningStep } from "../lib/practiceTasks";
@@ -37,6 +38,8 @@ export function LearningTaskPage() {
   const navigate = useNavigate();
   const scene = useScene();
   const base = `/practice/sessions/${scene.sessionId}`;
+  // Back mid-task returns to this session's task list, not wherever history points.
+  useBackAction(() => { trackAction("task_back_clicked", { taskId }); navigate(`${base}/learn`); }, "Back to tasks");
   if (!session) return null;
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
   const tasks = practiceStages(session.tasks).learning;
@@ -144,7 +147,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   const earnedText = basilEarnedText(actionResult?.basilEarned);
   return <div className="stack">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{taskTitle(task)}</h1></div>{!terminal ? <TaskSkipPill task={task} onSkipped={onNext} /> : null}</div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{taskTitle(task)}</h1></div><div className="learning-title-actions"><div className="learning-title-primary-actions">{!terminal ? <TaskSkipPill task={task} onSkipped={onNext} /> : null}</div></div></div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={1} total={1} label="Question 1 of 1" /></div>
     </div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
@@ -234,7 +237,7 @@ function TaskSkipPill({ task, disabled = false, onSkipped }: { task: SessionTask
       aria-describedby={descriptionId} onClick={() => {
         trackAction("task_skip_prompted", { taskId: task.id, kind });
         setConfirming(true);
-      }}>Skip this task</button>
+      }}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button>
     <span id={descriptionId} className="visually-hidden">Skip this task and return to the task list.</span>
     {confirming ? <SkipTaskDialog busy={practiceSaving} title="Skip this task?"
       body="It will be marked as skipped and you'll go back to your task list."
@@ -246,6 +249,28 @@ function TaskSkipPill({ task, disabled = false, onSkipped }: { task: SessionTask
         else setConfirming(false);
       }} /> : null}
   </>;
+}
+
+type VocabularyStep = { stage: "quiz" | "typing"; index: number };
+const vocabularyStepKey = (taskId: string) => `linguini:vocabulary-step:${taskId}`;
+
+/** The learner's last exercise step for a word review task, kept per device. */
+function readVocabularyStep(taskId: string): VocabularyStep | null {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(vocabularyStepKey(taskId)) ?? "null") as VocabularyStep | null;
+    return value && (value.stage === "quiz" || value.stage === "typing") && Number.isInteger(value.index) && value.index >= 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeVocabularyStep(taskId: string, step: VocabularyStep | null) {
+  try {
+    if (step) window.localStorage.setItem(vocabularyStepKey(taskId), JSON.stringify(step));
+    else window.localStorage.removeItem(vocabularyStepKey(taskId));
+  } catch {
+    // Storage can be unavailable (private mode); resuming then falls back to saved answers.
+  }
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, revisiting = false }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void; revisiting?: boolean }) {
@@ -288,15 +313,37 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     setBasilByQuestion(value => ({ ...value, ...Object.fromEntries(checks.map(item => [item.questionId, item.basilEarned])) }));
     if (!restoredNavigation.current) {
       restoredNavigation.current = true;
-      if (!checks.length) return;
       const questions = task.publicContent.kind === "vocabularyIntroduction" ? task.publicContent.questions : [];
-      const first = questions.findIndex(item => !checks.some(check => check.questionId === item.questionId));
-      // Typing progress is local, so resume from the second recognition answer
-      // before continuing through the interleaved recognition/typing sequence.
-      setQuestionIndex(first === 0 ? 0 : Math.min(1, Math.max(0, questions.length - 1)));
+      const wordCount = task.publicContent.kind === "vocabularyIntroduction" ? task.publicContent.words.length : 0;
+      if (!checks.length) return;
+      const answered = (index: number) => checks.some(check => check.questionId === questions[index]?.questionId);
+      const first = questions.findIndex((_, index) => !answered(index));
+      const reached = first < 0 ? questions.length : first;
+      // Resume at the exact step last reached on this device, when the saved answers back
+      // it up: question i follows question i - 1, and typing word k follows question k + 1.
+      const saved = readVocabularyStep(task.id);
+      const savedValid = saved && (saved.stage === "quiz"
+        ? saved.index < questions.length && saved.index <= reached
+        : saved.index < wordCount && Math.min(saved.index + 2, questions.length) <= reached);
+      if (saved && savedValid) {
+        if (saved.stage === "quiz") setQuestionIndex(saved.index);
+        else setTypingIndex(saved.index);
+        setStage(saved.stage);
+        return;
+      }
+      // Typing answers are not saved on the server, so without a saved step resume at the
+      // first unanswered recognition question (or the last one).
+      setQuestionIndex(first < 0 ? Math.max(0, questions.length - 1) : first);
       setStage("quiz");
     }
-  }, [restored.data, revisiting, task.publicContent]);
+  }, [restored.data, revisiting, task.id, task.publicContent]);
+  // Remember the current exercise step so leaving and reopening the task returns here.
+  useEffect(() => {
+    if (revisiting || taskDone(task) || !restoredNavigation.current) return;
+    if (stage === "quiz") writeVocabularyStep(task.id, { stage, index: questionIndex });
+    else if (stage === "typing") writeVocabularyStep(task.id, { stage, index: typingIndex });
+    else if (stage === "complete") writeVocabularyStep(task.id, null);
+  }, [revisiting, task, stage, questionIndex, typingIndex]);
   useEffect(() => {
     if (content.kind !== "vocabularyIntroduction" || stage !== "review") return;
     const words = vocabularyReviewGroups(content.words)[page] ?? [];
@@ -483,12 +530,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div>{revisiting ? <LearningExit onExit={onExit} label="Back to vocabulary" />
-        : !terminal ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions">
+        {revisiting ? <div className="learning-title-primary-actions"><LearningExit onExit={onExit} label="Back to vocabulary" /></div> : null}
+        <div className="learning-title-primary-actions">{!revisiting && !terminal ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
           aria-describedby={`vocabulary-skip-${task.id}`} onClick={() => {
             trackAction("vocabulary_skip_prompted", { taskId: task.id, stage });
             setConfirmingSkip(true);
-          }}>Skip this task</button> : null}</div>
+          }}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}</div>
+      </div></div>
       {!terminal && !revisiting ? <p id={`vocabulary-skip-${task.id}`} className="visually-hidden">Skip the whole word activity and return to the task list.</p> : null}
       <div className="vocabulary-flow__progress">{/* Cards count slides; the quiz and typing count questions. */}
         {stage === "review" && pageCount > 0
@@ -976,7 +1025,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
 
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><div className="learning-title-primary-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div></div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /></div>
     </div>
     {/* Desktop keeps the question's photo beside the question; phones stack them. */}
@@ -1316,7 +1365,7 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
   const showsScene = plainPhoto || markerPhoto || Boolean(question?.displayCount || question?.sceneObjectId);
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><div className="learning-title-primary-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div></div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /></div>
     </div>
     {/* Desktop keeps the question's photo beside the question; phones stack them. */}

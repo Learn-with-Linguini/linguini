@@ -15,6 +15,7 @@ from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.image_analysis import PlaceholderImageExtractor
 from app.services.ispy_clue_frames import build_clue_support, object_phrase
 from app.services.ispy_levels import ispy_cheat_sheet, ispy_level, word_bank
+from app.services.session_personalization import mix_article_questions
 
 # Fixed, deliberately small upload vocabulary. Unknown languages fail explicitly.
 UPLOAD_WORDS = {
@@ -652,6 +653,9 @@ def build_tasks(
         correct_option_ids[article_question["question_id"]] = article_question[
             "correct_option_id"
         ]
+    questions = mix_article_questions(
+        questions, session_id, question_id=lambda question: question["question_id"]
+    )
     contents = [
         dict(
             kind="vocabularyIntroduction",

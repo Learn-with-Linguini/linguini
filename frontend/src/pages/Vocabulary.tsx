@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Card, IconButton, Tabs } from "../components/ui";
-import { BookIcon, CameraIcon, CloseIcon, FilterIcon, PlayIcon, SpeakerIcon } from "../components/icons";
+import { BookIcon, CameraIcon, ChevronDownIcon, CloseIcon, FilterIcon, PlayIcon, SpeakerIcon } from "../components/icons";
 import { SceneVisual } from "../components/SceneVisual";
 import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { ErrorState } from "../components/ErrorState";
@@ -30,6 +30,8 @@ export function Vocabulary() {
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
   const { scenes, scenesLoading, scenesError } = useScenesQuery();
   const [view, setView] = useState<"journey" | "list">("journey");
+  // Word lists a learner has opened or closed; scenes start open.
+  const [openScenes, setOpenScenes] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<StatusFilter>("all");
   const [wordClass, setWordClass] = useState<WordClass | "all">("all");
   const [category, setCategory] = useState("all");
@@ -101,16 +103,14 @@ export function Vocabulary() {
 
   return <div className="stack vocabulary-page revisit-page">
     <header className="vocabulary-page__header">
-      <div><h1>Revisit</h1><p className="muted">Come back to the places and words you’ve learned.</p></div>
-      {hasRevisitHistory ? <Button variant="secondary" className="vocabulary-page__view-toggle" aria-pressed={view === "list"} onClick={() => {
+      <div><h1>Revisit</h1><p className="muted">Come back to your moments</p></div>
+      {hasRevisitHistory ? <Button variant="secondary" className="vocabulary-page__view-toggle" aria-label={view === "journey" ? "Show vocabulary list" : "Show scene list"} aria-pressed={view === "list"} onClick={() => {
         const nextView = view === "journey" ? "list" : "journey";
         trackAction("vocabulary_view_toggled", { view: nextView });
         setView(nextView);
       }}>
-        <span className="vocabulary-page__view-icon" aria-hidden="true">
-          {view === "journey" ? <BookIcon size={22} /> : <CameraIcon size={22} />}
-        </span>
-        <span>{view === "journey" ? "Vocabulary List" : "Scenes"}</span>
+        {view === "journey" ? <BookIcon size={22} /> : <CameraIcon size={22} />}
+        <span className="vocabulary-page__view-label">{view === "journey" ? "Vocabulary list" : "Scene list"}</span>
       </Button> : null}
     </header>
 
@@ -122,6 +122,8 @@ export function Vocabulary() {
         const scenario = scenarioByAsset.get(scene.id);
         const unfinished = scenario?.status === "in-progress";
         const startsSecondColumn = index === Math.ceil(sceneGroups.length / 2);
+        const open = openScenes[scene.id] ?? true;
+        const wordsId = `revisit-words-${scene.id}`;
         return <section key={scene.id} className={`revisit-stop${startsSecondColumn ? " revisit-stop--column-start" : ""}`}>
           <div className="revisit-stop__card">
             <div className="revisit-stop__image">
@@ -147,9 +149,13 @@ export function Vocabulary() {
                   trackAction("scene_vocabulary_review_started", { sessionId: scenario.sessionId });
                   navigate(`/practice/sessions/${scenario.sessionId}/review`);
                 }}><BookIcon size={16} /> Review words</Button> : null}
+                <IconButton className="revisit-stop__toggle" label={`${open ? "Hide" : "Show"} ${scene.title} words`} aria-expanded={open} aria-controls={wordsId} onClick={() => {
+                  trackAction("revisit_scene_toggled", { mediaAssetId: scene.id, expanded: !open });
+                  setOpenScenes(current => ({ ...current, [scene.id]: !open }));
+                }}><ChevronDownIcon size={20} /></IconButton>
               </div>
               {revisitError?.assetId === scene.id ? <p role="alert" className="small">{revisitError.message}</p> : null}
-              <div className="vocabulary-scene__words">{words.map((item) => {
+              <div id={wordsId} className="vocabulary-scene__words" hidden={!open}>{words.map((item) => {
                 const spokenWord = vocabularyLabel(item);
                 return <div key={item.id} className="vocabulary-scene__word">
                   <span><strong>{spokenWord}</strong><small>{item.translation}</small></span><IconButton label={`Hear ${spokenWord}`} onClick={() => { trackAction("vocabulary_audio_played", { word: spokenWord }); speak(spokenWord, learner.languageCode); }}><SpeakerIcon size={18} /></IconButton>

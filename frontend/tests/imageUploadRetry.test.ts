@@ -278,6 +278,37 @@ test("camera capture uploads a JPEG with camera provenance and stops the webcam"
   }
 });
 
+test("touch devices open the device camera instead of the live preview", async () => {
+  let cameraRequested = false;
+  mockCamera(async () => { cameraRequested = true; return { getTracks: () => [] }; });
+  (window as unknown as { matchMedia: unknown }).matchMedia = (query: string) => ({ matches: query === "(pointer: coarse)" });
+  const view = await mount();
+  try {
+    const input = view.container.querySelector<HTMLInputElement>('input[capture="environment"]');
+    assert.ok(input);
+    let opened = 0;
+    input.click = () => { opened++; };
+    await act(async () => button(view.container, "Open camera").click());
+    assert.equal(opened, 1, "the device's camera app opens");
+    assert.equal(view.container.querySelector("dialog"), null, "the live preview stays closed");
+    assert.equal(cameraRequested, false, "no browser camera permission is requested");
+    Object.defineProperty(input, "files", { value: [new File(["photo"], "photo.jpg", { type: "image/jpeg" })], configurable: true });
+    await act(async () => { input.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
+    await waitForUpload(view);
+    assert.equal(view.uploaded.length, 1);
+    assert.equal(requests.find(request => request.path.endsWith("/upload-url"))?.body?.source, "camera");
+  } finally {
+    delete (window as unknown as { matchMedia?: unknown }).matchMedia;
+  }
+});
+
+async function waitForUpload(view: { uploaded: unknown[] }) {
+  const deadline = Date.now() + 2_000;
+  while (!view.uploaded.length && Date.now() < deadline) {
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+  }
+}
+
 test("closing a pending permission request stops a camera granted afterwards without uploading", async () => {
   let grant!: (stream: unknown) => void;
   let stopped = 0;

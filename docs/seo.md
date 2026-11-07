@@ -125,7 +125,7 @@ queries. Add a page only when it offers a distinct, useful lesson or explanation
 Publish original product examples; seek relevant links from course pages and
 project profiles using the canonical site URL.
 
-In GA4, compare organic landing pages with `guest_preview_started`,
+In GA4, compare organic landing pages with `guest_demo_scene_selected`,
 `guest_demo_signup_clicked`, `signup_submitted` and completed Google sign-ins.
 These events indicate actions, not necessarily verified new accounts. The new
 `marketing_language_link` event measures comparison-article links to language

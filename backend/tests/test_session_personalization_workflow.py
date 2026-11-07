@@ -228,14 +228,19 @@ def test_next_session_revisits_missed_words_and_keeps_saved_summary_private(cura
     assert words[0].target_text == "la taza"
     assert words[-1].target_text == "la mesa"
     assert {word.translation for word in words[1:-1]} == {"red", "on"}
-    expected_question_ids = [f"word-{word.learning_key}" for word in words]
-    expected_question_ids.extend([
+    ids = [question.question_id for question in introduction.public_content.questions]
+    # Word questions follow the personalized order; article checks are mixed in after them.
+    assert [qid for qid in ids if qid.startswith("word-")] == [
+        f"word-{word.learning_key}" for word in words
+    ]
+    assert sorted(qid for qid in ids if qid.startswith("article-")) == sorted([
         f"article-{words[0].learning_key}",
         f"article-{words[-1].learning_key}",
     ])
-    assert [
-        question.question_id for question in introduction.public_content.questions
-    ] == expected_question_ids
+    for word in (words[0], words[-1]):
+        assert ids.index(f"article-{word.learning_key}") > (
+            ids.index(f"word-{word.learning_key}")
+        )
     history = _assert_private_grammar_only(records, owner, profile)
     observed = {word["term"]: word for word in history["words"]}
     assert observed["taza"]["lastOutcome"] == "incorrect"

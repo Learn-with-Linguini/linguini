@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { BasilReward, Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { ArrowRightIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -19,6 +19,7 @@ import { celebrateAnswer } from "../lib/answerCelebration";
 import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
+import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
 import { clueOpening } from "../lib/ispyClue";
 
 // Matches the server's guesses per clue.
@@ -58,13 +59,12 @@ export function ISpyPhase1() {
   if (!task) return <Navigate to={paths.describe} replace />;
   return <ClueRound key={task.id} task={task} index={index} total={clues.length} describePath={paths.describe}
     skipDescription={!reflection.length} finishLabel={game ? "See results" : "Finish session"}
-    onExit={() => { trackAction("ispy_exit_clicked", { phase: "clues" }); navigate("/home"); }}
     onFinish={finishWithoutDescription} onNext={() => setIndex(value => value + 1)} />;
 }
 
-function ClueRound({ task, index, total, describePath, skipDescription, finishLabel, onExit, onFinish, onNext }: {
+function ClueRound({ task, index, total, describePath, skipDescription, finishLabel, onFinish, onNext }: {
   task: SessionTask; index: number; total: number; describePath: string;
-  skipDescription: boolean; finishLabel: string; onExit: () => void; onFinish: () => void; onNext: () => void;
+  skipDescription: boolean; finishLabel: string; onFinish: () => void; onNext: () => void;
 }) {
   const navigate = useNavigate();
   const scene = useScene();
@@ -74,8 +74,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
   const [missed, setMissed] = useState<string[]>([]);
   const [result, setResult] = useState<TaskActionResult | null>(null);
   const round = task.publicContent.kind === "ispyRound" ? task.publicContent : null;
-  // A0 reads the translation straight away; A2 hears the clue before reading it.
-  const [showTranslation, setShowTranslation] = useState(Boolean(round?.translationShown));
+  const [showTranslation, setShowTranslation] = useState(false);
   const [heard, setHeard] = useState(!round?.listenFirst || taskDone(task));
   const [checking, setChecking] = useState(false);
   const request = useRef<{ answer: string; key: string } | null>(null);
@@ -146,10 +145,14 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       <div className="learning-title-row">
         <div className="vocabulary-flow__title"><h1>Linguini's clues</h1></div>
         <div className="learning-title-actions">
-          {reward ? <XpPill {...reward} /> : null}
-          {!answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
-            onClick={() => void actOnTask(task.id, "skip")}>Skip this task</button> : null}
-          <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+          <div className="learning-title-primary-actions">
+            {content.cheatSheet ? <MissionCheatSheetLauncher missionId={content.cheatSheet.missionId}
+              practiceLevel={content.cheatSheet.practiceLevel} contentVersion={content.cheatSheet.contentVersion}
+              languageCode={scene.languageCode} /> : null}
+            {!answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+              onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
+          </div>
+          {reward ? <div className="learning-title-progress-actions"><XpPill {...reward} /></div> : null}
         </div>
       </div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`Clue ${index + 1} of ${total}`} /></div>
@@ -157,7 +160,8 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     {/* Desktop keeps the photo beside the clue; phones stack them. */}
     <div className="lesson-flow__body">
     <div className="lesson-flow__scene">
-      <ScenePhoto scene={scene} items={optionItems} hideWords
+      <ScenePhoto scene={scene} items={scene.items} hideWords
+        interactiveItemIds={optionItems.map(item => item.id)}
         activeItemId={isCorrect ? selected?.sceneObjectId : null}
         guessItemId={selected?.sceneObjectId}
         onMarkerClick={!answered && !practiceSaving && !checking ? item => {
@@ -171,21 +175,22 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     {!answered ? <h2 className="ispy-instruction">{heard ? "Which object is Linguini describing? Tap its number in the photo." : "Play Linguini's clue, then tap the object it describes."}</h2> : null}
     {/* Linguini beside the bubble, so the clue reads as Linguini speaking. */}
     <div className="ispy-clue-speaker">
-    <img className="ispy-clue-speaker__avatar" src="/apple-touch-icon.png" width={64} height={64} alt="" />
+    <div className="ispy-clue-speaker__controls">
+      <img className="ispy-clue-speaker__avatar" src="/apple-touch-icon.png" width={64} height={64} alt="" />
+      <IconButton label="Hear the clue" onClick={hearClue}><SpeakerIcon /></IconButton>
+    </div>
     <div className="stack-2 ispy-clue-card">
-      <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={hearClue}><SpeakerIcon /></IconButton></div>
       {heard ? <>
       <span className="prompt-translation prompt-translation--with-source">
-        <span className="prompt-translation__source"><h3>{opening} {content.clue}</h3>{content.clueTranslation ? <IconButton className="prompt-translation__toggle" label={showTranslation ? "Hide translation" : "Show translation"} onClick={() => setShowTranslation(value => !value)}>{showTranslation ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}</IconButton> : null}</span>
+        <span className="prompt-translation__source"><h3>{opening} {content.clue}</h3>{content.clueTranslation ? <IconButton className="prompt-translation__toggle" label={showTranslation ? "Hide translation" : "Show translation"} aria-expanded={showTranslation} onClick={() => setShowTranslation(value => { const visible = !value; trackAction("ispy_translation_toggled", { phase: "clues", visible }); return visible; })}>{showTranslation ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}</IconButton> : null}</span>
         {content.clueTranslation && showTranslation ? <span className="small muted">{content.clueTranslation}</span> : null}
       </span>
       </> : <div className="stack-2" data-testid="listen-first">
-        <div className="spread"><Button variant="secondary" onClick={hearClue}><SpeakerIcon /> Play the clue</Button>
-          <Button variant="quiet" onClick={() => { trackAction("ispy_clue_text_revealed", { taskId: task.id }); setHeard(true); }}>Show the clue</Button></div>
+        <Button variant="quiet" onClick={() => { trackAction("ispy_clue_text_revealed", { taskId: task.id }); setHeard(true); }}>Show the clue</Button>
       </div>}
     </div>
     </div>
-    <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} showCheatSheet={false} />
     </section>
     {checking ? <InlineLoader compact label="Checking your answer" /> : null}
     {answered || result ? <>

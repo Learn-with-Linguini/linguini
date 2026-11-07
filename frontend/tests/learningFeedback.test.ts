@@ -657,6 +657,30 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   assert.equal(requests.length, 1);
 });
 
+test("reopening word review resumes at the saved typing step instead of an earlier question", async () => {
+  vocabularySaved = [{ questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 }];
+  dom.window.localStorage.setItem("linguini:vocabulary-step:t1", JSON.stringify({ stage: "typing", index: 0 }));
+  try {
+    await mount(vocabularyTask());
+    await waitFor(() => assert.ok(dom.window.document.querySelector('input[aria-label="Type cup"]')));
+    assert.equal(button("cup"), undefined);
+    assert.equal(requests.length, 0);
+  } finally {
+    dom.window.localStorage.removeItem("linguini:vocabulary-step:t1");
+  }
+});
+
+test("a saved step the server answers do not back up is ignored", async () => {
+  dom.window.localStorage.setItem("linguini:vocabulary-step:t1", JSON.stringify({ stage: "typing", index: 0 }));
+  try {
+    await mount(vocabularyTask());
+    await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+    assert.equal(dom.window.document.querySelector('input[aria-label="Type cup"]'), null);
+  } finally {
+    dom.window.localStorage.removeItem("linguini:vocabulary-step:t1");
+  }
+});
+
 test("an accent-only typing answer is accepted with yellow guidance", async () => {
   const task = vocabularyTask();
   if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");

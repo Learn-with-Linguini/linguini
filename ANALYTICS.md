@@ -66,7 +66,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
-* `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson
+* `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson, with the prize ranking and community board
+* `/ispy/chefs` — Today's full Chefs of the Day leaderboard
 * `/ispy/friends` — Persistent private I-Spy chats and invitation preview
 * `/ispy/friends/:chatId` — Photo rounds, clues, guesses and completed-round history
 * `/rooms` — Active and previous multiplayer rooms list
@@ -92,8 +93,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `photo_camera_opened` | — | User opens the live camera preview |
-| `photo_camera_captured` | — | A JPEG photo is captured for the existing upload flow |
+| `photo_camera_opened` | `{ camera? }` | User opens the live camera preview on desktop, or the device's own camera app on a touch device (`camera: "device"`) |
+| `photo_camera_captured` | `{ camera? }` | A photo is captured for the existing upload flow; `camera: "device"` when it came from the device's own camera app |
 | `photo_camera_cancelled` | — | User closes the preview with Cancel or Escape |
 | `photo_camera_failed` | `{ reason }` | Camera API unavailable, browser error name, or `capture_failed`; no image data is tracked |
 
@@ -127,7 +128,6 @@ The existing analysis and review routes show this progress; no new page is added
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the guest photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
 | `google_signin_completed` | — | Google ID token is successfully exchanged for a Supabase session |
@@ -135,7 +135,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `forgot_password_requested` | — | User submits email to request password reset link |
 | `password_reset_completed` | — | User submits and sets a new password on `/reset-password` |
 | `profile_password_changed` | — | Authenticated user changes password from Profile page |
-| `logout_clicked` | — | User clicks "Log Out" in Profile |
+| `profile_locked_badges_toggled` | `{ open, count }` | User opens or closes the locked Chef Badges list on the Profile page |
+| `profile_note_toggled` | `{ note, open }` | User opens or closes the "How AI helps" or "Your privacy" note on the Profile page |
+| `logout_clicked` | — | User clicks "Log out" in Profile |
 | `account_deleted` | — | User confirms account deletion request |
 
 ### Onboarding & Setup
@@ -167,6 +169,8 @@ The existing analysis and review routes show this progress; no new page is added
 | `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo; the selection is checked immediately |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
+| `task_back_clicked` | `{ taskId }` | Learner taps the brand-bar back button mid-task and returns to the task list |
+| `task_list_back_clicked` | — | Learner taps the brand-bar back button on the task list and returns to home |
 | `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
 | `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
 | `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
@@ -192,6 +196,7 @@ The existing analysis and review routes show this progress; no new page is added
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
+| `ispy_translation_toggled` | `{ phase, visible }` | Learner shows or hides an I-Spy translation |
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
 | `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker", guess }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages; `guess` is 1–3, since each clue allows three different guesses |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
@@ -200,9 +205,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `ispy_word_bank_word_added` | `{ learnerLevel, kind }` | Learner taps a word bank word on the I-Spy "Your turn" page to add it to their clue; `kind` is `noun`, `adjective`, `preposition` or `unknown` for older word banks |
 | `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
 | `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
-| `ispy_exit_clicked` | `{ phase: "clues" \| "describe" }` | Learner exits an active I-Spy round back to Home |
 | `describe_round_skipped` | `{ mode }` | Session skips the describing round because there is no reflection task and proceeds to results |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
+| `ispy_finish_clicked` | `{ outcome, last }` | Learner taps "Finish I-Spy" on an unconfirmed guess; the object is skipped and the next object (or the summary, when `last`) opens |
 | `room_created` | — | User creates a new multiplayer room |
 | `room_joined` | — | User joins a friend's room using a room code |
 | `room_friend_invited` | — | User creates a friend invitation code/link |
@@ -261,7 +266,10 @@ or private-help content. Private help and audio activity do not enter the shared
 | `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
 | `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
 | `home_chef_standings_clicked` | — | Learner opens the daily Basil leaderboard from the Home standings card |
+| `home_daily_challenge_clicked` | `{ sceneKey, status }` | Learner opens or resumes the daily challenge from Home |
+| `play_section_nav_clicked` | `{ section }` | Learner uses the phone Play page section navigation |
 | `daily_challenge_start_clicked` | `{ sceneKey }` | User opens today's daily challenge from the Play tab |
+| `daily_challenge_details_clicked` | `{ sceneKey }` | User opens the prizes and community board from the Play page challenge summary |
 | `daily_challenge_resumed` | `{ sceneKey }` | User continues an unfinished daily challenge session from the Play tab |
 | `daily_challenge_photo_uploaded` | `{ sceneKey, assetId }` | User uploads or captures a photo for today's challenge |
 | `daily_challenge_session_started` | `{ sceneKey, assetId }` | User starts a lesson session tagged as today's challenge entry |
@@ -274,6 +282,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `journal_entry_viewed` | `{ entryId }` | User clicks an existing journal entry to read |
 | `journal_entry_saved` | `{ hasPhotos, wordCount, isNew }` | Daily journal entry saved or updated |
 | `vocabulary_view_toggled` | `{ view }` | Switched between journey tree and list views |
+| `revisit_scene_toggled` | `{ mediaAssetId, expanded }` | Learner opens or closes a scene's word list on the Revisit page |
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
 | `revisit_lesson_started` | `{ mediaAssetId, previousSessionId, sessionId }` | Learner taps Revisit on a photo card and a new lesson on the same photo is created (or its unfinished one resumed); `previousSessionId` is the card's latest lesson |
 | `scene_practice_continued` | `{ sessionId }` | Learner taps Continue on a Revisit photo card with an unfinished lesson |
@@ -299,6 +308,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `mission_cheatsheet_opened` | `{ missionId, practiceLevel, contentVersion, languageCode }` | Learner opens a mission cheatsheet from an active task |
+| `mission_cheatsheet_closed` | `{ missionId, practiceLevel, contentVersion, languageCode, method }` | Learner closes a mission cheatsheet with Escape, a backdrop tap, or a downward drag |
 | `mission_cheatsheet_audio_played` | `{ languageCode, conceptId }` | Learner plays a target-language example from a cheatsheet |
 
 ### Feedback, Support & Social
@@ -335,7 +345,7 @@ Below are the 4 primary funnels designed around Linguini's user journey, followe
 | Step | Step Name | Event / Condition |
 | :--- | :--- | :--- |
 | **Step 1** | Landed on Marketing Page | Event: `page_view`<br>Parameter: `page_location` equals `https://www.learnwithlinguini.com/` (or page_path = `/`) |
-| **Step 2** | Engaged with Demo or Auth CTA | Event is one of:<br>• `demo_stage_viewed`<br>• `pricing_cta_clicked`<br>• `guest_demo_scene_selected`<br>• `guest_preview_started` |
+| **Step 2** | Engaged with Demo or Auth CTA | Event is one of:<br>• `demo_stage_viewed`<br>• `pricing_cta_clicked`<br>• `guest_demo_scene_selected` |
 | **Step 3** | Visited Sign Up / Login | Event: `page_view`<br>Parameter: `page_path` matches regex `^/login.*` |
 | **Step 4** | Submitted Registration | Event is one of:<br>• `signup_submitted`<br>• `google_signin_completed` |
 | **Step 5** | Completed Onboarding | Event: `onboarding_completed` |

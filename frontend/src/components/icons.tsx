@@ -95,7 +95,7 @@ export const MicIcon = ({ size = 22, className }: IconProps) => (
 );
 
 export const SpeakerIcon = ({ size = 22, className }: IconProps) => (
-  <svg {...base(size)} className={className}>
+  <svg {...base(size)} className={["speaker-icon", className].filter(Boolean).join(" ")}>
     <path d="M5 9.5h3l4-3v11l-4-3H5z" />
     <path d="M16 9.2a4 4 0 0 1 0 5.6" />
   </svg>

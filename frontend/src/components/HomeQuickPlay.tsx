@@ -74,8 +74,8 @@ export function HomeQuickPlay({ owner, profileId }: { owner: string; profileId: 
     <button type="button" className="home-quick-play__open" disabled={starting || loading || Boolean(loadError) || empty || !profileId}
       aria-label={current ? "Continue your I-Spy game" : "Start I-Spy with your photo"} aria-busy={starting || loading} onClick={() => void play()}>
       <div className="home-explore-card__image">{assetId && title ? <MediaImage assetId={assetId} title={title} width={640} lazy /> :
-        <div className="home-quick-play__placeholder" aria-hidden="true"><EyeIcon size={40} /></div>}</div>
-      <div className="home-explore-card__body"><span className="home-tag home-tag--play"><EyeIcon size={14} /> Quick play</span>
+        <div className="home-quick-play__placeholder" aria-hidden="true"><EyeIcon size={40} /></div>}<span className="home-tag home-tag--play"><EyeIcon size={14} /> Quick play</span></div>
+      <div className="home-explore-card__body">
         <strong>{current ? "Continue your I-Spy" : "I-Spy challenge"}</strong>
         <span>{!ready ? "Choose a learning language in Profile" : starting ? "Setting up your game…" : loading ? "Loading your photo…" : loadError ? "Your photo is unavailable" : empty ? "Add a photo to play" : title}</span>
       </div>
