@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Ravioli character holding a flag">
+  <title>Ravioli character holding a flag</title>
+  
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFE36A"/>
+    <stop offset="0.52" stop-color="#FFD84A"/>
+    <stop offset="1" stop-color="#FFAE16"/>
+  </linearGradient>
+  <linearGradient id="goldDeep" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFD458"/>
+    <stop offset="1" stop-color="#F58B2D"/>
+  </linearGradient>
+  <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A9D7B6"/>
+    <stop offset="1" stop-color="#85BEA4"/>
+  </linearGradient>
+  <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#4C4649"/>
+    <stop offset="0.55" stop-color="#17181B"/>
+    <stop offset="1" stop-color="#302A2E"/>
+  </linearGradient>
+  <filter id="softShadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#9B3E1E" flood-opacity="0.2"/>
+  </filter>
+</defs>
+
+  
+<g filter="url(#softShadow)">
+  <path d="M143 330c0-118 78-209 180-209 103 0 185 88 185 209 0 100-69 181-185 181-114 0-180-79-180-181z" fill="url(#gold)" stroke="#F26A32" stroke-width="17"/>
+  <path d="M165 278c35-60 89-95 158-104 72 5 125 37 159 96" fill="none" stroke="#FFE574" stroke-width="14" stroke-linecap="round" opacity=".7"/>
+  <path d="M151 372c-42 3-76-30-75-72 1-38 26-68 63-74" fill="none" stroke="#F26A32" stroke-width="14" stroke-linecap="round"/>
+  <path d="M82 223V86" stroke="#F26A32" stroke-width="15" stroke-linecap="round"/>
+  <path d="M89 91c51-13 88 15 127 2v78c-44 13-78-15-127-2z" fill="#F35A37" stroke="#F26A32" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="289" cy="319" r="11" fill="#B9533D"/><circle cx="358" cy="319" r="11" fill="#B9533D"/>
+  <path d="M301 352c14 17 31 17 45 0" fill="none" stroke="#B9533D" stroke-width="11" stroke-linecap="round"/>
+  <path d="M461 376c30 4 48 25 53 56" fill="none" stroke="#F26A32" stroke-width="13" stroke-linecap="round"/>
+</g>
+</svg>

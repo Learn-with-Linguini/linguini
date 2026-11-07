@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Curved macaroni character">
+  <title>Curved macaroni character</title>
+  
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFE36A"/>
+    <stop offset="0.52" stop-color="#FFD84A"/>
+    <stop offset="1" stop-color="#FFAE16"/>
+  </linearGradient>
+  <linearGradient id="goldDeep" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFD458"/>
+    <stop offset="1" stop-color="#F58B2D"/>
+  </linearGradient>
+  <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A9D7B6"/>
+    <stop offset="1" stop-color="#85BEA4"/>
+  </linearGradient>
+  <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#4C4649"/>
+    <stop offset="0.55" stop-color="#17181B"/>
+    <stop offset="1" stop-color="#302A2E"/>
+  </linearGradient>
+  <filter id="softShadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#9B3E1E" flood-opacity="0.2"/>
+  </filter>
+</defs>
+
+  
+<g filter="url(#softShadow)">
+  <path d="M191 130c78-59 200-35 260 48 69 97 58 225-21 305-77 78-210 78-286-1-54-56-70-141-43-214 18-50 48-95 90-138z" fill="url(#goldDeep)" stroke="#F26A32" stroke-width="17"/>
+  <path d="M209 133c55-37 117-42 174-14-50 15-91 51-117 103-29-20-57-49-57-89z" fill="#FFFDF2" stroke="#F26A32" stroke-width="15"/>
+  <path d="M224 113c25-40 67-54 107-39 34 13 56 48 55 85-1 43-33 78-73 85-38 6-77-15-94-51" fill="url(#gold)" stroke="#F26A32" stroke-width="16"/>
+  <path d="M252 102c29-19 68-7 78 25 9 30-11 60-41 65-27 4-51-15-55-39" fill="#FFFDF2" stroke="#F26A32" stroke-width="13"/>
+  <path d="M144 313c-8 70 22 134 79 170" fill="none" stroke="#FFCB4A" stroke-width="14" stroke-linecap="round" opacity=".55"/>
+  <circle cx="352" cy="290" r="11" fill="#B9533D"/><circle cx="401" cy="303" r="11" fill="#B9533D"/>
+  <path d="M359 331c12 15 28 18 43 7" fill="none" stroke="#B9533D" stroke-width="10" stroke-linecap="round"/>
+</g>
+</svg>

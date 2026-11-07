@@ -961,6 +961,31 @@ class PostgresWorkflowRepository:
             get_mission(*task.public_content.mission_key)
             if task.public_content.mission_key else None
         )
+        # Tasks stored before evaluation metadata covered every question grade
+        # normally but report an unassessed outcome (same as review_details).
+        outcome = (
+            QuestionOutcome(
+                question_id=question_id,
+                outcome="correct" if is_correct else "incorrect",
+                objective_id=evaluation.objective_id,
+                target_ids=evaluation.target_ids,
+                evidence_type=evaluation.evidence_type,
+                assistance=supports,
+                assistance_used=any(
+                    mission is None or mission.counts_as_assistance(item) for item in supports
+                ),
+            )
+            if evaluation
+            else QuestionOutcome(
+                question_id=question_id,
+                outcome="unassessed",
+                evidence_type=default_evidence(question),
+                assistance=supports,
+                assistance_used=any(
+                    mission is None or mission.counts_as_assistance(item) for item in supports
+                ),
+            )
+        )
         return LessonAnswerCheck(
             basil_earned=(stored or {}).get("basilEarned", 0),
             question_id=question_id,
@@ -971,22 +996,7 @@ class PostgresWorkflowRepository:
             feedback=feedback,
             wrong_field=wrong_field,
             assistance_steps_used=list((stored or {}).get("assistance", [])),
-            outcome=QuestionOutcome(
-                question_id=question_id,
-                outcome=(
-                    "unassessed" if evaluation is None
-                    else "correct" if is_correct else "incorrect"
-                ),
-                objective_id=evaluation.objective_id if evaluation else None,
-                target_ids=evaluation.target_ids if evaluation else [],
-                evidence_type=(
-                    evaluation.evidence_type if evaluation else default_evidence(question)
-                ),
-                assistance=supports,
-                assistance_used=any(
-                    mission is None or mission.counts_as_assistance(item) for item in supports
-                ),
-            ),
+            outcome=outcome,
         )
 
     def check_lesson_answer(self, task_id, question_id, answer):

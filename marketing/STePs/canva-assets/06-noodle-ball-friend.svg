@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Noodle ball character">
+  <title>Noodle ball character</title>
+  
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFE36A"/>
+    <stop offset="0.52" stop-color="#FFD84A"/>
+    <stop offset="1" stop-color="#FFAE16"/>
+  </linearGradient>
+  <linearGradient id="goldDeep" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFD458"/>
+    <stop offset="1" stop-color="#F58B2D"/>
+  </linearGradient>
+  <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A9D7B6"/>
+    <stop offset="1" stop-color="#85BEA4"/>
+  </linearGradient>
+  <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#4C4649"/>
+    <stop offset="0.55" stop-color="#17181B"/>
+    <stop offset="1" stop-color="#302A2E"/>
+  </linearGradient>
+  <filter id="softShadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#9B3E1E" flood-opacity="0.2"/>
+  </filter>
+</defs>
+
+  
+<g filter="url(#softShadow)">
+  <circle cx="320" cy="326" r="220" fill="url(#gold)" stroke="#F26A32" stroke-width="17"/>
+  <path d="M172 277c-42-58 32-121 88-82 33-64 132-41 130 33 70-20 108 64 61 111" fill="none" stroke="#F7942D" stroke-width="17" stroke-linecap="round"/><path d="M153 343c-53-21-49-100 10-115 2-68 100-89 132-30 48-52 137-6 119 65" fill="none" stroke="#F7942D" stroke-width="17" stroke-linecap="round"/><path d="M177 403c-66-17-64-110 2-127 1-69 100-93 137-36 46-45 125-1 107 61" fill="none" stroke="#F7942D" stroke-width="17" stroke-linecap="round"/><path d="M210 449c-58-32-35-122 31-119 21-61 116-58 133 7 58-16 92 58 55 100" fill="none" stroke="#F7942D" stroke-width="17" stroke-linecap="round"/><path d="M251 166c34-71 142-51 149 29 62 5 76 91 20 118" fill="none" stroke="#F7942D" stroke-width="17" stroke-linecap="round"/><path d="M238 238c33-42 100-23 105 30 48 2 66 62 35 94" fill="none" stroke="#F7942D" stroke-width="17" stroke-linecap="round"/>
+  <circle cx="287" cy="345" r="11" fill="#B9533D"/><circle cx="354" cy="345" r="11" fill="#B9533D"/>
+  <path d="M299 376c15 18 31 18 47 0" fill="none" stroke="#B9533D" stroke-width="11" stroke-linecap="round"/>
+</g>
+</svg>
