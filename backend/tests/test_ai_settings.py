@@ -182,6 +182,7 @@ def test_default_file_holds_the_measured_defaults():
     assert translation.provider is AiProvider.OPENAI
     assert translation.model_name == "gpt-5.4-mini"
     assert translation.timeout_seconds == 60
+    assert translation.max_output_tokens == 4000
 
     learning = settings.learning_task
     assert learning.provider is AiProvider.OPENAI

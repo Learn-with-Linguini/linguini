@@ -78,7 +78,9 @@ api = "responses"
 model = "gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
 credentials = ["openai-1", "openai-2", "openai-3"]
-defaults = { timeout_seconds = 60, max_retries = 1 }
+# Larger scenes can exceed the shared 1,500-token default when every object,
+# attribute and relationship is returned as structured translation JSON.
+defaults = { timeout_seconds = 60, max_output_tokens = 4000, max_retries = 1 }
 
 [deployments.lessons-gpt-5-4-mini]
 adapter = "openai"
