@@ -301,6 +301,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `mission_cheatsheet_opened` | `{ missionId, practiceLevel, contentVersion, languageCode }` | Learner opens a mission cheatsheet from an active task |
+| `mission_cheatsheet_closed` | `{ missionId, practiceLevel, contentVersion, languageCode, method }` | Learner closes a mission cheatsheet with Escape, a backdrop tap, or a downward drag |
 | `mission_cheatsheet_audio_played` | `{ languageCode, conceptId }` | Learner plays a target-language example from a cheatsheet |
 
 ### Feedback, Support & Social

@@ -4942,6 +4942,17 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
+.learning-title-primary-actions,
+.learning-title-progress-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.speaker-icon {
+  color: var(--tomato);
+}
+
 .learning-exit {
   flex: none;
   gap: var(--space-1);
@@ -4974,8 +4985,7 @@ p[role="alert"]::before { content: "!"; }
   align-self: start;
 }
 
-/* Phones: the title takes the first line, then the question count shares a line with the
-   task's actions so they never wrap into a row of their own above the bar. */
+/* Phones: Help stays beside the title; Skip shares the count row so the bar stays full width. */
 @media (max-width: 520px) {
   .vocabulary-flow__header {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -4991,7 +5001,8 @@ p[role="alert"]::before { content: "!"; }
   }
 
   .vocabulary-flow__header .vocabulary-flow__title {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .vocabulary-flow__title h1 {
@@ -4999,8 +5010,19 @@ p[role="alert"]::before { content: "!"; }
   }
 
   .vocabulary-flow__header .learning-title-row > :not(.vocabulary-flow__title) {
+    display: contents;
+  }
+
+  .vocabulary-flow__header .learning-title-primary-actions {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .vocabulary-flow__header .learning-title-progress-actions {
     grid-column: 2;
     grid-row: 2;
+    justify-self: end;
   }
 
   .vocabulary-flow__header .trail__label {
@@ -5320,7 +5342,7 @@ p[role="alert"]::before { content: "!"; }
   color: var(--ink);
 }
 
-/* Pill beside the lesson title, sized like the mission Help button next to it */
+/* Skip stays a compact pill beside the question count. */
 .vocabulary-flow__skip-pill {
   flex: none;
   align-self: center;

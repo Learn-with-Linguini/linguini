@@ -144,7 +144,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   const earnedText = basilEarnedText(actionResult?.basilEarned);
   return <div className="stack">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{taskTitle(task)}</h1></div>{!terminal ? <TaskSkipPill task={task} onSkipped={onNext} /> : null}</div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{taskTitle(task)}</h1></div><div className="learning-title-actions"><div className="learning-title-primary-actions">{!terminal ? <TaskSkipPill task={task} onSkipped={onNext} /> : null}</div></div></div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={1} total={1} label="Question 1 of 1" /></div>
     </div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
@@ -483,12 +483,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div>{revisiting ? <LearningExit onExit={onExit} label="Back to vocabulary" />
-        : !terminal ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions">
+        {revisiting ? <div className="learning-title-primary-actions"><LearningExit onExit={onExit} label="Back to vocabulary" /></div> : null}
+        <div className="learning-title-primary-actions">{!revisiting && !terminal ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
           aria-describedby={`vocabulary-skip-${task.id}`} onClick={() => {
             trackAction("vocabulary_skip_prompted", { taskId: task.id, stage });
             setConfirmingSkip(true);
           }}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}</div>
+      </div></div>
       {!terminal && !revisiting ? <p id={`vocabulary-skip-${task.id}`} className="visually-hidden">Skip the whole word activity and return to the task list.</p> : null}
       <div className="vocabulary-flow__progress">{/* Cards count slides; the quiz and typing count questions. */}
         {stage === "review" && pageCount > 0
@@ -976,7 +978,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
 
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><div className="learning-title-primary-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div></div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /></div>
     </div>
     {/* Desktop keeps the question's photo beside the question; phones stack them. */}
@@ -1316,7 +1318,7 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
   const showsScene = plainPhoto || markerPhoto || Boolean(question?.displayCount || question?.sceneObjectId);
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div><div className="learning-title-actions"><div className="learning-title-primary-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} />{!terminal ? <TaskSkipPill task={task} disabled={checking} onSkipped={onNext} /> : null}</div></div></div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /></div>
     </div>
     {/* Desktop keeps the question's photo beside the question; phones stack them. */}

@@ -19,6 +19,7 @@ import { celebrateAnswer } from "../lib/answerCelebration";
 import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
+import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
 import { clueOpening } from "../lib/ispyClue";
 
 // Matches the server's guesses per clue.
@@ -146,10 +147,17 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       <div className="learning-title-row">
         <div className="vocabulary-flow__title"><h1>Linguini's clues</h1></div>
         <div className="learning-title-actions">
-          {reward ? <XpPill {...reward} /> : null}
-          {!answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
-            onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
-          <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+          <div className="learning-title-primary-actions">
+            {content.cheatSheet ? <MissionCheatSheetLauncher missionId={content.cheatSheet.missionId}
+              practiceLevel={content.cheatSheet.practiceLevel} contentVersion={content.cheatSheet.contentVersion}
+              languageCode={scene.languageCode} /> : null}
+            {!answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+              onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
+          </div>
+          <div className="learning-title-progress-actions">
+            {reward ? <XpPill {...reward} /> : null}
+            <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+          </div>
         </div>
       </div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`Clue ${index + 1} of ${total}`} /></div>
@@ -185,7 +193,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       </div>}
     </div>
     </div>
-    <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} showCheatSheet={false} />
     </section>
     {checking ? <InlineLoader compact label="Checking your answer" /> : null}
     {answered || result ? <>

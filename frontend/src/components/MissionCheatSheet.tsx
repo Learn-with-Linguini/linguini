@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMissionCheatSheet, type MissionCheatSheet } from "../lib/api";
 import { trackAction } from "../lib/analytics";
@@ -23,6 +23,9 @@ export function MissionCheatSheetLauncher({
   onOpen?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef<number | null>(null);
   const available = Boolean(missionId && practiceLevel && contentVersion);
   const sheet = useQuery({
     queryKey: queryKeys.missionCheatSheet(
@@ -39,21 +42,45 @@ export function MissionCheatSheetLauncher({
     staleTime: Infinity,
   });
 
-  const close = () => setOpen(false);
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
-
   const tracking = {
     missionId,
     practiceLevel,
     contentVersion,
     languageCode,
+  };
+  const close = (method: "escape" | "backdrop" | "drag") => {
+    setOpen(false);
+    setDragging(false);
+    setDragOffset(0);
+    trackAction("mission_cheatsheet_closed", { ...tracking, method });
+  };
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close("escape");
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  const beginDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (window.matchMedia("(min-width: 680px)").matches) return;
+    dragStart.current = event.clientY;
+    setDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStart.current === null) return;
+    setDragOffset(Math.max(0, event.clientY - dragStart.current));
+  };
+  const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStart.current === null) return;
+    const distance = Math.max(0, event.clientY - dragStart.current);
+    dragStart.current = null;
+    setDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (distance >= 96) close("drag");
+    else setDragOffset(0);
   };
 
   if (!available) return null;
@@ -68,11 +95,16 @@ export function MissionCheatSheetLauncher({
       <HelpIcon size={22} />
       <span>Help</span>
     </button>
-    {open ? <div className="cheatsheet-backdrop" onMouseDown={event => {
-      if (event.target === event.currentTarget) close();
+    {open ? <div className="cheatsheet-backdrop" onPointerDown={event => {
+      if (event.target === event.currentTarget) close("backdrop");
     }}>
-      <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-label="Mission cheatsheet">
-        <div className="cheatsheet-sheet__handle" aria-hidden="true" />
+      <section className={`cheatsheet-sheet${dragging ? " cheatsheet-sheet--dragging" : ""}`}
+        style={{ transform: `translateY(${dragOffset}px)` }} role="dialog" aria-modal="true" aria-label="Mission cheatsheet">
+        <div className="cheatsheet-sheet__drag-zone" aria-hidden="true"
+          onPointerDown={beginDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
+          <div className="cheatsheet-sheet__handle" />
+        </div>
+        <div className="cheatsheet-sheet__content">
         {sheet.isLoading ? <InlineLoader label="Opening your mission guide" /> : null}
         {sheet.isError ? <div className="cheatsheet-unavailable" role="status">
           <h3>This cheatsheet is still being prepared</h3>
@@ -85,6 +117,7 @@ export function MissionCheatSheetLauncher({
               key={concept.sectionId ?? concept.conceptId} concept={concept} languageCode={sheet.data.languageCode}
               textDirection={sheet.data.textDirection} />)}
           </div></> : null}
+        </div>
       </section>
     </div> : null}
   </>;

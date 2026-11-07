@@ -19,6 +19,7 @@ import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
+import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
 import { clueExample, clueOpening } from "../lib/ispyClue";
 
 export function ISpyPhase2() {
@@ -180,9 +181,16 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       <div className="learning-title-row">
         <div className="vocabulary-flow__title"><h1>Your Clues</h1></div>
         <div className="learning-title-actions">
-          {hydrated && !answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
-            onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
-          <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+          <div className="learning-title-primary-actions">
+            {content.cheatSheet ? <MissionCheatSheetLauncher missionId={content.cheatSheet.missionId}
+              practiceLevel={content.cheatSheet.practiceLevel} contentVersion={content.cheatSheet.contentVersion}
+              languageCode={scene.languageCode} /> : null}
+            {hydrated && !answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+              onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
+          </div>
+          <div className="learning-title-progress-actions">
+            <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+          </div>
         </div>
       </div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`Object ${index + 1} of ${total}`} /></div>
@@ -204,7 +212,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       <strong className="ispy-target-card__word" lang={scene.languageCode}>{content.targetPhrase ?? target?.word}</strong>
       <span className="ispy-target-card__meaning">{target?.translation}</span>
     </div>
-    <ISpyLevelHelp support={content} languageCode={scene.languageCode} onPick={locked ? undefined : addWord}
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} showCheatSheet={false} onPick={locked ? undefined : addWord}
       canPick={word => !mentionsTarget(word, content.avoidWords ?? [])} />
     {/* The clue carries on from the I-Spy opener, so the opener labels the field. */}
     <div className="field"><label className="field__label ispy-clue-opening" htmlFor="reflection">
