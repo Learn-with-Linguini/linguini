@@ -181,7 +181,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
         <div className="vocabulary-flow__title"><h1>Your Clues</h1></div>
         <div className="learning-title-actions">
           {hydrated && !answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
-            onClick={() => void actOnTask(task.id, "skip")}>Skip this task</button> : null}
+            onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
           <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
         </div>
       </div>

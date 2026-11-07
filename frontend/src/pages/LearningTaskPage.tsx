@@ -234,7 +234,7 @@ function TaskSkipPill({ task, disabled = false, onSkipped }: { task: SessionTask
       aria-describedby={descriptionId} onClick={() => {
         trackAction("task_skip_prompted", { taskId: task.id, kind });
         setConfirming(true);
-      }}>Skip this task</button>
+      }}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button>
     <span id={descriptionId} className="visually-hidden">Skip this task and return to the task list.</span>
     {confirming ? <SkipTaskDialog busy={practiceSaving} title="Skip this task?"
       body="It will be marked as skipped and you'll go back to your task list."
@@ -488,7 +488,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           aria-describedby={`vocabulary-skip-${task.id}`} onClick={() => {
             trackAction("vocabulary_skip_prompted", { taskId: task.id, stage });
             setConfirmingSkip(true);
-          }}>Skip this task</button> : null}</div>
+          }}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}</div>
       {!terminal && !revisiting ? <p id={`vocabulary-skip-${task.id}`} className="visually-hidden">Skip the whole word activity and return to the task list.</p> : null}
       <div className="vocabulary-flow__progress">{/* Cards count slides; the quiz and typing count questions. */}
         {stage === "review" && pageCount > 0

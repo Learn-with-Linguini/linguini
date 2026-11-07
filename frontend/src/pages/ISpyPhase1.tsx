@@ -148,7 +148,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
         <div className="learning-title-actions">
           {reward ? <XpPill {...reward} /> : null}
           {!answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
-            onClick={() => void actOnTask(task.id, "skip")}>Skip this task</button> : null}
+            onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
           <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
         </div>
       </div>
