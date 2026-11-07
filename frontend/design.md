@@ -70,6 +70,7 @@ The supplied palette is the starting point. These refinements preserve its inten
 - Butter is the default page background; cream is the default elevated surface.
 - Tomato is reserved for the most important action on a screen. Do not use it as general decoration.
 - Teal means confidence, confirmation, or an alternate positive route; it should not compete with tomato in the same action group.
+- On Home, weekly progress uses sage and other cards stay on paper, so no surface colour repeats on every card.
 - Pasta yellow is a highlight, not a body-text color. Use dark teal or ink for text on yellow.
 - Use the full-color wordmark on butter/cream. Use a one-color tomato or cream version only where contrast requires it.
 
@@ -197,7 +198,7 @@ Every compact Basil amount or earned-reward message uses the shared light-teal `
 
 ### Mission badge
 
-Use the supplied square badge artwork for each mission, mapped by stable mission ID rather than display copy. Crop empty canvas from the source artwork and keep the surrounding card padding tight so the badge fills a compact row without excessive white space. Show the artwork in the Chef Badges collection beside the mission name, skill, and level progress. Unearned badges keep the same recognizable image but appear muted and desaturated; the written status and accessible label continue to explain whether the badge is earned and at which level.
+Use the supplied square badge artwork for each mission, mapped by stable mission ID rather than display copy. Crop empty canvas from the source artwork and keep the surrounding card padding tight so the badge fills a compact row without excessive white space. Show the artwork in the Chef Badges collection beside the mission name, skill, and level progress. Unearned badges keep the same recognizable image but appear muted and desaturated, and badges locked to a higher level fold into a closed "Locked badges" row on Profile; the written status and accessible label continue to explain whether the badge is earned and at which level.
 
 ## Key screens
 
@@ -239,7 +240,7 @@ Treat the journal as proof of progress, not a dense database. Put a soft pasta-y
 
 ### Vocabulary library
 
-Vocabulary replaces Progress as a primary navigation destination. Open with a scene-first library: each real scene image introduces the words collected from that place, with target words, translations, and pronunciation controls grouped directly beneath it. A prominent teal book action at the top switches to the complete vocabulary list. Present that full list as calm paper cards, matching the journal’s card language rather than a divided utility list. Give the target-language word clear teal emphasis on the left, align its translation to the right, and keep the example, word type, and topic together below. Use soft teal-green pills for word type and topic so they remain distinct from pasta-yellow actions and surfaces. Anchor pronunciation in a circular control at the card’s bottom-right corner. Open vocabulary filters in a bottom sheet rather than expanding the page; changes stay temporary until the learner selects the filled “Apply filters” action, while close, backdrop, or Escape dismisses the sheet without applying them.
+Vocabulary replaces Progress as a primary navigation destination. Open with a scene-first library: each real scene image introduces the words collected from that place, with target words, translations, and pronunciation controls grouped directly beneath it. A teal book action beside the Revisit title, icon-only on phones and labelled on wider screens, switches to the complete vocabulary list, and a chevron aligned with the speaker controls opens or closes its word list, which starts open, so the photo and Revisit action stay in view. Present that full list as calm paper cards, matching the journal’s card language rather than a divided utility list. Give the target-language word clear teal emphasis on the left, align its translation to the right, and keep the example, word type, and topic together below. Use soft teal-green pills for word type and topic so they remain distinct from pasta-yellow actions and surfaces. Anchor pronunciation in a circular control at the card’s bottom-right corner. Open vocabulary filters in a bottom sheet rather than expanding the page; changes stay temporary until the learner selects the filled “Apply filters” action, while close, backdrop, or Escape dismisses the sheet without applying them.
 
 ### Session summary
 
@@ -247,7 +248,7 @@ Make the completion state feel celebratory without becoming noisy. Center the no
 
 ### Profile
 
-Lead with a paper profile card containing a large pasta avatar inside a clean white circular frame, followed by the learner's name and joining month. A right chevron opens a dedicated Edit profile page; never expose editing controls or a separate Edit profile button on the main profile. The editing page owns the learner's name, pasta avatar, language, daily goal, practice preference, and permissions, and returns through the standard header back control. Show the maximum streak in its own compact cream card. Show only this week's quick progress beneath the identity area, then present the saved learning setup and permissions as readable values. End with a concise explanation that AI suggests scene vocabulary and prompts while the learner reviews and controls every decision, followed by a full-width tomato Log out action. Flags may identify languages, but do not use emoji as decoration elsewhere on this page.
+Lead with a paper profile card containing a large pasta avatar inside a clean white circular frame, followed by the learner's name and joining month. A right chevron opens a dedicated Edit profile page; never expose editing controls or a separate Edit profile button on the main profile. The editing page owns the learner's name, pasta avatar, language, daily goal, practice preference, and permissions, and returns through the standard header back control. Show the maximum streak in its own compact cream card. Show only this week's quick progress beneath the identity area, then present the saved learning setup and permissions as readable values. End with a concise explanation that AI suggests scene vocabulary and prompts while the learner reviews and controls every decision, followed by a "Manage my account" section holding Log out and Delete my account. Flags may identify languages, but do not use emoji as decoration elsewhere on this page.
 
 The journal list is a single-month view. Use a centered month-and-year label (for example, “September 2026”) with standard previous and next month chevrons on either side. Filter entries to the chosen month and keep the chevrons active when that month is empty. A journal entry can collect multiple ready-scene or uploaded photos; display them as a single-photo carousel with previous/next chevrons and a clear position label.
 

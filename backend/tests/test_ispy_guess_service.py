@@ -360,8 +360,7 @@ def test_output_bounds_are_enforced(overrides) -> None:
 def test_registry_caps_output_tokens_and_retries(tmp_path) -> None:
     data = example()
     deployment = data["deployments"]["guess-gpt-4-1-mini"]
-    deployment.update(adapter="openai", model="gpt-test", credentials=["openai"])
-    del deployment["upstream_fallback"]
+    deployment.update(model="gpt-test")
     deployment["defaults"]["max_retries"] = 5
     data["routes"]["ispyGuess"].update(deadline_seconds=120, max_model_calls=2)
     settings = load_ai_settings(env={
@@ -380,7 +379,7 @@ def test_registry_returns_none_when_disabled_or_unconfigured(tmp_path) -> None:
     data["routes"]["ispyGuess"] = {"enabled": False}
     off = load_ai_settings(env={
         "AI_CONFIG_FILE": write(tmp_path, data),
-        "AI_OPENROUTER_API_KEY": "sk-or",
+        "AI_OPENAI_API_KEY": "sk-openai",
     })
     no_key = load_ai_settings(env={})
     assert build_ispy_guess_generator(off, NoOpAITracer()) is None

@@ -28,7 +28,7 @@ def offered_supports(question):
     return _OFFERED_SUPPORTS[_interaction(question)]
 
 
-def _default_evidence(question):
+def default_evidence(question):
     """Evidence follows the interaction, never a client claim of independence."""
     if _interaction(question) == "sentenceBuilding":
         return "construction"
@@ -171,7 +171,7 @@ def review_details(
         if evaluation is None or question_id not in question_results:
             outcomes.append(
                 QuestionOutcome(
-                    **common, outcome="unassessed", evidence_type=_default_evidence(question)
+                    **common, outcome="unassessed", evidence_type=default_evidence(question)
                 )
             )
             continue
@@ -182,7 +182,7 @@ def review_details(
                 outcome="correct" if correct else "incorrect",
                 objective_id=evaluation.objective_id,
                 target_ids=evaluation.target_ids,
-                evidence_type=_default_evidence(question),
+                evidence_type=default_evidence(question),
                 correct_note=(
                     evaluation.correct_note
                     if correct and _interaction(question) == "multipleChoice" else None

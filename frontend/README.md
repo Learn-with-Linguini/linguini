@@ -125,7 +125,7 @@ Keep account and language boundaries when reading or invalidating learner data.
 | `/practice/sessions/:sessionId/learn/:taskId` | Individual lesson task |
 | `/practice/sessions/:sessionId/ispy-1`, `ispy-2` | Two-way I-Spy within a lesson |
 | `/practice/sessions/:sessionId/summary` | Session results |
-| `/ispy`, `/ispy/play`, `/ispy/challenge`, `/ispy/friends` | Standalone I-Spy, daily challenge and friends lobby |
+| `/ispy`, `/ispy/play`, `/ispy/challenge`, `/ispy/chefs`, `/ispy/friends` | Standalone I-Spy, daily challenge, leaderboard and friends lobby |
 | `/ispy/games/:sessionId/clues`, `describe`, `results` | Standalone game stages |
 | `/rooms/:roomId` | Private friend challenge |
 | `/progress`, `/vocabulary` | Learning progress and saved vocabulary |
@@ -140,13 +140,17 @@ friends lobby.
 ## Marketing and deployment
 
 `src/main.tsx` selects the learner or marketing root from the URL. The roots
-lazy-load separate global stylesheets. `vercel.json` rewrites routes to the Vite
-entry point, so refreshes work on both parts of the site. The API is a separate
+lazy-load separate global stylesheets. Public marketing pages are rendered to
+HTML at build time and hydrate in the browser. `vercel.json` serves clean public
+URLs, keeps supported learner refreshes on a noindex app shell and returns real
+404s for missing public pages and resources. The API is a separate
 deployment; see the [root README](../README.md).
 
 Static Open Graph cards live in `public/og/`; replacements should be 1200×630 PNGs.
 SEO verification and IndexNow settings are listed in `.env.example`. Source files
 and regeneration steps for launch media live in [marketing/](../marketing/README.md).
+See [the SEO guide](../docs/seo.md) for search-console verification, sitemap
+submission, canonical-host settings, release checks and measurement.
 
 ## Checks and conventions
 
@@ -158,7 +162,8 @@ npm run preview
 ```
 
 `lint` runs Oxlint; `test` uses the Node test runner; `build` typechecks and writes
-production assets to `dist/`. `preview` serves an existing build.
+production HTML and assets to `dist/`, then verifies the raw output with
+`npm run check:seo`. `preview` serves an existing build with public/app/404 routing.
 
 Read [AGENTS.md](AGENTS.md) and [design.md](design.md) before UI changes. Reuse shared
 controls and media components, preserve loading and retry states, and instrument

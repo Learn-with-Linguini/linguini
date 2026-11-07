@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
+import { useBackAction } from "../components/BackAction";
 import { BasilIcon, BookIcon, ChatIcon, CheckIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon, PlayIcon } from "../components/icons";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { SceneImage } from "../components/SceneImage";
@@ -35,6 +36,8 @@ export function Learn() {
   const scene = useScene();
   const { session, practiceSaving, practiceError, practiceStalled, retryProcessing, completeSession } = useAppState();
   const badges = useGamification();
+  // The task list is the top of a practice session, so back leaves it for home.
+  useBackAction(() => { trackAction("task_list_back_clicked"); navigate("/home"); }, "Back to home");
   if (!session) return null;
   const base = `/practice/sessions/${scene.sessionId}`;
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;

@@ -53,6 +53,13 @@ def retry_session_analysis(
     return service.retry_analysis(session_id)
 
 
+@router.post("/{session_id}/retry-generation", response_model=SessionDetailResponse)
+def retry_session_generation(
+    session_id: UUID, service: PracticeServiceDep
+) -> SessionDetailResponse:
+    return service.retry_generation(session_id)
+
+
 @router.post(
     "/{session_id}/generate-plan",
     response_model=SessionDetailResponse,

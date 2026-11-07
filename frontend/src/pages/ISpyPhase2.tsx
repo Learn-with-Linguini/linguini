@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { BasilReward, Button, Feedback, ProgressTrail, TopBar } from "../components/ui";
-import { ArrowRightIcon, CloseIcon } from "../components/icons";
+import { BasilReward, Button, Feedback, IconButton, ProgressTrail, TopBar } from "../components/ui";
+import { ArrowRightIcon, EyeIcon, EyeOffIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -19,6 +19,7 @@ import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
+import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
 import { clueExample, clueOpening } from "../lib/ispyClue";
 
 export function ISpyPhase2() {
@@ -67,7 +68,6 @@ export function ISpyPhase2() {
     <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
   </div>;
   return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel}
-    onExit={() => { trackAction("ispy_exit_clicked", { phase: "describe" }); navigate("/home"); }}
     onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
 }
 
@@ -81,7 +81,7 @@ const OUTCOME_PROMPTS: Record<ISpyDescriptionOutcome, string> = {
 
 type LatestGuess = { attemptId: string; evaluation: ISpyDescriptionEvaluation; feedback: string | null };
 
-function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onExit: () => void; onNext: () => void }) {
+function Reflection({ task, index, total, finishLabel, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onNext: () => void }) {
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
@@ -89,6 +89,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
   const [basilEarned, setBasilEarned] = useState<number>();
   const [guess, setGuess] = useState<LatestGuess | null>(null);
   const [revising, setRevising] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   // Word bank words the learner tapped into the clue, recorded as guided help.
   const [insertedChips, setInsertedChips] = useState<string[]>([]);
   // A pending task has no attempts; any other task restores its latest one before taking input.
@@ -174,15 +175,28 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
     }
   };
   const improve = () => { setGuess(null); setRevising(true); };
+  // Moves past an unconfirmed guess: the task is saved as skipped (the session only
+  // completes once every task is terminal), then onNext opens the next object or,
+  // on the last one, completes the session and shows the summary.
+  const finishISpy = async () => {
+    if (!guess || practiceSaving) return;
+    const last = index === total - 1;
+    trackAction("ispy_finish_clicked", { outcome: guess.evaluation.outcome, last });
+    if (await actOnTask(task.id, "skip")) onNext();
+  };
   const outcome = guess?.evaluation.outcome;
   return <div className="stack">
     <div className="vocabulary-flow__header">
       <div className="learning-title-row">
         <div className="vocabulary-flow__title"><h1>Your Clues</h1></div>
         <div className="learning-title-actions">
-          {hydrated && !answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
-            onClick={() => void actOnTask(task.id, "skip")}>Skip this task</button> : null}
-          <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+          <div className="learning-title-primary-actions">
+            {content.cheatSheet ? <MissionCheatSheetLauncher missionId={content.cheatSheet.missionId}
+              practiceLevel={content.cheatSheet.practiceLevel} contentVersion={content.cheatSheet.contentVersion}
+              languageCode={scene.languageCode} /> : null}
+            {hydrated && !answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+              onClick={() => void actOnTask(task.id, "skip")}>Skip<span className="vocabulary-flow__skip-more"> this task</span></button> : null}
+          </div>
         </div>
       </div>
       <div className="vocabulary-flow__progress"><ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`Object ${index + 1} of ${total}`} /></div>
@@ -201,10 +215,11 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
     {!answered ? <h2 className="ispy-instruction">Describe the highlighted object so Linguini can find it.</h2> : null}
     <div className="ispy-target-card">
       {/* With its article (la chaise) when the task carries it; older tasks show the bare word. */}
-      <strong className="ispy-target-card__word" lang={scene.languageCode}>{content.targetPhrase ?? target?.word}</strong>
-      <span className="ispy-target-card__meaning">{target?.translation}</span>
+      <span className="prompt-translation__source"><strong className="ispy-target-card__word" lang={scene.languageCode}>{content.targetPhrase ?? target?.word}</strong>
+        {target?.translation ? <IconButton className="prompt-translation__toggle" label={showTranslation ? "Hide translation" : "Show translation"} aria-expanded={showTranslation} onClick={() => setShowTranslation(value => { const visible = !value; trackAction("ispy_translation_toggled", { phase: "describe", visible }); return visible; })}>{showTranslation ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}</IconButton> : null}</span>
+      {target?.translation && showTranslation ? <span className="ispy-target-card__meaning">{target.translation}</span> : null}
     </div>
-    <ISpyLevelHelp support={content} languageCode={scene.languageCode} onPick={locked ? undefined : addWord}
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} showCheatSheet={false} onPick={locked ? undefined : addWord}
       canPick={word => !mentionsTarget(word, content.avoidWords ?? [])} />
     {/* The clue carries on from the I-Spy opener, so the opener labels the field. */}
     <div className="field"><label className="field__label ispy-clue-opening" htmlFor="reflection">
@@ -238,6 +253,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       {outcome === "clearMatch" ? <Button block disabled={practiceSaving} onClick={() => void confirm()}>That's it</Button> : null}
       {outcome === "evaluationFailed" ? <Button block disabled={practiceSaving} onClick={() => void submit()}>Retry guessing</Button> : null}
       {guess ? <Button variant="secondary" block disabled={practiceSaving} onClick={improve}>Improve my clue</Button> : null}
+      {guess ? <Button variant="primary" block disabled={practiceSaving} onClick={() => void finishISpy()}>Finish I-Spy</Button> : null}
     </>}
     {(answered || guess) && task.status !== "skipped" ? <div className="learning-question-report"><ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[
       ["Task ID", task.id],

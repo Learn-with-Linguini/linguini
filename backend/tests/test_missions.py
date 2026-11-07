@@ -201,6 +201,24 @@ def test_stored_task_with_retired_mission_definition_loads_as_legacy():
     assert restored.answer_key.correct_option_ids == task.answer_key.correct_option_ids
 
 
+def test_retired_mission_lesson_still_checks_answers_without_evaluations():
+    from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+    stored = mission_task().model_dump(mode="json")
+    stored["publicContent"]["contentVersion"] = 99
+    restored = SessionTask.model_validate_stored(stored)
+
+    checked = PostgresWorkflowRepository._lesson_check(restored, "colour", "rojo", False)
+    assert checked.is_correct is False
+    assert checked.correct_answer == "La taza es roja."
+    # Without its mission evaluation the answer is still graded, but not counted as evidence.
+    assert checked.outcome.outcome == "unassessed"
+    assert checked.outcome.objective_id is None
+    assert checked.outcome.evidence_type == "recognition"
+    built = PostgresWorkflowRepository._lesson_check(restored, "build", "La taza es roja", True)
+    assert built.outcome.evidence_type == "construction"
+
+
 @pytest.mark.parametrize(
     ("content", "key", "message"),
     [

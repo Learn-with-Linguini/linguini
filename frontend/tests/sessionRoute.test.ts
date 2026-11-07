@@ -171,6 +171,13 @@ test("failed sessions carry a notice per failure code", () => {
   assert.ok(sessionDestination(detail("failed", [], null)).notice?.length);
 });
 
+test("a retryable lesson build failure stays on the analysis step to offer a retry", () => {
+  const failed = { ...detail("failed", [], "taskGenerationFailed"), generationRetryable: true };
+  assert.deepEqual(sessionDestination(failed), { path: "/practice/sessions/s1/analysis", notice: null });
+  assert.ok(isSessionRouteAllowed(failed, "/practice/sessions/s1/analysis"));
+  assert.equal(isSessionRouteAllowed(failed, "/practice/sessions/s1/learn"), false);
+});
+
 function game(status: SessionStatus, tasks: SessionTask[] = []): PracticeDetail {
   const lesson = detail(status, tasks);
   return { ...lesson, session: { ...lesson.session, id: "g1", mode: "ispy", sourceSessionId: "s1" } };

@@ -19,6 +19,8 @@ def bundled_packs_as_local_experiment(monkeypatch):
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday")
+    # Failed model steps retry once; tests should not wait out the production pause.
+    monkeypatch.setenv("TASK_GENERATION_RETRY_DELAY_SECONDS", "0")
     for name in ("LINGUINI_LANGUAGE_PACK_DIRS", "LINGUINI_LANGUAGE_PACK_RELEASES",
                  "LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR"):
         monkeypatch.delenv(name, raising=False)

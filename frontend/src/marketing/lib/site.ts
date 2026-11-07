@@ -1,4 +1,6 @@
 import { SOCIAL_LINKS } from "../../config/social";
+import { siteContent } from "./siteContent";
+import { normalizeSiteUrl } from "./siteUrl";
 
 const defaultSupportEmail = "linguini-support@googlegroups.com";
 
@@ -9,8 +11,8 @@ const productHunt = {
 };
 
 export const site = {
-  name: "Linguini",
-  url: (import.meta.env.VITE_SITE_URL || "https://www.learnwithlinguini.com").replace(/\/$/, ""),
+  ...siteContent,
+  url: normalizeSiteUrl(import.meta.env.VITE_SITE_URL),
   productHunt,
   supportEmail: import.meta.env.VITE_SUPPORT_EMAIL?.trim() || defaultSupportEmail,
   /** Official profiles, for Organization `sameAs`. */
@@ -21,15 +23,6 @@ export const site = {
     SOCIAL_LINKS.x.url,
     SOCIAL_LINKS.linkedin.url,
   ].filter(Boolean),
-  title: "Linguini — Learn a language from the photos you take",
-  shortTitle: "Linguini",
-  description:
-    "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size language games. Learn Spanish, French, German or beginner Korean in the public beta.",
-  tagline: "Learn the language of your day.",
-  locale: "en_US",
-  ogImage: "/og/linguini-beta.png",
-  ogImageAlt:
-    "Linguini public beta — turn everyday photos into short lessons in Spanish, French, German or beginner Korean, with unlimited photo lessons at $0 during beta.",
   keywords: [
     "language learning app",
     "learn Spanish with photos",

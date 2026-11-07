@@ -18,6 +18,9 @@ type ImageUploadProps = {
   onBusyChange?: (busy: boolean) => void;
 };
 
+/** Phones and tablets have a touch screen as their main input, and a far better camera app of their own. */
+const usesDeviceCamera = () => window.matchMedia?.("(pointer: coarse)").matches ?? false;
+
 export function ImageUpload(props: ImageUploadProps) {
   const { session } = useAuth();
   return <ImageUploadForAccount key={session?.user.id ?? "demo"} {...props} />;
@@ -25,6 +28,7 @@ export function ImageUpload(props: ImageUploadProps) {
 
 function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = false, onBusyChange, compact = false, dropzoneLabel }: ImageUploadProps) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const deviceCameraInput = useRef<HTMLInputElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const busyRef = useRef(false);
   const mounted = useRef(true);
@@ -62,6 +66,14 @@ function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = fa
   return <div className="stack-2">
     <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp"
       onChange={(e) => { void select(e.target.files?.[0], "userUpload"); e.target.value = ""; }} />
+    <input ref={deviceCameraInput} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="environment"
+      data-testid="device-camera"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) trackAction("photo_camera_captured", { camera: "device" });
+        void select(file, "camera");
+        e.target.value = "";
+      }} />
     {cameraOpen && cameraEnabled && !disabled && !busy ? <CameraCapture
       onClose={() => setCameraOpen(false)}
       onCapture={file => { setCameraOpen(false); void select(file, "camera"); }} /> : null}
@@ -74,7 +86,13 @@ function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = fa
       </button>
     ) : <>
       <div className="row">
-        <Button disabled={disabled || busy || !cameraEnabled} onClick={() => { setError(null); setCameraOpen(true); }}><CameraIcon size={18} /> {compact ? "Click" : "Open camera"}</Button>
+        <Button disabled={disabled || busy || !cameraEnabled} onClick={() => {
+          setError(null);
+          if (usesDeviceCamera()) {
+            trackAction("photo_camera_opened", { camera: "device" });
+            deviceCameraInput.current?.click();
+          } else setCameraOpen(true);
+        }}><CameraIcon size={18} /> {compact ? "Click" : "Open camera"}</Button>
         <Button variant="secondary" disabled={disabled || busy} onClick={() => fileInput.current?.click()}><UploadIcon size={18} /> Upload</Button>
       </div>
       {!compact ? <p className="small muted">JPEG, PNG or WebP, up to 10 MB</p> : null}

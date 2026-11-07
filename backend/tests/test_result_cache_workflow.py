@@ -49,4 +49,5 @@ def test_curated_reviews_share_and_learner_edits_stay_private(database):
         "edited-review",
         addedObjects=[{"id": str(uuid4()), "label": "my diary", "x": 0.5, "y": 0.5}],
     )
-    assert scopes == [CacheScope.public(), CacheScope.user(owner.id)]
+    # The failing translation is retried once per session, with the same scope.
+    assert scopes == [CacheScope.public()] * 2 + [CacheScope.user(owner.id)] * 2

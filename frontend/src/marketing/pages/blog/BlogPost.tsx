@@ -9,6 +9,7 @@ import { SiteHeader } from "../../components/SiteHeader";
 import { formatPostDate, getPost, movedPosts } from "../../data/posts";
 import { PageMeta } from "../../lib/seo";
 import { appLinks, site } from "../../lib/site";
+import { siteEntities } from "../../lib/structuredData";
 import NotFoundPage from "../NotFoundPage";
 import styles from "./post.module.css";
 
@@ -23,21 +24,45 @@ export default function PostPage() {
   const url = `${site.url}/blog/${post.slug}`;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "@id": `${url}#article`,
-    headline: post.title,
-    description: post.summary,
-    datePublished: post.date,
-    dateModified: post.date,
-    articleSection: post.category,
-    inLanguage: "en",
-    timeRequired: `PT${post.readMinutes}M`,
-    url,
-    mainEntityOfPage: url,
-    image: `${site.url}/og/blog-${post.slug}.png`,
-    author: { "@id": `${site.url}/#organization` },
-    publisher: { "@id": `${site.url}/#organization` },
-    isPartOf: { "@id": `${site.url}/#website` },
+    "@graph": [
+      ...siteEntities(),
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#article`,
+        headline: post.title,
+        description: post.summary,
+        datePublished: post.date,
+        dateModified: post.updatedDate ?? post.date,
+        articleSection: post.category,
+        inLanguage: "en",
+        timeRequired: `PT${post.readMinutes}M`,
+        url,
+        mainEntityOfPage: { "@id": url },
+        image: `${site.url}/og/blog-${post.slug}.png`,
+        author: { "@id": `${site.url}/#organization` },
+        publisher: { "@id": `${site.url}/#organization` },
+        isPartOf: { "@id": `${site.url}/#website` },
+      },
+      {
+        "@type": "WebPage",
+        "@id": url,
+        url,
+        name: post.title,
+        inLanguage: "en",
+        isPartOf: { "@id": `${site.url}/#website` },
+        breadcrumb: { "@id": `${url}#breadcrumbs` },
+        mainEntity: { "@id": `${url}#article` },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${url}#breadcrumbs`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: site.name, item: `${site.url}/` },
+          { "@type": "ListItem", position: 2, name: "Blog", item: `${site.url}/blog` },
+          { "@type": "ListItem", position: 3, name: post.title, item: url },
+        ],
+      },
+    ],
   };
 
   return (
@@ -46,7 +71,7 @@ export default function PostPage() {
         title={post.title}
         description={post.summary}
         path={`/blog/${post.slug}`}
-        article={{ publishedTime: post.date, section: post.category }}
+        article={{ publishedTime: post.date, modifiedTime: post.updatedDate, section: post.category }}
         image={{ url: `/og/blog-${post.slug}.png`, alt: post.title }}
       />
       <a href="#main" className="skip-link">Skip to content</a>
@@ -62,7 +87,10 @@ export default function PostPage() {
             <Link href="/blog" className={`btn-quiet ${styles.back}`}>
               <ArrowLeft size={18} /> Back to blog
             </Link>
-            <time dateTime={post.date} className={styles.date}>{formatPostDate(post.date)}</time>
+            <div className={styles.date}>
+              <time dateTime={post.date}>{formatPostDate(post.date)}</time>
+              {post.updatedDate ? <> · Updated <time dateTime={post.updatedDate}>{formatPostDate(post.updatedDate)}</time></> : null}
+            </div>
           </div>
 
           <header className={styles.head}>

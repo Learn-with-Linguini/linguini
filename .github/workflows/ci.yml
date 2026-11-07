@@ -54,6 +54,14 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm run test
+      - name: Check served SEO content and route responses
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/linguini-preview.log" 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --retry 15 --retry-connrefused --retry-delay 1 \
+            --output /dev/null http://127.0.0.1:4173/
+          node scripts/check-seo.mjs http://127.0.0.1:4173
 
   database:
     runs-on: ubuntu-latest

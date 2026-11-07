@@ -1,5 +1,6 @@
 import { pricing } from "../data/pricing";
 import { appLinks, site } from "../lib/site";
+import { siteEntities } from "../lib/structuredData";
 
 export type FaqItem = { q: string; a: string };
 
@@ -17,31 +18,8 @@ export function JsonLd({ faq }: JsonLdProps) {
   const orgId = `${site.url}/#organization`;
   const websiteId = `${site.url}/#website`;
   const appId = `${site.url}/#app`;
-  const logoUrl = `${site.url}/brand/linguini-logo.png`;
-
   const graph: Record<string, unknown>[] = [
-    {
-      "@type": "Organization",
-      "@id": orgId,
-      name: site.name,
-      url: `${site.url}/`,
-      sameAs: site.sameAs,
-      logo: {
-        "@type": "ImageObject",
-        url: logoUrl,
-        width: 360,
-        height: 360,
-      },
-    },
-    {
-      "@type": "WebSite",
-      "@id": websiteId,
-      name: site.name,
-      url: `${site.url}/`,
-      description: site.description,
-      inLanguage: "en",
-      publisher: { "@id": orgId },
-    },
+    ...siteEntities(),
     {
       "@type": "SoftwareApplication",
       "@id": appId,
@@ -53,7 +31,7 @@ export function JsonLd({ faq }: JsonLdProps) {
       operatingSystem: "Web",
       image: new URL(site.ogImage, site.url).toString(),
       publisher: { "@id": orgId },
-      inLanguage: ["es", "fr"],
+      inLanguage: "en",
       featureList: pricing.beta,
       offers: [
         {

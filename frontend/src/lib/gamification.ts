@@ -1,5 +1,6 @@
 import { request } from "./api.ts";
 import type { PastaAvatar } from "../data/types";
+import type { FinishScore } from "./answerCelebration";
 
 export type BadgeLevel = "Taster" | "Cook" | "Chef" | "Head Chef" | "Master";
 export const BADGE_LEVELS: readonly BadgeLevel[] = ["Taster", "Cook", "Chef", "Head Chef", "Master"];
@@ -41,4 +42,10 @@ export const getChefStandings = (signal?: AbortSignal) => request<ChefStandings>
 export const BADGE_MIN_CORRECT_PERCENT = 50;
 export const batchAccuracy = (batch: MissionBatch) =>
   batch.assessedQuestions ? Math.round((100 * batch.correctQuestions) / batch.assessedQuestions) : 0;
+/** Perfect only when the backend graded every assessed question correct and nothing was skipped. */
+export function lessonFinishScore(batches: MissionBatch[], skippedTasks: number): FinishScore {
+  const assessed = batches.reduce((sum, batch) => sum + batch.assessedQuestions, 0);
+  const correct = batches.reduce((sum, batch) => sum + batch.correctQuestions, 0);
+  return assessed > 0 && correct === assessed && skippedTasks === 0 ? "perfect" : "partial";
+}
 export const basilEarnedText = (amount: number | undefined) => amount && amount > 0 ? `+${amount} Basil earned` : null;

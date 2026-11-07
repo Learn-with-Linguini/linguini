@@ -293,14 +293,16 @@ function levelled(content: Partial<Extract<SessionTask["publicContent"], { kind:
 }
 const body = () => dom.window.document.body.textContent ?? "";
 
-test("A0 rounds show the translation, a word bank and the cheatsheet", async () => {
+test("A0 rounds hide the translation until requested and show the word bank and cheatsheet", async () => {
   await mount("ispy", levelled({
     learnerLevel: "A0", translationShown: true,
     wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }],
     cheatSheet: { missionId: "M02", practiceLevel: "A0", contentVersion: 2 },
   }));
   assert.match(body(), /es roja/);
-  assert.match(body(), /is red/, "the translation is open from the start");
+  assert.doesNotMatch(body(), /is red/, "the translation starts hidden");
+  await click(dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Show translation"]'));
+  assert.match(body(), /is red/, "the eye control reveals the translation");
   const words = [...dom.window.document.querySelectorAll(".ispy-help__words li strong")].map(item => item.textContent);
   assert.deepEqual(words, ["taza", "mesa"], "the word bank shows target-language words");
   const meanings = [...dom.window.document.querySelectorAll(".ispy-help__words [role=tooltip]")].map(item => item.textContent);
@@ -325,8 +327,8 @@ test("A2 rounds play the clue before showing its text", async () => {
   await mount("ispy", levelled({ learnerLevel: "A2", listenFirst: true }));
   assert.ok(dom.window.document.querySelector('[data-testid="listen-first"]'));
   assert.doesNotMatch(body(), /es roja/, "the clue text waits until it is heard");
-  const play = [...dom.window.document.querySelectorAll<HTMLButtonElement>("button")]
-    .find(button => button.textContent?.includes("Play the clue"));
+  // The speaker beside Linguini plays the clue; hearing it reveals the text.
+  const play = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Hear the clue"]') ?? undefined;
   await click(play);
   assert.match(body(), /es roja/);
   assert.equal(dom.window.document.querySelector('[data-testid="listen-first"]'), null);

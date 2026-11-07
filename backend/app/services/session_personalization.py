@@ -1,5 +1,6 @@
 """Use prior observations to revisit current vocabulary, without declaring mastery."""
 
+import random
 import re
 import unicodedata
 from copy import deepcopy
@@ -49,6 +50,27 @@ def _observation(word, history):
                  if _matches(word, item, history)), None)
 
 
+def mix_article_questions(questions, seed, question_id=lambda question: question.question_id):
+    """Spread article checks among the word questions instead of leaving them at the end.
+
+    Each `article-<key>` lands after its own `word-<key>` question, and not directly after
+    it when there is room, so the learner meets the word first and the check is not an
+    immediate echo.
+    The order is seeded (by session), so rebuilding or resuming a session keeps it.
+    """
+    articles = [q for q in questions if question_id(q).startswith("article-")]
+    if not articles:
+        return list(questions)
+    result = [q for q in questions if not question_id(q).startswith("article-")]
+    rng = random.Random(str(seed))
+    for article in articles:
+        word_id = "word-" + question_id(article).removeprefix("article-")
+        word_index = next((i for i, q in enumerate(result) if question_id(q) == word_id), -1)
+        earliest = min(word_index + 2, len(result)) if word_index >= 0 else 0
+        result.insert(rng.randint(earliest, len(result)), article)
+    return result
+
+
 def personalize_introduction(task, history):
     """Review previously missed words first; retain IDs, answer keys and scene facts."""
     if not history or not getattr(task.public_content, "words", None):
@@ -68,9 +90,10 @@ def personalize_introduction(task, history):
             f"article-{word.learning_key}",
         ))
     }
-    questions = sorted(content.questions, key=lambda question: by_question.get(
+    ordered = sorted(content.questions, key=lambda question: by_question.get(
         question.question_id, (2, len(words)),
     ))
+    questions = mix_article_questions(ordered, task.id)
     return task.model_copy(update={
         "public_content": content.model_copy(update={"words": words, "questions": questions}),
     })

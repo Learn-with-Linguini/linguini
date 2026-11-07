@@ -6,6 +6,7 @@ from uuid import uuid4
 from app.schemas.tasks import SessionTask
 from app.services.session_personalization import (
     lesson_history,
+    mix_article_questions,
     personalization_summary,
     personalize_introduction,
 )
@@ -80,11 +81,34 @@ def test_article_questions_follow_the_personalized_word_order():
     task.public_content.questions.extend(article_questions)
 
     reordered = personalize_introduction(task, history())
+    ids = [question.question_id for question in reordered.public_content.questions]
 
-    assert [question.question_id for question in reordered.public_content.questions] == [
+    assert [qid for qid in ids if qid.startswith("word-")] == [
         "word-table", "word-chair", "word-cup",
-        "article-table", "article-chair", "article-cup",
     ]
+    assert sorted(qid for qid in ids if qid.startswith("article-")) == [
+        "article-chair", "article-cup", "article-table",
+    ]
+    for key in ("table", "chair", "cup"):
+        assert ids.index(f"article-{key}") > ids.index(f"word-{key}")
+    assert ids == [question.question_id for question in
+                   personalize_introduction(task, history()).public_content.questions]
+
+
+def test_article_questions_are_mixed_in_after_their_word():
+    keys = [f"w{index}" for index in range(8)]
+    questions = [f"word-{key}" for key in keys] + [f"article-{key}" for key in keys]
+
+    mixed = mix_article_questions(questions, "session-a", question_id=lambda qid: qid)
+
+    assert sorted(mixed) == sorted(questions)
+    assert [qid for qid in mixed if qid.startswith("word-")] == questions[:8]
+    for key in keys:
+        assert mixed.index(f"article-{key}") > mixed.index(f"word-{key}")
+    # Not simply appended: some article check comes before the last word question.
+    assert mixed.index("article-w0") < mixed.index("word-w7")
+    assert mixed == mix_article_questions(questions, "session-a", question_id=lambda qid: qid)
+    assert mix_article_questions(questions[:8], "s", question_id=lambda qid: qid) == questions[:8]
 
 
 def test_summary_includes_only_current_words_and_applicable_observed_focuses():

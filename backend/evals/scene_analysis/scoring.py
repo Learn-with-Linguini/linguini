@@ -230,7 +230,10 @@ def score_case(
     latency_ms: float | None = None,
     input_tokens: int | None = None,
     output_tokens: int | None = None,
+    normalize_gemini_coordinates: bool = False,
 ) -> CaseScore:
+    """Score one reply. Gemini replies use its 0..1000 scale; pass
+    ``normalize_gemini_coordinates`` so they are read exactly as the app reads them."""
     score = CaseScore(
         case_id=case.case_id,
         difficulty=case.difficulty.value,
@@ -241,7 +244,9 @@ def score_case(
     )
 
     try:
-        result: SceneAnalysisModelResult = parse_scene_analysis(payload)
+        result: SceneAnalysisModelResult = parse_scene_analysis(
+            payload, normalize_gemini_coordinates=normalize_gemini_coordinates
+        )
     except SceneAnalysisValidationError as exc:
         score.issue_codes = sorted({issue.code.value for issue in exc.issues})
         score.error = str(exc)

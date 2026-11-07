@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { fillMissionGap, serializeMissionChoices } from "../src/lib/missionGaps.ts";
+import { fillMissionGap, serializeMissionChoices, situationPhrase } from "../src/lib/missionGaps.ts";
 
 test("gap completion preserves French elision and Korean spacing", () => {
   assert.equal(fillMissionGap("l'___ est ici.", "assiette"), "l'assiette est ici.");
@@ -26,4 +26,11 @@ test("review choices serialize only selected, complete facts", () => {
   }, new Set(["cup", "book"])), {
     preference: { sceneObjectIds: ["cup", "book"], chosenObjectId: "book", reaction: "like" },
   });
+});
+
+test("situation questions say a target-language phrase, never a marker number or English label", () => {
+  assert.equal(situationPhrase({ completeChunk: "Me gusta la taza.", slotTemplate: "___ la taza." }, "Me gusta"), "Me gusta la taza.");
+  assert.equal(situationPhrase({ slotTemplate: "Sí, ___" }, "me gusta"), "Sí, me gusta");
+  assert.equal(situationPhrase({ audioText: "No me gusta el libro." }, "Don't like"), "No me gusta el libro.");
+  assert.equal(situationPhrase({}, "2"), null);
 });

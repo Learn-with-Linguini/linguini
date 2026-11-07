@@ -7,6 +7,13 @@
 .basil-totals span { font-size: 14px; }
 .mission-badges { display: grid; gap: 8px; }
 .mission-badges > .card { padding: 12px; border-radius: var(--radius-md); }
+.badges-locked summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper); color: var(--ink); cursor: pointer; list-style: none; }
+.badges-locked summary::-webkit-details-marker { display: none; }
+.badges-locked summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.badges-locked summary svg { flex: none; color: var(--teal-dark); transition: transform 120ms ease-out; }
+.badges-locked[open] summary { margin-bottom: 8px; }
+.badges-locked[open] summary svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .badges-locked summary svg { transition: none; } }
 .mission-badges__heading { display: flex; align-items: center; gap: 12px; margin: 0; }
 .mission-badges__heading h3, .mission-badges__heading p { margin: 0; }
 .mission-badges details { margin-top: 12px; }

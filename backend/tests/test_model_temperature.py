@@ -98,3 +98,68 @@ def test_gemini_text_client_sends_the_configured_temperature():
     ).generate(text_request())
 
     assert captured["config"].temperature == 0.3
+
+
+def test_reasoning_effort_is_omitted_unless_configured():
+    body = sent_body(TextModelConfig(model_name="m"), text_request())
+    assert "reasoning" not in body
+
+
+def test_reasoning_effort_is_sent_and_drops_temperature():
+    body = sent_body(
+        TextModelConfig(model_name="m", reasoning_effort="low"), text_request()
+    )
+    assert body["reasoning"] == {"effort": "low"}
+    assert "temperature" not in body
+
+
+def test_effort_none_keeps_the_temperature():
+    body = sent_body(
+        TextModelConfig(model_name="m", reasoning_effort="none"), text_request()
+    )
+    assert body["reasoning"] == {"effort": "none"}
+    assert body["temperature"] == 0.0
+
+
+def test_unknown_reasoning_effort_is_rejected():
+    with pytest.raises(ValueError):
+        TextModelConfig(model_name="m", reasoning_effort="extreme")
+
+
+@pytest.mark.parametrize(("effort", "level"), [("none", "MINIMAL"), ("low", "LOW")])
+def test_gemini_maps_reasoning_effort_to_a_thinking_level(effort, level):
+    from app.ai.adapters.gemini import GeminiTextClient
+
+    captured = {}
+
+    def generate_content(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(
+            text="{}", candidates=[SimpleNamespace(finish_reason=None)], usage_metadata=None
+        )
+
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    GeminiTextClient(
+        "key", TextModelConfig(model_name="m", reasoning_effort=effort), client=client
+    ).generate(text_request())
+
+    assert captured["config"].thinking_config.thinking_level.value == level
+
+
+def test_gemini_sends_no_thinking_config_by_default():
+    from app.ai.adapters.gemini import GeminiTextClient
+
+    captured = {}
+
+    def generate_content(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(
+            text="{}", candidates=[SimpleNamespace(finish_reason=None)], usage_metadata=None
+        )
+
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    GeminiTextClient("key", TextModelConfig(model_name="m"), client=client).generate(
+        text_request()
+    )
+
+    assert captured["config"].thinking_config is None

@@ -1,4 +1,5 @@
 import type { MissionChoices } from "../data/types";
+import type { GrammarLessonQuestion } from "./api";
 
 export interface MissionChoiceDraft {
   ownedObjectId: string | null;
@@ -41,4 +42,19 @@ export function serializeMissionChoices(
     ...(ownership ? { ownership } : {}),
     ...(preference ? { preference } : {}),
   };
+}
+
+/**
+ * What a situation question says aloud once the learner lands on the right answer: the
+ * completed sentence, or else the sentence they listened to. Questions without either
+ * (photo markers, "Like"/"Don't like") stay silent rather than reading a marker number
+ * or an English label in the target-language voice.
+ */
+export function situationPhrase(
+  question: Pick<GrammarLessonQuestion, "completeChunk" | "slotTemplate" | "audioText">,
+  answer: string,
+): string | null {
+  if (question.completeChunk) return question.completeChunk;
+  if (question.slotTemplate && answer) return fillMissionGap(question.slotTemplate, answer);
+  return question.audioText ?? null;
 }

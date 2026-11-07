@@ -3,6 +3,9 @@ import { languagePages } from "../src/marketing/data/languages.js";
 import { posts } from "../src/marketing/data/posts.js";
 import { pricing } from "../src/marketing/data/pricing.js";
 import { steps } from "../src/marketing/data/steps.js";
+import { siteContent } from "../src/marketing/lib/siteContent.js";
+import { normalizeSiteUrl } from "../src/marketing/lib/siteUrl.js";
+import { marketingRoutes } from "../src/marketing/routes.js";
 import type { HtmlTagDescriptor, Plugin } from "vite";
 
 type SiteFilesOptions = {
@@ -10,13 +13,6 @@ type SiteFilesOptions = {
   indexNowKey?: string;
   googleSiteVerification?: string;
   bingSiteVerification?: string;
-};
-
-type SitemapEntry = {
-  url: string;
-  lastModified: Date;
-  changeFrequency: string;
-  priority: number;
 };
 
 function escapeXml(value: string): string {
@@ -28,39 +24,20 @@ function escapeXml(value: string): string {
     .replaceAll("'", "&apos;");
 }
 
-function createSiteFiles(options: SiteFilesOptions): Record<string, string> {
-  const siteUrl = (options.siteUrl || "https://www.learnwithlinguini.com").replace(/\/$/, "");
-  const lastModified = new Date();
-  const sitemapEntries: SitemapEntry[] = [
-    { url: `${siteUrl}/`, lastModified, changeFrequency: "weekly", priority: 1 },
-    ...languagePages.map(page => ({
-      url: `${siteUrl}/learn/${page.slug}`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    })),
-    { url: `${siteUrl}/blog`, lastModified, changeFrequency: "weekly", priority: 0.6 },
-    ...posts.map(post => ({
-      url: `${siteUrl}/blog/${post.slug}`,
-      lastModified: new Date(`${post.date}T00:00:00Z`),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    })),
-    { url: `${siteUrl}/credits`, lastModified, changeFrequency: "monthly", priority: 0.3 },
-    { url: `${siteUrl}/privacy`, lastModified, changeFrequency: "yearly", priority: 0.2 },
-    { url: `${siteUrl}/terms`, lastModified, changeFrequency: "yearly", priority: 0.2 },
-  ];
+export function createSiteFiles(options: SiteFilesOptions): Record<string, string> {
+  const siteUrl = normalizeSiteUrl(options.siteUrl);
   const sitemap = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...sitemapEntries.flatMap(entry => [
-      "  <url>",
-      `    <loc>${escapeXml(entry.url)}</loc>`,
-      `    <lastmod>${entry.lastModified.toISOString()}</lastmod>`,
-      `    <changefreq>${entry.changeFrequency}</changefreq>`,
-      `    <priority>${entry.priority}</priority>`,
-      "  </url>",
-    ]),
+    ...marketingRoutes.flatMap(path => {
+      const post = posts.find(item => path === `/blog/${item.slug}`);
+      return [
+        "  <url>",
+        `    <loc>${escapeXml(new URL(path, siteUrl).href)}</loc>`,
+        ...(post ? [`    <lastmod>${escapeXml(post.updatedDate ?? post.date)}</lastmod>`] : []),
+        "  </url>",
+      ];
+    }),
     "</urlset>",
     "",
   ].join("\n");
@@ -68,9 +45,9 @@ function createSiteFiles(options: SiteFilesOptions): Record<string, string> {
   const llms = [
     "# Linguini",
     "",
-    "> Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size Spanish or French games and a journal page. Join the public beta for unlimited photo lessons.",
+    `> ${siteContent.description}`,
     "",
-    "Linguini is a web app for beginners and returning learners (roughly CEFR A1–A2) who want to learn Spanish or French from English. Instead of a fixed word list, each lesson is built from a photo of the learner's own day, so the vocabulary is about things they actually see.",
+    "Linguini teaches Spanish, French and German, plus beginner Korean, from English. Instead of a fixed word list, each lesson starts with a photo of the learner's own day. Learners review AI-suggested objects before studying vocabulary and practising sentences. Level coverage varies by language; Korean currently focuses on beginner content.",
     "",
     "## How it works",
     "",
@@ -86,10 +63,11 @@ function createSiteFiles(options: SiteFilesOptions): Record<string, string> {
     ...faq.flatMap(({ q, a }) => [`### ${q}`, "", a, ""]),
     "## Links",
     "",
-    `- [Home and interactive demo](${siteUrl}/): try a lesson on a real photo without signing up`,
+    `- [Home](${siteUrl}/): learn how photo lessons work`,
+    `- [Interactive demo](${siteUrl}/demo): try a lesson on a bundled photo without signing up`,
     `- [Pricing](${siteUrl}/#pricing)`,
     ...languagePages.map(
-      page => `- [Learn ${page.name} with photos](${siteUrl}/learn/${page.slug}): every ${page.name} word in the demo scenes, with article, gender and pronunciation, and a worked session`,
+      page => `- [Learn ${page.name} with photos](${siteUrl}/learn/${page.slug}): vocabulary, pronunciation and a worked photo session${page.lang === "ko" ? "" : ", including articles and grammatical gender"}`,
     ),
     `- [Join the public beta](${new URL("/login?mode=signup", siteUrl).toString()})`,
     `- [Blog](${siteUrl}/blog)`,
@@ -98,9 +76,9 @@ function createSiteFiles(options: SiteFilesOptions): Record<string, string> {
     "",
   ].join("\n");
   const manifest = JSON.stringify({
-    name: "Linguini — Learn a language from the photos you take",
-    short_name: "Linguini",
-    description: "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size Spanish or French games and a journal page. Join the public beta for unlimited photo lessons.",
+    name: siteContent.title,
+    short_name: siteContent.name,
+    description: siteContent.description,
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -122,7 +100,12 @@ function createSiteFiles(options: SiteFilesOptions): Record<string, string> {
     "manifest.webmanifest": manifest,
   };
 
-  if (options.indexNowKey) files["indexnow-key.txt"] = options.indexNowKey;
+  if (options.indexNowKey) {
+    if (!/^[A-Za-z0-9-]{8,128}$/.test(options.indexNowKey)) {
+      throw new Error("INDEXNOW_KEY must contain 8–128 letters, numbers or hyphens.");
+    }
+    files["indexnow-key.txt"] = options.indexNowKey;
+  }
   return files;
 }
 

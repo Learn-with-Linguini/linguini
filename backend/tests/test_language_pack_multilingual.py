@@ -1064,7 +1064,11 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
         tracer=NoOpAITracer(),
         provider="mock",
     )
-    repo = SimpleNamespace(learning_task_generator=service)
+    # One model call per mission, as before automatic retries.
+    repo = SimpleNamespace(
+        learning_task_generator=service,
+        _with_retry=lambda _stage, _claim, call: call(),
+    )
     return PostgresWorkflowRepository._mission_lessons(
         repo, claim, objects, relations, words, translated, []
     )
