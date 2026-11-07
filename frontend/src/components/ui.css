@@ -4974,6 +4974,50 @@ p[role="alert"]::before { content: "!"; }
   align-self: start;
 }
 
+/* Phones: the title takes the first line, then the question count shares a line with the
+   task's actions so they never wrap into a row of their own above the bar. */
+@media (max-width: 520px) {
+  .vocabulary-flow__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-2);
+    row-gap: var(--space-1);
+  }
+
+  .vocabulary-flow__header .learning-title-row,
+  .vocabulary-flow__header .vocabulary-flow__progress,
+  .vocabulary-flow__header .trail {
+    display: contents;
+  }
+
+  .vocabulary-flow__header .vocabulary-flow__title {
+    grid-column: 1 / -1;
+  }
+
+  .vocabulary-flow__title h1 {
+    font-size: var(--text-h2);
+  }
+
+  .vocabulary-flow__header .learning-title-row > :not(.vocabulary-flow__title) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .vocabulary-flow__header .trail__label {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .vocabulary-flow__header .trail__track {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .vocabulary-flow__skip-more {
+    display: none;
+  }
+}
+
 .vocabulary-flow__title {
   display: flex;
   align-items: center;
