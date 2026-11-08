@@ -365,19 +365,32 @@ def test_another_language_retranslates_the_same_confirmed_facts(database, repos)
     }
 
 
-def test_clue_failure_fails_the_game_without_lesson_tasks(database, repos):
+def test_clue_failure_falls_back_to_description_rounds(database, repos):
     engine, owner, _, _ = database
     workflow, games, profile, _, clues = repos
     asset = upload_asset(engine, owner)
     confirmed_lesson(workflow, profile, asset, "lesson-key-11")
     clues.error = ISpyClueGenerationError("off")
     game = workflow.get(start(games, profile, asset).session.id, profile.id)
+
+    assert game.session.status == "inProgress"
+    assert game.session.failure_code is None
+    assert game.tasks
+    assert {task.kind for task in game.tasks} == {"reflection"}
+
+
+def test_game_fails_when_neither_ispy_mode_can_build_a_round(database, repos):
+    engine, owner, _, _ = database
+    workflow, games, profile, _, clues = repos
+    asset = upload_asset(engine, owner)
+    confirmed_lesson(workflow, profile, asset, "lesson-key-no-ispy-rounds")
+    clues.error = ISpyClueGenerationError("off")
+    workflow.ispy_guess_generator = None
+    game = workflow.get(start(games, profile, asset).session.id, profile.id)
+
     assert game.session.status == "failed"
     assert game.session.failure_code == "taskGenerationFailed"
     assert game.tasks == []
-    clues.error = None
-    retry = workflow.get(start(games, profile, asset, "game-key-4").session.id, profile.id)
-    assert retry.session.status == "inProgress"
 
 
 def test_games_reject_lesson_review_and_analysis(database, repos):

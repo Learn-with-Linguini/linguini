@@ -407,8 +407,6 @@ class PostgresISpyGameRepository:
             session.id, payload, translated_scene, objects, words, relations,
             claim.generation_options, level=level,
         )
-        if not clues:
-            raise ISpyGameUnavailableError("No I-Spy clue rounds were generated.")
         descriptions = (
             build_ispy_description_tasks(
                 session.id, objects, words,
@@ -418,6 +416,8 @@ class PostgresISpyGameRepository:
             if workflow.ispy_guess_generator
             else []
         )
+        if not clues and not descriptions:
+            raise ISpyGameUnavailableError("No I-Spy rounds were generated.")
         with workflow.transaction() as c:
             current = workflow._current_generation(c, claim)
             if current is None:
