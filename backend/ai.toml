@@ -96,7 +96,9 @@ api = "generateContent"
 model = "gemini-3.1-flash-lite"
 capabilities = ["text", "jsonSchema"]
 credentials = ["gemini-1", "gemini-2", "gemini-3"]
-defaults = { timeout_seconds = 60, max_retries = 1 }
+# Structured clue generation can spend output tokens before completing its
+# JSON response, so the shared 1,500-token default can leave no usable round.
+defaults = { timeout_seconds = 60, max_output_tokens = 4000, max_retries = 1 }
 
 [deployments.guess-gpt-4-1-mini]
 adapter = "openai"

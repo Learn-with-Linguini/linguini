@@ -195,6 +195,7 @@ def test_default_file_holds_the_measured_defaults():
     assert clue.provider is AiProvider.GEMINI
     assert clue.model_name == "gemini-3.1-flash-lite"
     assert clue.max_retries == 1
+    assert clue.max_output_tokens == 4000
 
     guess = settings.ispy_guess
     assert guess.provider is AiProvider.OPENAI
@@ -203,7 +204,7 @@ def test_default_file_holds_the_measured_defaults():
 
     for config in (clue, guess):
         assert config.timeout_seconds == 60
-        assert config.max_output_tokens is None
+    assert guess.max_output_tokens is None
 
 
 def test_removed_environment_variables_have_no_effect():
