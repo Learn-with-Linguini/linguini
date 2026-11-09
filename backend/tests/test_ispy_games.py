@@ -384,7 +384,7 @@ def test_another_language_retranslates_the_same_confirmed_facts(database, repos)
     }
 
 
-def test_clue_failure_falls_back_to_description_rounds(database, repos):
+def test_clue_failure_keeps_both_ispy_phases(database, repos):
     engine, owner, _, _ = database
     workflow, games, profile, _, clues = repos
     asset = upload_asset(engine, owner)
@@ -395,10 +395,10 @@ def test_clue_failure_falls_back_to_description_rounds(database, repos):
     assert game.session.status == "inProgress"
     assert game.session.failure_code is None
     assert game.tasks
-    assert {task.kind for task in game.tasks} == {"reflection"}
+    assert {task.kind for task in game.tasks} == {"ispyRound", "reflection"}
 
 
-def test_game_fails_when_neither_ispy_mode_can_build_a_round(database, repos):
+def test_clue_fallback_keeps_phase_one_when_descriptions_are_unavailable(database, repos):
     engine, owner, _, _ = database
     workflow, games, profile, _, clues = repos
     asset = upload_asset(engine, owner)
@@ -407,9 +407,10 @@ def test_game_fails_when_neither_ispy_mode_can_build_a_round(database, repos):
     workflow.ispy_guess_generator = None
     game = workflow.get(start(games, profile, asset).session.id, profile.id)
 
-    assert game.session.status == "failed"
-    assert game.session.failure_code == "taskGenerationFailed"
-    assert game.tasks == []
+    assert game.session.status == "inProgress"
+    assert game.session.failure_code is None
+    assert game.tasks
+    assert {task.kind for task in game.tasks} == {"ispyRound"}
 
 
 def test_games_reject_lesson_review_and_analysis(database, repos):

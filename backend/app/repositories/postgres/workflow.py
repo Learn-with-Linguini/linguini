@@ -162,6 +162,7 @@ from app.services.session_personalization import (
 )
 from app.services.session_plan import (
     bootstrap_word,
+    build_fallback_ispy_clue_tasks,
     build_grammar_lessons,
     build_ispy_clue_tasks,
     build_ispy_description_tasks,
@@ -3363,7 +3364,14 @@ class PostgresWorkflowRepository:
                 )
         except ISpyClueGenerationError:
             logger.exception("I-Spy clue generation failed for session %s.", session_id)
-            return []
+            return build_fallback_ispy_clue_tasks(
+                session_id,
+                objects,
+                words,
+                clue_payload,
+                level=level,
+                language=clue_payload.get("targetLanguage"),
+            )
 
     def _lessons_and_clues(
         self,

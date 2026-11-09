@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.repositories.postgres.vocabulary import vocabulary_items, vocabulary_translations
 from app.repositories.practice import PracticeConflictError
-from app.schemas.ispy_clues import ISpyClueResult
+from app.schemas.ispy_clues import GeneratedISpyClue, ISpyClueResult
 from app.schemas.media import SceneObject
 from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
@@ -392,6 +392,57 @@ def build_ispy_clue_tasks(
         )
         for clue in result.clues
     ]
+
+
+def build_fallback_ispy_clue_tasks(
+    session_id, objects, words, scene_facts, *, level=None, language=None,
+):
+    """Build grounded Phase 1 rounds when generated clues are unavailable.
+
+    The translation step already produced these confirmed scene facts. Reusing
+    them keeps I-Spy's two phases intact without inventing anything about the
+    photo or naming the answer in the clue.
+    """
+    object_keys = {str(obj.id) for obj in objects}
+    candidates = []
+    for fact in scene_facts.get("attributes", ()):
+        target = fact.get("objectKey") or str(fact.get("key", "")).rsplit(":", 1)[0]
+        clue = str(fact.get("translation") or "").strip()
+        if target in object_keys and clue:
+            candidates.append((target, clue, str(fact.get("source") or clue), []))
+    for fact in scene_facts.get("relationships", ()):
+        target = str(fact.get("subjectObjectKey") or "")
+        clue = str(fact.get("translation") or "").strip()
+        key = str(fact.get("key") or "")
+        if target in object_keys and clue:
+            candidates.append((target, clue, str(fact.get("source") or clue), [key] if key else []))
+
+    selected = []
+    seen = set()
+    for target, clue, translation, relationship_keys in candidates:
+        if target in seen:
+            continue
+        seen.add(target)
+        selected.append(GeneratedISpyClue(
+            clue=clue,
+            clue_translation=translation,
+            answer_object_key=target,
+            object_keys=[target],
+            relationship_keys=relationship_keys,
+        ))
+        if len(selected) == 2:
+            break
+    if not selected:
+        return []
+    return build_ispy_clue_tasks(
+        session_id,
+        ISpyClueResult(clues=selected),
+        objects,
+        words,
+        level=level,
+        language=language,
+        scene_facts=scene_facts,
+    )
 
 
 def build_ispy_description_tasks(session_id, objects, words, description_context, *, level=None):
