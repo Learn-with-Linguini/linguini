@@ -13,7 +13,11 @@ from app.schemas.tasks import SessionTaskPublic
 from app.schemas.vocabulary import VocabularyItem
 from app.services.ispy_descriptions import MORE_DETAIL_MESSAGE, guess_feedback, interpret_guess
 from app.services.ispy_levels import ispy_level
-from app.services.session_plan import build_ispy_clue_tasks, build_ispy_description_tasks
+from app.services.session_plan import (
+    build_fallback_ispy_clue_tasks,
+    build_ispy_clue_tasks,
+    build_ispy_description_tasks,
+)
 
 SESSION = uuid4()
 
@@ -106,6 +110,37 @@ def test_word_bank_adds_the_scenes_adjectives_and_prepositions_after_its_objects
         ("tasse", "cup", "noun"), ("table", "table", "noun"), ("rouge", "red", "adjective"),
         ("à côté de", "next to", "preposition"), ("devant", "in front of", "preposition"),
     ]
+
+
+def test_fallback_clues_keep_phase_one_grounded_in_translated_scene_facts():
+    objects, words = _scene(["tasse", "livre"], ["cup", "book"])
+    cup, book = (str(obj.id) for obj in objects)
+    tasks = build_fallback_ispy_clue_tasks(
+        SESSION,
+        objects,
+        words,
+        {
+            "attributes": [
+                {
+                    "key": f"{cup}:color", "objectKey": cup,
+                    "source": "red", "translation": "rouge",
+                },
+                {
+                    "key": f"{book}:color", "objectKey": book,
+                    "source": "white", "translation": "blanc",
+                },
+            ],
+            "relationships": [],
+        },
+        level="A1",
+        language="fr",
+    )
+
+    assert len(tasks) == 2
+    assert {task.kind for task in tasks} == {"ispyRound"}
+    assert [task.public_content.clue for task in tasks] == ["rouge", "blanc"]
+    assert [task.public_content.clue_translation for task in tasks] == ["red", "white"]
+    assert {str(task.scene_object_id) for task in tasks} == {cup, book}
 
 
 def test_a2_clues_are_heard_before_they_are_read():
