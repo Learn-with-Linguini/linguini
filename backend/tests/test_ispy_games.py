@@ -17,6 +17,7 @@ from app.repositories.postgres.ispy_games import CONFIRM_SCENE_FIRST, PostgresIS
 from app.repositories.postgres.language_profiles import PostgresLanguageProfileRepository
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scenes import preloaded_scenes
+from app.repositories.postgres.tasks import session_tasks
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
@@ -248,6 +249,30 @@ def test_starting_a_different_photo_closes_the_interrupted_game(database, repos)
     assert active is not None
     assert active.session.id == second
     assert active.active_session_count == 1
+
+
+def test_resuming_a_legacy_phase_two_only_game_rebuilds_both_phases(database, repos):
+    engine, owner, _, _ = database
+    workflow, games, profile, _, _ = repos
+    asset = upload_asset(engine, owner)
+    confirmed_lesson(workflow, profile, asset, "lesson-legacy-ispy")
+    legacy = start(games, profile, asset, "game-legacy-ispy").session.id
+    with engine.begin() as c:
+        c.execute(
+            session_tasks.delete().where(
+                session_tasks.c.session_id == legacy,
+                session_tasks.c.kind == "ispyRound",
+            )
+        )
+
+    rebuilt = workflow.get(
+        start(games, profile, asset, "game-rebuilt-ispy").session.id,
+        profile.id,
+    )
+
+    assert rebuilt.session.id != legacy
+    assert workflow.get(legacy, profile.id).session.status == "abandoned"
+    assert {task.kind for task in rebuilt.tasks} == {"ispyRound", "reflection"}
 
 
 def test_most_recent_confirmation_is_the_source(database, repos):

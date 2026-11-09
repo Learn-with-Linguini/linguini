@@ -221,7 +221,21 @@ class PostgresISpyGameRepository:
                 .one_or_none()
             )
             if unfinished is not None:
-                return workflow._detail(c, parse_session(unfinished))
+                unfinished_session = parse_session(unfinished)
+                has_clue_round = c.execute(
+                    select(
+                        exists().where(
+                            session_tasks.c.session_id == unfinished_session.id,
+                            session_tasks.c.kind == "ispyRound",
+                        )
+                    )
+                ).scalar_one()
+                if unfinished_session.status == SessionStatus.GENERATING_TASKS or has_clue_round:
+                    return workflow._detail(c, unfinished_session)
+                # Games created by the former clue-failure fallback could have
+                # description tasks but no Phase 1 rounds. They cannot gain the
+                # missing phase by resuming, so replace them with a fresh game.
+                workflow._transition(c, unfinished_session, "abandoned")
 
             # I-Spy has no session-management screen: the photo picker is the
             # place where a learner starts or switches games. Keep the game
