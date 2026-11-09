@@ -222,6 +222,23 @@ class PostgresISpyGameRepository:
             )
             if unfinished is not None:
                 return workflow._detail(c, parse_session(unfinished))
+
+            # I-Spy has no session-management screen: the photo picker is the
+            # place where a learner starts or switches games. Keep the game
+            # they selected and close older interrupted games so invisible
+            # sessions cannot accumulate until they hit the active-session
+            # limit.
+            older_games = c.execute(
+                select(sessions).where(
+                    sessions.c.user_id == self.user_id,
+                    sessions.c.language_profile_id == profile_id,
+                    sessions.c.mode == SessionMode.ISPY,
+                    sessions.c.status.not_in(TERMINAL),
+                )
+            ).mappings()
+            for older in older_games:
+                workflow._transition(c, parse_session(older), "abandoned")
+
             workflow._check_active_limit(c, profile_id, SessionMode.ISPY)
             source = self._source(c, request.media_asset_id)
             scene = None

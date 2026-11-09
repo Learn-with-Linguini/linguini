@@ -231,6 +231,25 @@ def test_duplicate_starts_resume_one_game_and_replay_uses_the_latest_review(data
     }
 
 
+def test_starting_a_different_photo_closes_the_interrupted_game(database, repos):
+    engine, owner, _, _ = database
+    workflow, games, profile, _, _ = repos
+    first_asset = upload_asset(engine, owner)
+    second_asset = upload_asset(engine, owner)
+    confirmed_lesson(workflow, profile, first_asset, "lesson-switch-1")
+    confirmed_lesson(workflow, profile, second_asset, "lesson-switch-2")
+
+    first = start(games, profile, first_asset, "game-switch-1").session.id
+    second = start(games, profile, second_asset, "game-switch-2").session.id
+
+    assert second != first
+    assert workflow.get(first, profile.id).session.status == "abandoned"
+    active = games.active(profile.id)
+    assert active is not None
+    assert active.session.id == second
+    assert active.active_session_count == 1
+
+
 def test_most_recent_confirmation_is_the_source(database, repos):
     engine, owner, _, _ = database
     workflow, games, profile, _, _ = repos
