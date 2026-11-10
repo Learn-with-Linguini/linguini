@@ -111,6 +111,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `task_skip_prompted` | `{ taskId, kind }` | Learner taps the "Skip this task" pill beside a grammar, mission or other non-word task title, opening the skip confirmation |
 | `task_skip_confirmed` | `{ taskId, kind }` | Learner confirms skipping that task |
 | `task_skip_cancelled` | `{ taskId, kind }` | Learner closes that skip confirmation and keeps learning |
+| `task_basil_summary_shown` | `{ taskId, amount }` | A completed lesson displays its cumulative task Basil reward popup |
+| `task_basil_summary_continued` | `{ taskId, amount }` | Learner continues from the cumulative task Basil reward popup |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and

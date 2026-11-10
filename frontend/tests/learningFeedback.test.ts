@@ -384,6 +384,11 @@ for (const missionId of ["M04", "M05"] as const) {
     assert.deepEqual(taskActions, [{ action: "attempts", body: {
       inputMode: "vocabularyReview", answers: { q1: "b", q2: "a" }, typedAnswers: {},
     } }]);
+    await waitFor(() => assert.match(text(), /Task complete!/));
+    assert.match(text(), /\+5 Basil/);
+    assert.equal(dom.window.document.querySelectorAll(".task-basil-earned").length, 1);
+    assert.equal(dom.window.document.querySelectorAll(".question-basil").length, 0);
+    assert.ok(button("Back to tasks"));
     assert.match(text(), /1 of 2 questions correct/);
   });
 

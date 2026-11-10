@@ -226,6 +226,30 @@ function SkipTaskDialog({ busy, onConfirm, onCancel, title = "Skip all the words
   </div>;
 }
 
+/** One task-level reward moment, after the final question reward has been rolled up. */
+function TaskBasilModal({ amount, nextLabel, taskId, onNext }: {
+  amount: number; nextLabel: string; taskId: string; onNext: () => void;
+}) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    trackAction("task_basil_summary_shown", { taskId, amount });
+  }, [amount, taskId]);
+  return <div className="help-modal__backdrop">
+    <section ref={dialogRef} className="help-modal task-basil-earned" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div className="task-basil-earned__leaf" aria-hidden="true">🌿</div>
+      <h2 id={titleId}>Task complete!</h2>
+      <strong className="task-basil-earned__total">+{amount} Basil</strong>
+      <p>You earned {amount} Basil across this task.</p>
+      <Button block onClick={() => {
+        trackAction("task_basil_summary_continued", { taskId, amount });
+        onNext();
+      }}>{nextLabel}</Button>
+    </section>
+  </div>;
+}
+
 /** The "Skip this task" pill beside a lesson title; the skip is confirmed before it is saved. */
 function TaskSkipPill({ task, disabled = false, onSkipped }: { task: SessionTask; disabled?: boolean; onSkipped: () => void }) {
   const { actOnTask, practiceSaving } = useAppState();
@@ -658,13 +682,14 @@ function MissionSnapshotFacts({ task, scene }: { task: SessionTask; scene: Retur
   const content = task.publicContent;
   if (content.kind !== "grammarLesson" || !content.missionSnapshot) return null;
   const snapshot = content.missionSnapshot;
+  if (snapshot.missionId === "M05") return null;
   const objectLabel = (id?: string | null) => {
     const item = scene.items.find(item => item.id === id);
     return item ? `${item.translation} (marker ${item.marker})` : id;
   };
   const focus = snapshot.ownedObjectId ?? snapshot.chosenObjectId ?? snapshot.preferenceObjectIds?.[0];
   return <section className="mission-planning-facts" aria-label="Your mission facts">
-    <strong>{focus ? `${snapshot.pretend ? "Practice scenario" : snapshot.missionId === "M05" ? "Your preference" : "Your choice"}: ${objectLabel(focus)}` : "Your choice"}</strong>
+    <strong>{focus ? `${snapshot.pretend ? "Practice scenario" : "Your choice"}: ${objectLabel(focus)}` : "Your choice"}</strong>
     <ul>
       {focus && snapshot.missionId === "M04" ? <li>It's yours.</li> : null}
       {snapshot.pretend ? <li>It's pretend</li> : null}
@@ -1213,7 +1238,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
         </Button> : null}
         </>}
       </div></Card>
-      <QuestionBasil amount={storedCheck?.basilEarned} />
+      {!terminal ? <QuestionBasil amount={storedCheck?.basilEarned} /> : null}
     </div> : null}
     {checking ? <InlineLoader compact label="Checking your answer" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
@@ -1222,8 +1247,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
       <strong>{learningFeedback("saved", task.id)}</strong>
       {actionResult.attempt?.feedback?.message ? <p>{actionResult.attempt.feedback.message}</p> : null}
     </div></Feedback> : null}
-    <BasilReward text={earnedText} />
-    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button>
+    {!terminal ? <BasilReward text={earnedText} /> : null}
+    {terminal ? null
       : question && !isChecked
         ? checkButtonShown ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
           onClick={() => void check()}>{retrying ? "Check again" : "Check answer"}</Button> : null
@@ -1232,6 +1257,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
           onClick={() => setActiveIndex(activeIndex + 1)}>Next question</Button>
         : <Button block disabled={!allChecked || checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => void submit()}>Finish task</Button>}
+    {terminal && actionResult ? <TaskBasilModal amount={actionResult.basilEarned ?? actionResult.xpEarned ?? 0}
+      nextLabel={index < total - 1 ? "Next task" : "Back to tasks"} taskId={task.id} onNext={onNext} /> : null}
     {question && storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
       ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
       ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],

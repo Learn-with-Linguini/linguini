@@ -244,6 +244,8 @@ def _plan_a0(specs, facts, vocabulary, seed):
         specs.add(f"chooseName-{index}", "option", "location-phrase", place, truth=False,
                   counterfactual={"relation": alternative.term_id}, suffix="other")
         specs.add(f"listenSelect-{index}", "answer", "scene-location", statement)
+        specs.add(f"listenSelect-{index}", "question", "where-question",
+                  {"subject": relation.subject_fact_id})
 
 
 def _plan_a1(specs, facts, vocabulary, seed):
@@ -319,6 +321,7 @@ def _build_a0(ctx):
         wrong = ctx.sentence_by_id(f"findNamed-{index}", "other")
         place = ctx.sentence_by_id(f"chooseName-{index}", "correct")
         other_place = ctx.sentence_by_id(f"chooseName-{index}", "other")
+        where = ctx.sentence_by_id(f"listenSelect-{index}", "question")
         spec = ctx.spec(f"findNamed-{index}")
         row = ctx.by_fact[spec.bindings["subject"]]
         row.update(find=correct.text, name=place.text, isIt=correct.text,
@@ -326,8 +329,18 @@ def _build_a0(ctx):
         translations.update({
             correct.text: correct.translation, wrong.text: wrong.translation,
             place.text: place.translation, other_place.text: other_place.translation,
+            where.text: where.translation,
         })
-        focus.append((row, correct, wrong, place, other_place))
+        frame = correct.text.replace(place.text, "___", 1)
+        frame_translation = correct.translation.replace(place.translation, "___", 1)
+        if frame == correct.text:
+            raise ValueError("M02 A0 location phrase must appear in its complete sentence")
+        if correct.romanization and place.romanization:
+            latin_frame = latin_of(correct).replace(latin_of(place), "___", 1)
+            if latin_frame != latin_of(correct):
+                ctx.extra_spellings[frame] = latin_frame
+        translations[frame] = frame_translation
+        focus.append((row, correct, wrong, place, other_place, where, frame))
     payload = ctx.payload(
         focus=[row["key"] for row, *_ in focus],
         approvedObjects=ctx.rows,
@@ -339,10 +352,10 @@ def _build_a0(ctx):
         yesNo=[ctx.label("yes-answer"), ctx.label("no-answer")],
     )
     questions = []
-    for index, (row, correct, wrong, place, other_place) in enumerate(focus, 1):
+    for index, (row, correct, wrong, place, other_place, where, frame) in enumerate(focus, 1):
         section = f"Task {index} · Locate the {row['label']}"
         built = build_question(
-            payload, "listenSelect", section, row, INSTRUCTIONS["listenSelect"],
+            payload, "listenSelect", section, row, where.text,
             correct.text, row["noun"], index=index,
         )
         built["token_bank"] = ctx.chunks(correct, ctx.chunks(wrong)["answer_chunks"][:1],
@@ -350,7 +363,7 @@ def _build_a0(ctx):
         questions += [
             choice_question(payload, "findNamed", section, row, INSTRUCTIONS["findNamed"],
                             [correct.text, wrong.text], correct.text, index=index),
-            choice_question(payload, "chooseName", section, row, INSTRUCTIONS["chooseName"],
+            choice_question(payload, "chooseName", section, row, frame,
                             [place.text, other_place.text], place.text, index=index),
             built,
         ]
