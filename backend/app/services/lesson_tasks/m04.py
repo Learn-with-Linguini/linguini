@@ -18,8 +18,8 @@ def owner_name(fact):
 
 def premise(fact, label):
     if fact.owner_type == "learner":
-        return f"Let's pretend the {label} is yours."
-    return f"Let's pretend the {label} is {owner_name(fact)}'s."
+        return f"The {label} is yours."
+    return f"The {label} is {owner_name(fact)}'s."
 
 
 def m04_lesson_task(session_id, mission, payload, result, vocabulary_ids):
