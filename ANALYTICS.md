@@ -229,6 +229,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_invite_created` | — | The creator generates a replacement invitation |
 | `ispy_friend_invite_copied` | — | Copying an invitation succeeds |
 | `ispy_friend_invite_shared` | — | Sharing an invitation succeeds |
+| `ispy_friend_invite_pasted` | — | The learner submits a pasted invite link or code from the lobby |
 | `ispy_friend_invite_opened` | — | The invitation preview opens |
 | `ispy_friend_invite_revoked` | — | The creator revokes an invitation |
 | `ispy_friend_chat_joined` | — | A compatible learner explicitly joins |

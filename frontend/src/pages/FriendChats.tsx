@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
@@ -55,20 +56,39 @@ function FriendChatList() {
       setError(reason instanceof ApiError ? reason.message : friendlyError(reason));
     } finally { busyRef.current = false; setBusy(false); }
   };
-  const pastedInvite = () => {
+  const pastedInvite = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     let token = input.trim();
+    if (!token) return;
     try { token = new URL(token).hash.match(/(?:^#|&)invite=([^&]+)/)?.[1] ?? token; token = decodeURIComponent(token); } catch { /* A raw code is also accepted. */ }
+    trackAction("ispy_friend_invite_pasted");
     rememberFriendInvite(token); setInvite(token); setInput("");
   };
   return <div className="stack friend-chats" data-cs-mask>
-    <header><span className="label muted">I-Spy with a friend</span><h1>Your photo chats</h1>
+    <header><span className="label muted">I-Spy with a friend</span><h1>Play I-Spy with a friend</h1>
       <p>Send a photo and a clue. Your friend can find it whenever they’re ready.</p></header>
-    {invite ? <FriendInvite key={`${owner}:${invite}`} token={invite} onJoined={chat => { rememberFriendInvite(""); setInvite(""); open(chat); }}
-      onDismiss={() => { rememberFriendInvite(""); setInvite(""); }} /> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile before creating or joining a chat.</p> : null}
-    <Button disabled={!activeProfile || busy || createPending} onClick={() => void create()}>Play with a friend</Button>
-    {busy ? <InlineLoader compact label="Creating your private chat…" /> : null}
-    {error ? <div className="stack-2"><p role="alert">{error}</p>{createPending ? <Button variant="secondary" disabled={busy} onClick={() => void create()}>Retry creating chat</Button> : null}</div> : null}
+    {invite ? <FriendInvite key={`${owner}:${invite}`} token={invite} onJoined={chat => { rememberFriendInvite(""); setInvite(""); open(chat); }}
+      onDismiss={() => { rememberFriendInvite(""); setInvite(""); }} /> :
+      <div className="friend-chats__choices">
+        <section className="card stack friend-chats__choice" aria-labelledby="friend-chat-create-title">
+          <div><h2 id="friend-chat-create-title">Invite a friend</h2>
+            <p>Start a new chat and get a private link to send to one friend.</p></div>
+          <Button block disabled={!activeProfile || busy || createPending} onClick={() => void create()}>Create invite link</Button>
+          {busy ? <InlineLoader compact label="Creating your private chat…" /> : null}
+          {error ? <div className="stack-2"><p role="alert">{error}</p>{createPending ? <Button variant="secondary" block disabled={busy} onClick={() => void create()}>Retry creating chat</Button> : null}</div> : null}
+        </section>
+        <span className="friend-chats__or" aria-hidden="true">or</span>
+        <section className="card stack friend-chats__choice" aria-labelledby="friend-chat-join-title">
+          <div><h2 id="friend-chat-join-title">Got an invite?</h2>
+            <p>Paste the link or code your friend sent you.</p></div>
+          <form className="stack-2" onSubmit={pastedInvite}>
+            <label className="field">Invite link or code<input className="input" value={input} maxLength={1000} autoComplete="off" autoCapitalize="none" spellCheck={false}
+              placeholder="Paste it here" onChange={event => setInput(event.target.value)} /></label>
+            <Button type="submit" variant="secondary" block disabled={!activeProfile || !input.trim()}>Join with invite</Button>
+          </form>
+        </section>
+      </div>}
     <section className="stack" aria-labelledby="friend-chat-list-title"><h2 id="friend-chat-list-title">Your chats</h2>
       {chats.isPending && activeProfile ? <InlineLoader label="Opening your chats…" /> : chats.error ? <Card className="stack-2"><p role="alert">{friendlyError(chats.error)}</p>
         <Button variant="secondary" onClick={() => void chats.refetch()}>Retry chats</Button></Card> : !chats.data?.length ?
@@ -77,9 +97,6 @@ function FriendChatList() {
           <ChatAvatar person={chat.partner} /><span><strong>{chat.partner?.displayName ?? "Your invitation"}</strong>
             <span className="small muted">{languageDisplayName(chat.targetLanguageCode)} · {chat.status === "waiting" ? "Waiting for your friend" : chat.status === "left" ? "Conversation ended" : chat.status === "blocked" ? "Blocked" : chat.activeRound ? "An I-Spy is in progress" : "Ready for another photo"}</span></span></button></li>)}</ul>}
     </section>
-    <details><summary>Have an invitation link?</summary><div className="stack-2">
-      <label className="field">Invitation link or code<input className="input" value={input} maxLength={1000} autoComplete="off" autoCapitalize="none" spellCheck={false} onChange={event => setInput(event.target.value)} /></label>
-      <Button variant="secondary" disabled={!input.trim()} onClick={pastedInvite}>Open invitation</Button></div></details>
   </div>;
 }
 

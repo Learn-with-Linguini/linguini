@@ -132,7 +132,7 @@ async function mount(which: "chat" | "list" = "chat", staleTime = 0) {
           surface.h(surface.Route, { path: "/profile", element: surface.h("p", null, "Profile destination") }),
         )))))));
   await render();
-  await waitFor(() => assert.match(bodyText(), which === "list" ? /Your photo chats/ : /Leo|Your I-Spy chat|Chat unavailable/));
+  await waitFor(() => assert.match(bodyText(), which === "list" ? /Play I-Spy with a friend/ : /Leo|Your I-Spy chat|Chat unavailable/));
   return { client, close, render };
 }
 async function selectPhotoWithKeyboard(key = "Enter") {
