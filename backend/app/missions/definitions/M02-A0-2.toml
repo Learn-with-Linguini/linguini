@@ -1,7 +1,7 @@
 mission_id = "M02"
 practice_level = "A0"
 content_version = 2
-title = "Find a described object"
+title = "Say where it is"
 
 [photo_requirements]
 media_sources = ["preloaded", "camera", "userUpload"]
@@ -11,13 +11,13 @@ min_relations = 1
 relations = ["on", "under", "next_to", "in_front_of", "behind"]
 
 [objective]
-objective_id = "find-described-object"
-can_do = "I can find an object from a simple description of what it is like or where it is."
+objective_id = "locate-object"
+can_do = "I can understand and build a simple sentence about where an object is."
 
 [[objective.targets]]
 target_id = "recognise-adjective"
-summary = "Recognise a familiar adjective used with an object name."
-evidence_types = ["recognition", "construction"]
+summary = "Recognise a familiar visible detail when it appears in a description."
+evidence_types = ["recognition"]
 
 [[objective.targets]]
 target_id = "recognise-preposition"
@@ -26,8 +26,8 @@ evidence_types = ["recognition", "construction"]
 
 [[objective.targets]]
 target_id = "find-described-object"
-summary = "Find the object that a short adjective or location phrase describes."
-evidence_types = ["recognition"]
+summary = "Choose and build the location sentence that matches the photo."
+evidence_types = ["recognition", "construction"]
 
 [[language_patterns]]
 pattern_id = "adjective-description"
@@ -43,7 +43,7 @@ examples = { es = ["la taza sobre la mesa"], fr = ["la tasse sur la table"], de 
 
 [teaching]
 task_sequence = ["vocabularyIntroduction", "grammarLesson"]
-teach_before_assessment = ["recognise-adjective", "recognise-preposition", "find-described-object"]
+teach_before_assessment = ["recognise-preposition", "find-described-object"]
 max_new_words = 3
 
 [[teaching.supports]]
@@ -57,12 +57,6 @@ availability = "always"
 counts_as_assistance = false
 
 [[evaluation_criteria]]
-criterion_id = "adjective-matches-object"
-target_id = "recognise-adjective"
-description = "Matches the taught adjective phrase to the confirmed object detail."
-evidence_types = ["recognition", "construction"]
-
-[[evaluation_criteria]]
 criterion_id = "preposition-matches-relation"
 target_id = "recognise-preposition"
 description = "Matches the taught position phrase to the confirmed object relation."
@@ -71,15 +65,14 @@ evidence_types = ["recognition", "construction"]
 [[evaluation_criteria]]
 criterion_id = "finds-described-object"
 target_id = "find-described-object"
-description = "Finds the object described by a taught adjective or location phrase."
-evidence_types = ["recognition"]
+description = "Chooses or builds the sentence that matches a confirmed object relation."
+evidence_types = ["recognition", "construction"]
 
 [expected_performance]
 min_assessed_questions = 4
 min_correct_ratio = 0.67
 min_independent_correct = 2
 required_target_groups = [
-  ["recognise-adjective"],
   ["recognise-preposition"],
   ["find-described-object"],
 ]

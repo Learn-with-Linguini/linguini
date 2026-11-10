@@ -12,22 +12,24 @@ _EXPLANATIONS = {
 
 
 _EVALUATIONS = {
-    "matchName": (["recognise-name"], "recognition", ["name-matches-object"]),
+    "matchName": (["recognise-description"], "recognition", ["description-matches-object"]),
     "confirmName": (["identify-object"], "recognition", ["identifies-object"]),
     "buildIdentify": (["identify-object"], "construction", ["identifies-object"]),
-    "findNamed": (["find-object"], "recognition", ["finds-named-object"]),
-    "chooseName": (["recognise-name"], "recognition", ["distinguishes-names"]),
-    "listenSelect": (["find-object"], "recognition", ["finds-named-object"]),
+    "findNamed": (["find-described-object"], "recognition", ["finds-described-object"]),
+    "chooseName": (["recognise-preposition"], "recognition", ["preposition-matches-relation"]),
+    "listenSelect": (["find-described-object"], "construction", ["finds-described-object"]),
     "countGroup": (["count-small-group"], "recognition", ["count-matches-photo"]),
     "matchChunk": (["number-noun-chunk"], "recognition", ["chunk-matches-count"]),
     "buildChunk": (["number-noun-chunk"], "construction", ["chunk-matches-count"]),
 }
 
+_LEGACY_MATCH_NAME = (["recognise-name"], "recognition", ["name-matches-object"])
 
-_NAME_PURPOSES = {"matchName", "findNamed", "chooseName", "listenSelect"}
+
+_NAME_PURPOSES = set()
 
 
-_MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect"}
+_MARKER_PURPOSES = set()
 
 
 def with_article(noun):
@@ -45,9 +47,12 @@ def _prep(payload):
     if mission_id == "M03":
         row = rows[0]
         chunks = payload["quantityChunks"]
+        practice = rows[1]
+        practice_chunks = payload["practiceQuantityChunks"]
         return [
             *(card(payload["approvedNumberWords"][str(n)]) for n in (1, 2, 3)),
             *(card(chunks[str(n)], row["key"]) for n in (1, 2, 3)),
+            *(card(practice_chunks[str(n)], practice["key"]) for n in (1, 2, 3)),
         ]
     focus = {key: row for row in rows for key in [row["key"]]}
     first = focus[payload["focus"][0]]
@@ -65,7 +70,7 @@ def _corrections(payload, question, label):
     purpose = question.purpose
     wrong = [option for option in question.options
              if option.option_id != question.correct_option_id]
-    if purpose in _MARKER_PURPOSES:
+    if purpose in _MARKER_PURPOSES or question.marker_keys is not None:
         return [
             dict(
                 mistake="wrongObject", answers=[option.option_id], correction=label,
@@ -81,9 +86,10 @@ def _corrections(payload, question, label):
         meaning = f"This is {with_article(target['source'])}: {target['identify']}"
         return [dict(mistake="wrongObject", answers=[option.option_id], correction=label,
                      explanation=meaning) for option in wrong], meaning
-    if purpose in {"chooseName"}:
+    if purpose in {"matchName", "findNamed", "chooseName"}:
+        note = f"The photo matches: {label}"
         return [dict(mistake="wrongWord", answers=[option.option_id], correction=label,
-                     explanation=f"This is {target['name']}.") for option in wrong], None
+                     explanation=note) for option in wrong], note
     if purpose in {"countGroup", "matchChunk"}:
         note = f"{label} — {payload['approvedTranslations'].get(label, label)}."
         return [dict(mistake="wrongQuantity", answers=[option.option_id], correction=label,
@@ -96,7 +102,11 @@ def a0_lesson_task(session_id, mission, payload, result, vocabulary_ids):
     statement_correct = {}
 
     def evaluate(question, label):
-        target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
+        target_ids, evidence_type, criteria = (
+            _LEGACY_MATCH_NAME
+            if payload.get("legacyA0") and question.purpose == "matchName"
+            else _EVALUATIONS[question.purpose]
+        )
         vocabulary_id = vocabulary_ids.get(question.object_key)
         corrections, correct_note = _corrections(payload, question, label)
         if question.statement_true is not None:

@@ -162,9 +162,22 @@ def _plan_a0(specs, pack, facts, vocabulary, _seed):
             specs.add("matchChunk-1", "option", "quantity-chunk", {"object": noun.fact_id},
                       truth=False, counterfactual={"count": f"number-{number}"},
                       suffix=f"n{number}")
-    # Both tasks reuse the question and the three chunks.
-    for slot in ("buildChunk-1", "countGroup-2", "matchChunk-2", "buildChunk-2"):
-        specs.skip(slot)
+    specs.skip("buildChunk-1")
+    other = next(
+        (term for term in vocabulary.terms
+         if term.part_of_speech == "noun" and fold(term.source_text) != fold(noun.source_text)),
+        None,
+    )
+    if other is None:
+        raise ValueError("M03 A0 needs a second, differently named object for transfer practice")
+    specs.add("countGroup-2", "question", "how-many-question", {"object": other.fact_id})
+    for number in A0_NUMBERS:
+        specs.add(
+            "matchChunk-2", "option", "quantity-chunk", {"object": other.fact_id},
+            truth=False,
+            counterfactual={"count": f"number-{number}"}, suffix=f"n{number}",
+        )
+    specs.skip("buildChunk-2")
 
 
 def _plan_a1(specs, pack, facts, vocabulary, seed):
@@ -287,21 +300,37 @@ def _build_a0(ctx):
     )
     count, row, object_ids = _group(ctx, counted)
     how_many = ctx.sentence("countGroup-1", "question")
-    words, chunks, translations = {}, {}, {how_many.text: how_many.translation}
+    practice_row = ctx.by_fact[ctx.spec("countGroup-2").bindings["object"]]
+    practice_question = ctx.sentence("countGroup-2", "question")
+    words, chunks, practice_words, practice_chunks = {}, {}, {}, {}
+    translations = {
+        how_many.text: how_many.translation,
+        practice_question.text: practice_question.translation,
+    }
     for number in A0_NUMBERS:
         chunk = ctx.sentence_by_id("matchChunk-1", f"n{number}")
+        practice_chunk = ctx.sentence_by_id("matchChunk-2", f"n{number}")
         words[str(number)] = _number_word(ctx, number, row)
+        practice_words[str(number)] = _number_word(ctx, number, practice_row)
         chunks[str(number)] = chunk.text
+        practice_chunks[str(number)] = practice_chunk.text
         translations[words[str(number)]] = ENGLISH_NUMBERS[number]
+        translations[practice_words[str(number)]] = ENGLISH_NUMBERS[number]
         translations[chunk.text] = chunk.translation
+        translations[practice_chunk.text] = practice_chunk.translation
     payload = ctx.payload(
         title=ctx.mission.title,
         yesNo=[ctx.label("yes-answer"), ctx.label("no-answer")],
         group=dict(key=row["key"], objectIds=object_ids, boardObjectId=row["key"],
                    quantity=count.quantity, confirmedQuantity=count.quantity),
+        practiceGroup=dict(key=practice_row["key"], boardObjectId=practice_row["key"],
+                           quantity=5 - count.quantity),
         focus=[], howMany=how_many.text, approvedNumberWords=words, quantityChunks=chunks,
-        approvedObjects=[row], approvedTranslations=translations,
-        approvedSentenceChunks=[how_many.text, *chunks.values()],
+        practiceHowMany=practice_question.text, practiceNumberWords=practice_words,
+        practiceQuantityChunks=practice_chunks,
+        approvedObjects=[row, practice_row], approvedTranslations=translations,
+        approvedSentenceChunks=[how_many.text, practice_question.text, *chunks.values(),
+                                *practice_chunks.values()],
         approvedArticlesOrEndings=[], pluralsTaught=True,
     )
     result = A0LessonResult(title=ctx.mission.title, questions=a0_m03_questions(payload))

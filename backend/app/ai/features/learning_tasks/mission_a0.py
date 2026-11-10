@@ -37,17 +37,17 @@ ORDERS: dict[str, list[str]] = {
     "M02": ["findNamed", "chooseName", "listenSelect"],
     "M03": ["countGroup", "matchChunk", "buildChunk"],
 }
-MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect"}
-BUILD_PURPOSES = {"buildIdentify", "buildChunk"}
+MARKER_PURPOSES = set()
+BUILD_PURPOSES = {"buildIdentify", "buildChunk", "listenSelect"}
 # English prompts and instructions an A0 question may show; target-language text
 # always comes from the payload's approved chunks.
 INSTRUCTIONS = {
-    "matchName": "Listen, then tap the marker for this word.",
+    "matchName": "Which sentence describes the highlighted object?",
     "confirmName": "Look at the highlighted object. Answer yes or no.",
     "buildIdentify": "Build the answer with the tiles.",
-    "findNamed": "Tap the marker for the object.",
-    "chooseName": "Which word names the highlighted object?",
-    "listenSelect": "Listen, then tap the marker for the object you hear.",
+    "findNamed": "Which sentence matches the photo?",
+    "chooseName": "Which position phrase completes the sentence?",
+    "listenSelect": "Build the location sentence with the tiles.",
     "countGroup": "Count the highlighted group. How many are there?",
     "matchChunk": "Which words match what you see?",
     "buildChunk": "Build the words with the tiles.",
@@ -222,23 +222,25 @@ def _m02(payload):
 
 def m03_questions(payload):
     group = payload["group"]
-    target = _objects(payload)[group["key"]]
-    words = payload["approvedNumberWords"]
-    chunks = payload["quantityChunks"]
+    practice = payload["practiceGroup"]
+    objects = _objects(payload)
     questions = []
     tasks = [
-        ("Task 1 · Count in your photo", group["quantity"],
+        ("Task 1 · Count in your photo", objects[group["key"]], group["quantity"],
+         payload["howMany"], payload["approvedNumberWords"], payload["quantityChunks"],
          dict(group_object_ids=group["objectIds"])),
-        ("Task 2 · Practice board", 5 - group["quantity"],
-         dict(display_count=5 - group["quantity"], board_object_id=group["boardObjectId"])),
+        ("Task 2 · Try a different object", objects[practice["key"]],
+         practice["quantity"], payload["practiceHowMany"],
+         payload["practiceNumberWords"], payload["practiceQuantityChunks"],
+         dict(display_count=practice["quantity"], board_object_id=practice["boardObjectId"])),
     ]
-    for index, (section, quantity, shown) in enumerate(tasks, 1):
+    for index, (section, target, quantity, prompt, words, chunks, shown) in enumerate(tasks, 1):
         other = 5 - quantity
         questions += [
             choice_question(
-                payload, "countGroup", section, target, payload["howMany"],
+                payload, "countGroup", section, target, prompt,
                 [words[str(number)] for number in (1, 2, 3)], words[str(quantity)],
-                index=index, audio_text=payload["howMany"], **shown,
+                index=index, audio_text=prompt, **shown,
             ),
             choice_question(
                 payload, "matchChunk", section, target, INSTRUCTIONS["matchChunk"],
@@ -246,7 +248,7 @@ def m03_questions(payload):
                 index=index, **shown,
             ),
             build_question(
-                payload, "buildChunk", section, target, payload["howMany"],
+                payload, "buildChunk", section, target, prompt,
                 chunks[str(quantity)], tokens(words[str(other)])[0], index=index, **shown,
             ),
         ]
@@ -317,7 +319,12 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
         target = objects.get(question.object_key)
         if target is None:
             _fail("Questions may only use approved, confirmed objects.")
-        if question.instruction != INSTRUCTIONS[question.purpose]:
+        expected_instruction = (
+            "Listen, then tap the marker for this word."
+            if payload.get("legacyA0") and question.purpose == "matchName"
+            else INSTRUCTIONS[question.purpose]
+        )
+        if question.instruction != expected_instruction:
             _fail("Instructions are the reviewed English instructions.")
         if fold(question.prompt) not in chunks and question.prompt != INSTRUCTIONS[
             question.purpose
@@ -334,7 +341,7 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
             continue
         checked_answer(question)
         labels = {option.option_id: option.label for option in question.options}
-        if question.purpose in MARKER_PURPOSES:
+        if question.purpose in MARKER_PURPOSES or question.marker_keys is not None:
             _check_markers(question, labels, objects)
             continue
         if question.marker_keys is not None or question.accepted_option_ids:
@@ -342,16 +349,13 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
         allowed = chunks | forms | {fold(item) for item in payload["yesNo"]} | {
             fold(item) for item in payload["approvedNumberWords"].values()
         }
+        allowed |= {fold(item) for item in payload.get("practiceNumberWords", {}).values()}
         if not {fold(label) for label in labels.values()} <= allowed:
             _fail("Options use only taught words and chunks.")
         if question.purpose == "confirmName":
             _validate_yes_no(payload, question, labels, objects, target)
-        if question.purpose == "chooseName":
-            names = {fold(row["name"]): key for key, row in objects.items()}
-            if len(labels) != 2 or not all(fold(label) in names for label in labels.values()):
-                _fail("Distinguish exactly two taught names.")
-            if names[fold(labels[question.correct_option_id])] != target["key"]:
-                _fail("The correct name is the highlighted object's.")
+        if question.purpose in {"matchName", "findNamed", "chooseName"} and len(labels) != 2:
+            _fail("A0 contrast questions offer exactly two taught choices.")
 
 
 def _check_markers(question, labels, objects):
@@ -391,16 +395,16 @@ def _validate_yes_no(payload, question, labels, objects, target):
 
 def _validate_m03(payload, questions):
     group = payload["group"]
+    practice = payload["practiceGroup"]
     if group is None or group["quantity"] not in (2, 3):
         _fail("The lesson needs one learner-counted group of 2 or 3.")
     if group["quantity"] != group["confirmedQuantity"]:
         _fail("The learner's count must never be changed.")
-    words = payload["approvedNumberWords"]
-    chunks = payload["quantityChunks"]
     for index, question in enumerate(questions):
-        if question.object_key != group["key"]:
-            _fail("Every question is about the counted group.")
-        expected = group["quantity"] if index < 3 else 5 - group["quantity"]
+        expected_key = group["key"] if index < 3 else practice["key"]
+        if question.object_key != expected_key:
+            _fail("Each counting task must focus on its own object.")
+        expected = group["quantity"] if index < 3 else practice["quantity"]
         if index >= 3 and question.display_count != expected:
             _fail("The practice board shows the other small number.")
         if index < 3 and (question.display_count is not None
@@ -409,6 +413,10 @@ def _validate_m03(payload, questions):
         shown = [question.prompt, *(option.label for option in question.options)]
         if any(_DIGIT.search(text) for text in shown):
             _fail("Counts are shown as number words, never numerals.")
+        words = (payload["approvedNumberWords"] if index < 3
+                 else payload["practiceNumberWords"])
+        chunks = (payload["quantityChunks"] if index < 3
+                  else payload["practiceQuantityChunks"])
         if question.purpose == "buildChunk":
             if fold(question.correct_text or "") != fold(chunks[str(expected)]):
                 _fail("The built chunk matches the count.")
