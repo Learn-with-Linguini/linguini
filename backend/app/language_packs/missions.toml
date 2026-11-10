@@ -142,7 +142,7 @@ required_constructions = [
 [[missions.slots]]
 purpose = "findObject"
 construction_id = "scene-location"
-target_ids = ["understand-location"]
+target_ids = ["describe-location"]
 
 [[missions.slots]]
 purpose = "chooseLocation"
