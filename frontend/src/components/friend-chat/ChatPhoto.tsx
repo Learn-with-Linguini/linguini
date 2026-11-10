@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { getChatPhoto } from "../../lib/friendChats";
-import type { ChatObject, ChatPoint } from "../../lib/friendChats";
+import type { ChatGuessChoice, ChatObject, ChatPoint } from "../../lib/friendChats";
 import { Button } from "../ui";
 import { InlineLoader } from "../LoadingScreen";
 
@@ -10,10 +10,13 @@ export function photoPoint(event: { clientX: number; clientY: number }, bounds: 
   return bounds.width && bounds.height ? { x: clamp((event.clientX - bounds.left) / bounds.width), y: clamp((event.clientY - bounds.top) / bounds.height) } : null;
 }
 
-export function ChatPhoto({ chatId, roundId, objects = [], selected, onObject, onPoint, disabled = false, crop, label = "Shared I-Spy photo" }: {
+export function ChatPhoto({ chatId, roundId, objects = [], selected, onObject, onPoint, disabled = false, crop, label = "Shared I-Spy photo",
+  choices = [], onChoice, chosenKey, triedKeys }: {
   chatId: string; roundId: string; objects?: ChatObject[]; selected?: ChatPoint | null;
   onObject?: (object: ChatObject) => void; onPoint?: (point: ChatPoint) => void; disabled?: boolean;
   crop?: ChatObject | null; label?: string;
+  /** Unlabelled markers for the guesser; each is a 44px target. */
+  choices?: ChatGuessChoice[]; onChoice?: (choice: ChatGuessChoice) => void; chosenKey?: string | null; triedKeys?: Set<string>;
 }) {
   const [retry, setRetry] = useState(0);
   const [image, setImage] = useState<{ key: string; url: string | null; failed: boolean } | null>(null);
@@ -58,7 +61,14 @@ export function ChatPhoto({ chatId, roundId, objects = [], selected, onObject, o
         style={{ left: `${object.x * 100}%`, top: `${object.y * 100}%` }} disabled={disabled}
         aria-label={`Choose ${object.translation || object.label}`} onClick={() => onObject(object)}><span aria-hidden="true" /></button> :
         <span key={object.key} className="friend-photo__object" aria-hidden="true" style={{ left: `${object.x * 100}%`, top: `${object.y * 100}%` }} />) : null}
-      {!crop && selected ? <span className="friend-photo__selection" aria-hidden="true" style={{ left: `${selected.x * 100}%`, top: `${selected.y * 100}%` }} /> : null}
+      {!crop && onChoice ? choices.map((choice, index) => {
+        const tried = triedKeys?.has(choice.key) ?? false;
+        const chosen = chosenKey === choice.key;
+        return <button type="button" key={choice.key} className={`friend-photo__object friend-photo__choice${chosen ? " friend-photo__choice--chosen" : ""}${tried ? " friend-photo__choice--tried" : ""}`}
+          style={{ left: `${choice.x * 100}%`, top: `${choice.y * 100}%` }} disabled={disabled || tried} aria-pressed={chosen}
+          aria-label={`Object ${index + 1}${tried ? ", already guessed" : ""}`} onClick={() => onChoice(choice)}><span aria-hidden="true">{tried ? "✕" : ""}</span></button>;
+      }) : null}
+      {!crop && selected && !onChoice ? <span className="friend-photo__selection" aria-hidden="true" style={{ left: `${selected.x * 100}%`, top: `${selected.y * 100}%` }} /> : null}
     </div>
     {onPoint ? <p className="small muted">Tap the photo to choose. With a keyboard, focus the photo and use arrow keys to move.</p> : null}
   </div>;

@@ -54,8 +54,21 @@ class SendChatClue(ChatCommand):
 
 
 class GuessChatTarget(ChatCommand):
-    x: Coordinate
-    y: Coordinate
+    """A guess names one of the round's marked choices, or (older clients) a photo point."""
+
+    choice_key: Annotated[str, Field(min_length=1, max_length=64)] | None = None
+    x: Coordinate | None = None
+    y: Coordinate | None = None
+
+    @model_validator(mode="after")
+    def one_guess(self):
+        point = self.x is not None and self.y is not None
+        if self.choice_key is not None:
+            if self.x is not None or self.y is not None:
+                raise ValueError("Choose a marked object or a photo location, not both.")
+        elif not point:
+            raise ValueError("Choose one of the marked objects.")
+        return self
 
 
 class ReportChat(ChatCommand):
@@ -78,6 +91,14 @@ class ChatObject(ApiModel):
     y: Coordinate
     width: Coordinate | None = None
     height: Coordinate | None = None
+
+
+class ChatGuessChoice(ApiModel):
+    """One marked object the guesser may pick. The key is opaque and per round."""
+
+    key: str
+    x: Coordinate
+    y: Coordinate
 
 
 class ChatCheatSheet(ApiModel):
@@ -125,6 +146,8 @@ class ChatRound(ApiModel):
     objects: list[ChatObject] = Field(default_factory=list)
     target: ChatObject | None = None
     clue_options: list[ChatClueOption] = Field(default_factory=list)
+    # Every marked object, target included, in an order that does not reveal it.
+    guess_choices: list[ChatGuessChoice] = Field(default_factory=list)
     messages: list[ChatMessage] = Field(default_factory=list)
     error: str | None = None
     retryable: bool = False

@@ -255,6 +255,33 @@ test("a joined learner sees their own name tagged You beside the inviter", async
   assert.doesNotMatch(players(), /Leo\s*You|Waiting to join/);
 });
 
+test("the guesser picks one of the unlabelled circles and the guess sends only its key", async () => {
+  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47 }, { key: "c2", x: .7, y: .3 }] });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Tap the circle on the object you think they mean/));
+  await waitFor(() => assert.equal(dom.window.document.querySelectorAll(".friend-photo__choice").length, 2));
+  const circles = [...dom.window.document.querySelectorAll<HTMLButtonElement>(".friend-photo__choice")];
+  assert.deepEqual(circles.map(item => item.getAttribute("aria-label")), ["Object 1", "Object 2"]);
+  assert.doesNotMatch(dom.window.document.querySelector(".friend-photo")?.textContent ?? "", /taza|cup/);
+  await clickElement(circles[1]);
+  assert.equal(circles[1].getAttribute("aria-pressed"), "true");
+  await click("Confirm this object"); await click("Submit guess");
+  const write = writes.at(-1)!;
+  assert.match(write.path, /\/rounds\/round1\/guess$/);
+  assert.equal(write.body.choiceKey, "c2");
+  assert.equal(write.body.x, undefined);
+});
+
+test("a circle already guessed wrong is marked and cannot be picked again", async () => {
+  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47 }, { key: "c2", x: .7, y: .3 }],
+    messages: [...round().messages, { id: "g1", type: "guess", senderId: "u1", x: .7, y: .3, isCorrect: false, createdAt: now }] });
+  await mount();
+  await waitFor(() => assert.equal(dom.window.document.querySelectorAll(".friend-photo__choice").length, 2));
+  const tried = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Object 2, already guessed"]');
+  assert.ok(tried?.disabled);
+  assert.equal(dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Object 1"]')?.disabled, false);
+});
+
 test("choosing a detected object previews its identity and requires an explicit confirmation before changing server state", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] });
   await mount(); await waitFor(() => assert.ok(dom.window.document.querySelector('button[aria-label="Choose cup"]')));

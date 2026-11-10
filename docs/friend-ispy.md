@@ -12,9 +12,16 @@ object's identity. Beginner clues use confirmed description pieces; other learne
 can edit or write a clue. Audio and the existing mission cheatsheets support the
 composer. Suggestions require review and an explicit send.
 
-The receiver sees the photo and original clue, selects a location and confirms
-the guess. Unfinished rounds do not expose the object inventory, answer or target
-region to the receiver. An incorrect guess lets the sender add a useful clue or
+The receiver sees the photo and original clue, picks one of the marked objects and
+confirms the guess. Every detected object is marked, with the target always among
+them, so the markers do not give the answer away; reading the clue does. Each marker
+carries only a centre point and an opaque per-round key (a hash of the round and
+object keys), and markers are ordered by that key. A custom target replaces any
+detected marker centred on the same spot. The server scores a guess by comparing the
+chosen key with the target's key; older clients may still send a photo point, which
+is scored against the target region. Markers already guessed wrong are shown as
+tried. Unfinished rounds do not expose object names, the answer or the target region
+to the receiver. An incorrect guess lets the sender add a useful clue or
 reveal the answer. Completed rounds remain in the conversation, and either learner
 can start the next round. Starting a round never requires both learners online.
 

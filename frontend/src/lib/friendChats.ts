@@ -22,7 +22,10 @@ export interface ChatRound {
   photoStatus: "analyzing" | "ready" | "failed"; imageUrl: string | null; createdAt: string;
   completedAt?: string | null; objects: ChatObject[]; target?: ChatObject | null;
   clueOptions: ChatClueOption[]; messages: ChatMessage[]; error?: string | null; retryable: boolean;
+  /** Marked objects the guesser picks from; the target is among them but not identified. */
+  guessChoices?: ChatGuessChoice[];
 }
+export interface ChatGuessChoice { key: string; x: number; y: number }
 export interface ChatSnapshot {
   id: string; status: "waiting" | "active" | "left" | "blocked"; revision: number; meId: string;
   targetLanguageCode: string; viewerLevel: string; partner: ChatPerson | null; creator: ChatPerson;
