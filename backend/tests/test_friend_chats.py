@@ -343,7 +343,14 @@ def test_receiver_never_gets_unrevealed_object_inventory_or_private_content(db):
     guest = db.repos[1].get(access.chat.id).active_round.model_dump(by_alias=True)
     assert guest["imageUrl"].startswith("/api/v1/friend-chats/")
     assert guest["target"] is None and guest["objects"] == [] and guest["clueOptions"] == []
-    assert target["word"] not in str(guest) and target["key"] not in str(guest)
+    assert target["key"] not in str(guest)
+    # The target's name appears only among the marker choices, where every object has
+    # one in the same shape, so nothing singles the target out.
+    choices = guest.pop("guessChoices")
+    assert target["word"] not in str(guest)
+    assert target["word"] in {choice["word"] for choice in choices}
+    assert len({tuple(sorted(choice)) for choice in choices}) == 1
+    assert all(choice["word"] for choice in choices)
     assert db.repos[1].image_asset(access.chat.id, round_id).id == db.assets[0][0].id
     with pytest.raises(RoomError):
         db.repos[3].image_asset(access.chat.id, sent.active_round.id)
@@ -593,6 +600,75 @@ def test_nonretryable_photo_rejection_cannot_start_another_analysis_attempt(db):
         stored = c.execute(select(rounds.c.analysis_attempts, rounds.c.retryable)
             .where(rounds.c.id == round_id)).mappings().one()
     assert stored["analysis_attempts"] == 1 and stored["retryable"] is False
+
+
+def test_the_guesser_picks_from_marked_objects_without_learning_which_is_the_target(db):
+    access = paired(db)
+    snapshot, target, _options = awaiting_guess(db, access.chat.id)
+    round_id = snapshot.active_round.id
+    assert snapshot.active_round.guess_choices == []
+    guest = db.repos[1].get(access.chat.id)
+    choices = guest.active_round.guess_choices
+    assert len(choices) == 2
+    assert {(round(c.x, 2), round(c.y, 2)) for c in choices} == {(.25, .4), (.75, .7)}
+    assert target["key"] not in {c.key for c in choices}
+    assert {(c.word, c.translation) for c in choices} == {
+        ("la taza", "the cup"), ("la silla", "the chair")}
+    assert all(c.width and c.height for c in choices)
+    assert guest.active_round.objects == [] and guest.active_round.target is None
+    assert db.repos[1].get(access.chat.id).active_round.guess_choices == choices
+    wrong = next(c for c in choices if c.x == .75)
+    missed = db.repos[1].guess(access.chat.id, round_id,
+        command(guest, GuessChatTarget, choice_key=wrong.key))
+    assert missed.active_round.status == "awaitingFollowUp"
+    guess = [m for m in missed.active_round.messages if m.type == "guess"][-1]
+    assert (guess.x, guess.y, guess.is_correct) == (.75, .7, False)
+    again = db.repos[0].send_clue(access.chat.id, round_id,
+        command(db.repos[0].get(access.chat.id), SendChatClue, text="Es roja."), "Es roja.")
+    with pytest.raises(RoomError) as invalid:
+        db.repos[1].guess(access.chat.id, round_id,
+            command(again, GuessChatTarget, choice_key="not-a-marker"))
+    assert invalid.value.code == "chat_guess_invalid"
+    right = next(c for c in choices if c.x == .25)
+    found = db.repos[1].guess(access.chat.id, round_id,
+        command(db.repos[1].get(access.chat.id), GuessChatTarget, choice_key=right.key))
+    assert found.rounds[-1].status == "completed"
+    assert found.rounds[-1].guess_choices == []
+
+
+def test_a_custom_target_replaces_a_detected_marker_on_the_same_spot(db):
+    access = paired(db)
+    snapshot, target, _options = awaiting_guess(db, access.chat.id)
+    custom = {**target, "key": "custom-region", "x": .76, "y": .71,
+        "region": {"x": .7, "y": .65, "width": .12, "height": .12}}
+    with db.engine.begin() as c:
+        c.execute(update(rounds).where(rounds.c.id == snapshot.active_round.id)
+            .values(target=custom))
+    choices = db.repos[1].get(access.chat.id).active_round.guess_choices
+    assert sorted((round(c.x, 2), round(c.y, 2)) for c in choices) == [(.25, .4), (.76, .71)]
+    marker = next(c for c in choices if c.x == .76)
+    found = db.repos[1].guess(access.chat.id, snapshot.active_round.id,
+        command(db.repos[1].get(access.chat.id), GuessChatTarget, choice_key=marker.key))
+    assert found.rounds[-1].status == "completed"
+
+
+def test_marker_names_omit_translations_in_another_explanation_language(db):
+    access = paired(db)
+    awaiting_guess(db, access.chat.id)
+    with db.engine.begin() as c:
+        profile = c.execute(select(chats.c.partner_profile)
+            .where(chats.c.id == access.chat.id)).scalar_one()
+        c.execute(update(chats).where(chats.c.id == access.chat.id)
+            .values(partner_profile={**profile, "source_language_code": "fr"}))
+    choices = db.repos[1].get(access.chat.id).active_round.guess_choices
+    assert {c.word for c in choices} == {"la taza", "la silla"}
+    assert {c.translation for c in choices} == {None}
+
+
+@pytest.mark.parametrize("guess", [{}, {"choice_key": "a", "x": .2, "y": .2}, {"x": .2}])
+def test_a_guess_names_exactly_one_marker_or_point(guess):
+    with pytest.raises(ValidationError):
+        GuessChatTarget(command_id=uuid4(), expected_revision=0, **guess)
 
 
 def test_explicit_reveal_and_cancel_are_sender_only_and_cancel_keeps_answer_hidden(db):

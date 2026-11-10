@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { ChatPoint, ChatRound, ChatSnapshot } from "../../lib/friendChats";
+
+type GuessDraft = ChatPoint & { key?: string };
 import { chatDraftKey, chatRoundIntent, clearChatDrafts, readChatDraft, saveChatDraft } from "../../lib/friendChats";
 import { trackAction } from "../../lib/analytics";
 import { Button, Card } from "../ui";
@@ -7,6 +9,8 @@ import { InlineLoader } from "../LoadingScreen";
 import { TargetPicker } from "./TargetPicker";
 import { ClueComposer } from "./ClueComposer";
 import { ChatPhoto } from "./ChatPhoto";
+import { speak } from "../../lib/speech";
+import { SpeakerIcon } from "../icons";
 import { ChatMessages } from "./ChatTimeline";
 import { PrivateClueHelp } from "./PrivateClueHelp";
 
@@ -16,18 +20,24 @@ export function ActiveChatRound({ chat, round, command, disabled, microphoneEnab
 }) {
   const [changingTarget, setChangingTarget] = useState(false);
   const key = chatDraftKey(chat.meId, chat.id, `${round.id}:guess`);
-  const [guess, setGuess] = useState<ChatPoint | null>(() => readChatDraft(key, null));
+  const [guess, setGuess] = useState<GuessDraft | null>(() => readChatDraft(key, null));
   const [confirming, setConfirming] = useState(false);
   const own = round.senderId === chat.meId;
   const draftTarget = own && (round.status === "selectingTarget" || changingTarget);
   const lastGuess = [...round.messages].reverse().find(message => message.type === "guess" && message.senderId === chat.meId && message.x != null && message.y != null);
   const lastPoint = lastGuess ? { x: lastGuess.x!, y: lastGuess.y! } : null;
+  const choices = round.guessChoices ?? [];
+  const samePoint = (a: ChatPoint, b: ChatPoint) => Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6;
+  const triedKeys = new Set(round.messages.filter(message => message.type === "guess" && message.senderId === chat.meId && message.x != null && message.y != null)
+    .flatMap(message => choices.filter(choice => samePoint(choice, { x: message.x!, y: message.y! })).map(choice => choice.key)));
+  const chosen = guess?.key ? choices.find(choice => choice.key === guess.key && !triedKeys.has(choice.key)) ?? null : null;
+  const chosenKey = chosen?.key ?? null;
   const cancel = async () => {
     if (await command(chatRoundIntent(round.id, "cancel"))) { clearChatDrafts(chat.meId, chat.id, round.id); trackAction("ispy_friend_round_cancelled"); }
   };
   const submit = async () => {
     if (!guess) return;
-    const next = await command(chatRoundIntent(round.id, "guess"), guess);
+    const next = await command(chatRoundIntent(round.id, "guess"), guess.key ? { choiceKey: guess.key } : { x: guess.x, y: guess.y });
     if (next) { setGuess(null); setConfirming(false); saveChatDraft(key, null); trackAction("ispy_friend_guess_submitted"); }
   };
   return <section className="stack friend-round friend-round--active" aria-label="Current I-Spy">
@@ -41,15 +51,26 @@ export function ActiveChatRound({ chat, round, command, disabled, microphoneEnab
         {round.imageUrl && (own || round.status !== "awaitingGuess") ? <ChatPhoto chatId={chat.id} roundId={round.id} selected={own ? round.target : lastPoint} /> : null}
         <ChatMessages chat={chat} round={round} />
         {own && ["composingClue", "awaitingFollowUp"].includes(round.status) ? <>
-          <ClueComposer key={`${round.id}:${round.status}`} chat={chat} round={round} disabled={disabled} command={command} microphoneEnabled={microphoneEnabled} />
-          {round.status === "composingClue" ? <Button variant="quiet" disabled={disabled} onClick={() => setChangingTarget(true)}>Choose a different object</Button> :
-            <Button variant="secondary" disabled={disabled} onClick={async () => { if (await command(chatRoundIntent(round.id, "reveal"))) { clearChatDrafts(chat.meId, chat.id, round.id); trackAction("ispy_friend_answer_revealed"); } }}>Reveal the answer</Button>}
+          <ClueComposer key={`${round.id}:${round.status}`} chat={chat} round={round} disabled={disabled} command={command} microphoneEnabled={microphoneEnabled}
+            onChangeTarget={round.status === "composingClue" ? () => setChangingTarget(true) : undefined} />
+          {round.status === "awaitingFollowUp" ? <Button variant="secondary" disabled={disabled} onClick={async () => { if (await command(chatRoundIntent(round.id, "reveal"))) { clearChatDrafts(chat.meId, chat.id, round.id); trackAction("ispy_friend_answer_revealed"); } }}>Reveal the answer</Button> : null}
         </> : own ? <p role="status">Your clue is sent. Your friend can guess whenever they’re ready.</p> : round.status === "awaitingGuess" ? <>
-          <h2>Tap the object you think they chose.</h2>
-          {round.imageUrl ? <ChatPhoto chatId={chat.id} roundId={round.id} selected={guess ?? lastPoint} disabled={disabled || confirming} onPoint={point => {
+          {choices.length ? <div><h2>Tap the circle on the object you think they mean.</h2>
+            <p className="small muted">Every circle is a possible object. Read the clue to pick the right one.</p></div> : <h2>Tap the object you think they chose.</h2>}
+          {round.imageUrl ? choices.length ? <ChatPhoto chatId={chat.id} roundId={round.id} choices={choices} chosenKey={chosenKey} triedKeys={triedKeys}
+            disabled={disabled || confirming} label="Photo with objects to choose from" onChoice={choice => {
+              const next = { x: choice.x, y: choice.y, key: choice.key }; setGuess(next); saveChatDraft(key, next); trackAction("ispy_friend_guess_selected");
+            }} /> : <ChatPhoto chatId={chat.id} roundId={round.id} selected={guess ?? lastPoint} disabled={disabled || confirming} onPoint={point => {
             setGuess(point); saveChatDraft(key, point); trackAction("ispy_friend_guess_selected");
           }} label="Choose the object your friend described" /> : <p role="status">This photo is unavailable. Ask your friend to start a new round.</p>}
-          {guess ? confirming ? <Card className="stack-2"><h3>Guess this object?</h3><Button disabled={disabled} onClick={() => void submit()}>Submit guess</Button>
+          {choices.length ? chosen ? <Card className="stack friend-target friend-guess-choice" aria-live="polite"><h3>Guess this object?</h3>
+            {chosen.width && chosen.height ? <ChatPhoto chatId={chat.id} roundId={round.id} label="Object you picked"
+              crop={{ key: chosen.key, label: "", word: chosen.word, translation: chosen.translation ?? "", x: chosen.x, y: chosen.y, width: chosen.width, height: chosen.height }} /> : null}
+            {chosen.word ? <><strong lang={chat.targetLanguageCode}>{chosen.word}</strong>{chosen.translation ? <span>{chosen.translation}</span> : null}
+              <Button variant="quiet" onClick={() => { speak(chosen.word, chat.targetLanguageCode); trackAction("ispy_friend_audio_played", { kind: "object" }); }}><SpeakerIcon size={18} /> Hear the word</Button></> : null}
+            <Button disabled={disabled} onClick={() => void submit()}>Submit guess</Button>
+            <Button variant="quiet" disabled={disabled} onClick={() => { setGuess(null); saveChatDraft(key, null); }}>Choose another object</Button></Card> : null
+            : guess ? confirming ? <Card className="stack-2"><h3>Guess this object?</h3><Button disabled={disabled} onClick={() => void submit()}>Submit guess</Button>
             <Button variant="quiet" disabled={disabled} onClick={() => setConfirming(false)}>Choose again</Button></Card> : <Button disabled={disabled} onClick={() => setConfirming(true)}>Confirm this object</Button> : null}
           <PrivateClueHelp key={`${round.id}:${round.messages.length}`} chat={chat} round={round} />
         </> : <p role="status">{round.status === "awaitingFollowUp" ? "Not quite. Your friend can send another clue or reveal the answer." : "Your friend is choosing an object and composing a clue."}</p>}

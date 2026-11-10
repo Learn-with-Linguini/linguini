@@ -229,6 +229,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_invite_created` | — | The creator generates a replacement invitation |
 | `ispy_friend_invite_copied` | — | Copying an invitation succeeds |
 | `ispy_friend_invite_shared` | — | Sharing an invitation succeeds |
+| `ispy_friend_invite_pasted` | — | The learner submits a pasted invite link or code from the lobby |
 | `ispy_friend_invite_opened` | — | The invitation preview opens |
 | `ispy_friend_invite_revoked` | — | The creator revokes an invitation |
 | `ispy_friend_chat_joined` | — | A compatible learner explicitly joins |
@@ -244,7 +245,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_clue_sent` | — | The sender explicitly sends a reviewed clue |
 | `ispy_friend_private_help_opened` | — | The receiver requests private assistance |
 | `ispy_friend_private_word_opened` | `{ shown }` | The receiver shows or hides a private word meaning |
-| `ispy_friend_guess_selected` | — | The receiver chooses a photo location |
+| `ispy_friend_guess_selected` | — | The receiver picks a marked object (or, on older rounds, a photo location) |
 | `ispy_friend_guess_submitted` | — | A confirmed location guess is saved |
 | `ispy_friend_guess_correct` | — | A new saved correct result appears |
 | `ispy_friend_guess_incorrect` | — | A new saved incorrect result appears |

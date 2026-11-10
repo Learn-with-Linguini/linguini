@@ -38,6 +38,7 @@ from app.schemas.base import utc_now
 from app.schemas.friend_chats import (
     ChatAccess,
     ChatClueOption,
+    ChatGuessChoice,
     ChatMessage,
     ChatObject,
     ChatPerson,
@@ -905,7 +906,24 @@ class PostgresFriendChatRepository:
                 target = item["target"]
                 region = target.get("region")
                 width, height = target.get("width"), target.get("height")
-                if region:
+                if request.choice_key is not None:
+                    choice = next(
+                        (
+                            option
+                            for option in _guess_choices(item)
+                            if option.key == request.choice_key
+                        ),
+                        None,
+                    )
+                    if choice is None:
+                        raise RoomError(
+                            "chat_guess_invalid",
+                            "Choose one of the marked objects in the photo.",
+                            422,
+                        )
+                    correct = choice.key == _choice_key(round_id, target["key"])
+                    guess_x, guess_y = choice.x, choice.y
+                elif region:
                     left, top = region["x"], region["y"]
                     width, height = region["width"], region["height"]
                 elif width and height:
@@ -917,15 +935,19 @@ class PostgresFriendChatRepository:
                         "Ask your friend to choose it again.",
                         409,
                     )
-                correct = left <= request.x <= left + width and top <= request.y <= top + height
+                if request.choice_key is None:
+                    correct = (
+                        left <= request.x <= left + width and top <= request.y <= top + height
+                    )
+                    guess_x, guess_y = request.x, request.y
                 self._message(
                     c,
                     chat_id,
                     round_id,
                     "guess",
                     actor=self.user_id,
-                    x=request.x,
-                    y=request.y,
+                    x=guess_x,
+                    y=guess_y,
                     is_correct=int(correct),
                 )
                 self._message(
@@ -1106,6 +1128,11 @@ class PostgresFriendChatRepository:
                 ]
                 if sender and shared
                 else [],
+                guess_choices=_guess_choices(item, translated=_same_explanations(chat, item))
+                if not sender
+                and image_visible
+                and item["status"] in {"awaitingGuess", "awaitingFollowUp"}
+                else [],
                 messages=public_messages,
                 error=("Photo preparation stopped. Try again." if stalled else item["error"])
                 if sender
@@ -1136,3 +1163,56 @@ class PostgresFriendChatRepository:
             active_round=active_round,
             rounds=history,
         )
+
+
+def _choice_key(round_id, object_key):
+    """An opaque per-round key, so a marker never reveals the stored object key."""
+    return hashlib.sha256(f"{round_id}:{object_key}".encode()).hexdigest()[:16]
+
+
+def _same_explanations(chat, item):
+    """Whether the round's translations, made for its sender, suit the other player too."""
+    sender_is_creator = item["sender_user_id"] == chat["creator_user_id"]
+    sender = (chat["creator_profile"] if sender_is_creator else chat["partner_profile"]) or {}
+    other = (chat["partner_profile"] if sender_is_creator else chat["creator_profile"]) or {}
+    return (
+        str(sender.get("source_language_code", "")).lower()
+        == str(other.get("source_language_code", "")).lower()
+    )
+
+
+def _guess_choices(item, *, translated=False):
+    """Every marked object in the round, with the target always included.
+
+    Choices carry an opaque key, position and name, the same for every object, so
+    nothing distinguishes the target. They are ordered by that key,
+    which is stable across refreshes but unrelated to which object is the target. A
+    custom target replaces detected objects centred on top of it, so the guesser never
+    sees two markers for one thing.
+    """
+    target = item["target"] or {}
+    content = item["content"] or {}
+    detected = content.get("objects", [])
+    custom = bool(target) and all(obj.get("key") != target.get("key") for obj in detected)
+    choices = {}
+    for obj in [*detected, *([target] if target else [])]:
+        if obj.get("x") is None or obj.get("y") is None or not obj.get("key"):
+            continue
+        if (
+            custom
+            and obj is not target
+            and abs(obj["x"] - target["x"]) < 0.04
+            and abs(obj["y"] - target["y"]) < 0.04
+        ):
+            continue
+        key = _choice_key(item["id"], obj["key"])
+        width, height = obj.get("width"), obj.get("height")
+        choices.setdefault(key, {
+            "key": key, "x": float(obj["x"]), "y": float(obj["y"]),
+            "width": float(width) if width else None,
+            "height": float(height) if height else None,
+            "word": str(obj.get("word") or ""),
+            "translation": str(obj.get("translation") or "") or None if translated else None,
+        })
+    ordered = sorted(choices.values(), key=lambda choice: choice["key"])
+    return [ChatGuessChoice(**choice) for choice in ordered]
