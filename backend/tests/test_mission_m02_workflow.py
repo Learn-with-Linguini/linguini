@@ -96,7 +96,7 @@ def _parts(detail):
     return [task for task in detail.tasks if task.public_content.mission_id == "M02"]
 
 
-def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
+def test_one_relation_plans_one_m02_task_without_a_marker_question(curated):
     engine, _owner, profile, client, *_ = curated
     model = SceneModel()
     repository, sid, detail = _lesson(curated, _relations_only, model)
@@ -107,23 +107,18 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     assert not any("m02" in name for name in model.requests)
     content = lesson.public_content
     assert content.title == "Find and locate" and content.explanation is None
-    find, choose, ask, answer = content.questions
+    choose, ask, answer = content.questions
     assert [q.section for q in content.questions] == [
-        "Task 1 · Find it in your photo", "Task 1 · Find it in your photo",
+        "Task 1 · Choose the location",
         "Task 2 · Ask and answer where", "Task 2 · Ask and answer where",
     ]
-    assert find.prompt == "La taza está sobre la mesa."
-    assert find.scene_object_id is None and find.reference_object_id is None
     # Marker numbers are the objects' numbers on the review screen (the analysed order).
     draft = _scalar(engine, select(sessions.c.analysis_draft).where(sessions.c.id == sid))
     numbers = {UUID(obj["id"]): index for index, obj in enumerate(draft["objects"], 1)}
     assert {UUID(key): number for key, number in draft["reviewMarkers"].items()} == numbers
     assert {UUID(key): number for key, number in detail.review_markers.items()} == numbers
     assert all("." not in q.token_bank for q in content.questions)
-    assert {o.option_id: o.label for o in find.options} == {
-        option_id: str(numbers[object_id])
-        for option_id, object_id in find.marker_object_ids.items()
-    }
+    assert not any(question.marker_object_ids for question in content.questions)
     cup = next(obj.id for obj in detail.scene_objects if obj.label == "cup")
     table = next(obj.id for obj in detail.scene_objects if obj.label == "table")
     assert choose.prompt == "¿Dónde está la taza?"
@@ -136,11 +131,10 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     )
     assert answer.reference_object_id == table
     key = _answer_key(engine, lesson.id)
-    assert find.marker_object_ids[key["correctOptionIds"]["find-object"]] == cup
     assert key["correctOptionIds"]["answer-where"] == "La taza está sobre la mesa."
     assert key["correctOptionIds"]["ask-where"] == "¿Dónde está la taza?"
     assert [item["targetIds"] for item in key["questionEvaluations"]] == [
-        ["understand-location"], ["recognise-position"], ["build-question", "name-object"],
+        ["recognise-position"], ["build-question", "name-object"],
         ["describe-location", "name-object"],
     ]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
@@ -172,14 +166,8 @@ def test_review_removal_and_manual_addition_keep_contiguous_markers_after_reload
     assert restored.review_markers == expected
     assert client.get(f"/api/v1/sessions/{sid}").json()["reviewMarkers"] == expected
     assert {str(obj.id) for obj in restored.scene_objects} == set(expected)
-    marker_questions = [question for task in _parts(restored)
-                        for question in task.public_content.questions if question.marker_object_ids]
-    assert marker_questions
-    for question in marker_questions:
-        assert {option.option_id: option.label for option in question.options} == {
-            option_id: str(expected[str(object_id)])
-            for option_id, object_id in question.marker_object_ids.items()
-        }
+    assert not any(question.marker_object_ids for task in _parts(restored)
+                   for question in task.public_content.questions)
 
 
 @pytest.mark.parametrize("scenario", ["correct", "incorrect"])
@@ -212,14 +200,13 @@ def test_m02_is_graded_once_across_its_questions(curated, scenario):
     assert saved["answers"] == answers
     assert saved["reviewDetails"]["questionResults"] == details["questionResults"]
     outcomes = {item["questionId"]: item for item in details["questionOutcomes"]}
-    assert len(outcomes) == len(answers) == 4
+    assert len(outcomes) == len(answers) == 3
     for question in task.public_content.questions:
         outcome = outcomes[question.question_id]
         if question.interaction_type == "sentenceBuilding":
             assert outcome["evidenceType"] == "construction"
             assert outcome["assistance"] == ["wordBank"]
     if scenario == "incorrect":
-        assert outcomes["find-object"]["mistakes"][0]["mistake"] == "wrongObject"
         assert outcomes["choose-location"]["mistakes"][0]["mistake"] == "wrongPosition"
 
 

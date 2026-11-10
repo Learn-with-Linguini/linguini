@@ -93,7 +93,7 @@ def _corrections(payload, question, label):
 
 
 def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
-    """The M02 lesson task: four questions on one confirmed relation, from a validated result."""
+    """The M02 lesson task: three questions on one confirmed relation, from a validated result."""
     relations = {row["key"]: row for row in payload["relations"]}
 
     def evaluate(question, label):
