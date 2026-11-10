@@ -43,6 +43,18 @@
 .friend-photo--crop img { position: absolute; object-fit: fill; }
 .friend-target { text-align: center; align-items: center; }
 .friend-composer__choices { display: grid; gap: 10px; }
+.friend-composer__intro { margin: 0; }
+.friend-composer__target { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: var(--sage); }
+.friend-composer__target > .small:first-child, .friend-composer__target-note { grid-column: 1 / -1; }
+.friend-composer__target-word { font-size: var(--text-h3); color: var(--teal-dark); }
+.friend-composer__target .btn { grid-row: 2; grid-column: 2; }
+.friend-composer__steps { display: grid; gap: var(--space-6); list-style: none; padding: 0; margin: 0; }
+.friend-composer__steps > li + li { padding-top: var(--space-5); border-top: 1px solid var(--line); }
+.friend-composer__step { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--text-h3); }
+.friend-composer__step > span { display: grid; flex: 0 0 32px; width: 32px; height: 32px; place-items: center; border-radius: 50%; background: var(--teal-dark); color: white; font-size: 16px; }
+.friend-composer__group { margin: var(--space-2) 0 0; font-size: var(--text-body); color: var(--ink); }
+.friend-composer__confirm { padding: var(--space-4); border-radius: var(--radius-sm); background: var(--cream); }
+.friend-composer__confirm p { margin: 0; }
 .friend-clue-option { display: flex; align-items: stretch; gap: 4px; }
 .friend-clue-option__choice { display: grid; gap: 4px; flex: 1; text-align: left; padding: 12px 14px; min-height: 54px; color: var(--ink); background: var(--butter); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; }
 .friend-clue-option__choice[aria-pressed="true"] { border: 2px solid var(--teal-dark); background: var(--sage); }

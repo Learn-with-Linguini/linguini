@@ -41,9 +41,9 @@ export function ActiveChatRound({ chat, round, command, disabled, microphoneEnab
         {round.imageUrl && (own || round.status !== "awaitingGuess") ? <ChatPhoto chatId={chat.id} roundId={round.id} selected={own ? round.target : lastPoint} /> : null}
         <ChatMessages chat={chat} round={round} />
         {own && ["composingClue", "awaitingFollowUp"].includes(round.status) ? <>
-          <ClueComposer key={`${round.id}:${round.status}`} chat={chat} round={round} disabled={disabled} command={command} microphoneEnabled={microphoneEnabled} />
-          {round.status === "composingClue" ? <Button variant="quiet" disabled={disabled} onClick={() => setChangingTarget(true)}>Choose a different object</Button> :
-            <Button variant="secondary" disabled={disabled} onClick={async () => { if (await command(chatRoundIntent(round.id, "reveal"))) { clearChatDrafts(chat.meId, chat.id, round.id); trackAction("ispy_friend_answer_revealed"); } }}>Reveal the answer</Button>}
+          <ClueComposer key={`${round.id}:${round.status}`} chat={chat} round={round} disabled={disabled} command={command} microphoneEnabled={microphoneEnabled}
+            onChangeTarget={round.status === "composingClue" ? () => setChangingTarget(true) : undefined} />
+          {round.status === "awaitingFollowUp" ? <Button variant="secondary" disabled={disabled} onClick={async () => { if (await command(chatRoundIntent(round.id, "reveal"))) { clearChatDrafts(chat.meId, chat.id, round.id); trackAction("ispy_friend_answer_revealed"); } }}>Reveal the answer</Button> : null}
         </> : own ? <p role="status">Your clue is sent. Your friend can guess whenever they’re ready.</p> : round.status === "awaitingGuess" ? <>
           <h2>Tap the object you think they chose.</h2>
           {round.imageUrl ? <ChatPhoto chatId={chat.id} roundId={round.id} selected={guess ?? lastPoint} disabled={disabled || confirming} onPoint={point => {

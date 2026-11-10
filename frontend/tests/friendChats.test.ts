@@ -322,14 +322,15 @@ test("pending commands and unsent clue drafts are isolated between accounts", as
   assert.equal(writes.length, 0);
 });
 
-test("an A0 clue grows one fact at a time, restores after refresh and reuses the stored mission cheatsheet", async () => {
+test("an A0 clue shows each detail group and grows one fact at a time, restores after refresh and reuses the stored mission cheatsheet", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "composingClue", messages: [] });
   let view = await mount();
   await clickElement(dom.window.document.querySelector('.friend-clue-option__choice'));
   assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es roja.");
   assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.readOnly, true);
   assert.equal(writes.length, 0);
-  await click("Add another detail"); await clickElement(dom.window.document.querySelector('.friend-clue-option__choice'));
+  assert.match(bodyText(), /What does it look like\?/); assert.match(bodyText(), /Where is it\?/);
+  await clickElement(dom.window.document.querySelectorAll('.friend-clue-option__choice')[1]);
   assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es roja. Está debajo de la mesa.");
   await view.close(); view = await mount();
   await waitFor(() => assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es roja. Está debajo de la mesa."));
@@ -343,7 +344,7 @@ test("an A0 clue grows one fact at a time, restores after refresh and reuses the
 test("suggested clues require explicit application, review and send; successful sends clear the unsent draft", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "composingClue", messages: [] });
   await mount(); replies.push(() => Response.json({ text: "Es pequeña y roja." }));
-  await click("Suggest a clue"); assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "");
+  await click("Stuck? Suggest a clue"); assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "");
   assert.equal(writes.filter(item => item.path.endsWith("/clue")).length, 0);
   await click("Use this suggestion"); assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es pequeña y roja.");
   await click("Review clue"); assert.equal(writes.filter(item => item.path.endsWith("/clue")).length, 0);
