@@ -187,6 +187,8 @@ class ChatObject(ApiModel):
     y: Coordinate
     width: Coordinate | None = None
     height: Coordinate | None = None
+    # For a beginner sender choosing a target: whether a beginner clue can be built.
+    clue_ready: bool = True
 
 
 class ChatGuessChoice(ApiModel):

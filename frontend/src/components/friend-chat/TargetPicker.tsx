@@ -23,14 +23,18 @@ export function TargetPicker({ chat, round, disabled, command }: { chat: ChatSna
     const next = await command(chatRoundIntent(round.id, "target"), { objectKey: draft.candidate.key, confirm: true });
     if (next) { saveChatDraft(key, null); trackAction("ispy_friend_detected_object_confirmed"); }
   };
-  return <section className="stack" aria-label="Choose the hidden object"><h2>Choose something for your friend to find.</h2>
+  const unready = round.objects.some(item => item.clueReady === false);
+  const noClue = draft.candidate?.clueReady === false;
+  return <section className="stack" aria-label="Choose the hidden object"><div><h2>Choose something for your friend to find.</h2>
+    {unready ? <p className="small muted">Faded markers don’t have enough detail for a beginner clue.</p> : null}</div>
     <ChatPhoto chatId={chat.id} roundId={round.id} objects={round.objects} disabled={disabled} selected={draft.candidate}
       onObject={object => { setDraft({ candidate: object }); trackAction("ispy_friend_detected_object_selected"); }} label="Choose one of your objects" />
     {draft.candidate ? <Card className="stack friend-target"><h3>Is this your object?</h3>
       <ChatPhoto chatId={chat.id} roundId={round.id} crop={draft.candidate} label="Selected object preview" />
       <strong lang={chat.targetLanguageCode}>{draft.candidate.word}</strong><span>{draft.candidate.translation}</span>
       <Button variant="quiet" onClick={() => { speak(draft.candidate!.word, chat.targetLanguageCode); trackAction("ispy_friend_audio_played", { kind: "object" }); }}><SpeakerIcon size={18} /> Hear the word</Button>
-      <Button disabled={disabled} onClick={() => void confirmTarget()}>Use this object</Button>
+      {noClue ? <p role="status" className="small">Beginner clues need a colour, size, position or a nearby object, and this one has none yet. Choose another object.</p>
+        : <Button disabled={disabled} onClick={() => void confirmTarget()}>Use this object</Button>}
       <Button variant="quiet" disabled={disabled} onClick={() => setDraft({ candidate: null })}>Choose another object</Button>
     </Card> : null}
   </section>;

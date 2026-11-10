@@ -613,3 +613,19 @@ test("an unanswered invite can be deleted, and an ended chat can be deleted from
   await waitFor(() => assert.deepEqual(deletes, ["/api/v1/friend-chats/chat1"]));
   await waitFor(() => assert.match(bodyText(), /Play I-Spy with a friend/));
 });
+
+test("a beginner sees which objects cannot make a beginner clue instead of a failing button", async () => {
+  const lamp = { ...target, key: "lamp", label: "lamp", word: "la lámpara", translation: "lamp", x: .5, y: .5, clueReady: false };
+  snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [], objects: [target, lamp] });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Faded markers don’t have enough detail for a beginner clue/));
+  const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Choose lamp, not enough detail for a beginner clue"]');
+  assert.ok(marker?.classList.contains("friend-photo__object--no-clue"));
+  await clickElement(marker);
+  await waitFor(() => assert.match(bodyText(), /Beginner clues need a colour, size, position or a nearby object/));
+  assert.equal(buttons("Use this object").length, 0);
+  await click("Choose another object");
+  await clickElement(dom.window.document.querySelector(`button[aria-label="Choose ${target.translation}"]`));
+  await waitFor(() => assert.ok(buttons("Use this object")[0]));
+  assert.equal(writes.length, 0);
+});

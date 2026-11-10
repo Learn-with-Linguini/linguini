@@ -5,6 +5,8 @@ export interface ChatCheatsheet { missionId: string; practiceLevel: string; cont
 export interface ChatObject {
   key: string; label: string; word: string; translation: string;
   x: number; y: number; width?: number; height?: number;
+  /** For a beginner sender choosing a target: false when no beginner clue can be built. */
+  clueReady?: boolean;
 }
 export interface ChatClueOption {
   id: string; text: string; translation: string;

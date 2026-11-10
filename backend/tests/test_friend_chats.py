@@ -1213,3 +1213,27 @@ def test_delete_route_returns_no_content_and_maps_errors():
         assert refused.status_code == 409
         assert refused.json()["detail"]["code"] == "chat_active"
     assert calls == [chat_id, chat_id]
+
+
+def test_a_beginner_sender_sees_which_objects_can_make_a_beginner_clue(db):
+    access = paired(db)
+    snapshot = start(db, access.chat.id)
+    job = db.repos[0].claim_photo(access.chat.id, snapshot.active_round.id)
+    content, target, _options = photo_content()
+    middle = {"key": str(uuid4()), "label": "lamp", "word": "la lámpara",
+        "translation": "the lamp", "x": .5, "y": .5, "width": .2, "height": .2,
+        "region": {"x": .4, "y": .4, "width": .2, "height": .2}}
+    content["objects"].append(middle)
+    db.repos[0].finish_photo(job, content=content)
+    objects = {obj.key: obj for obj in db.repos[0].get(access.chat.id).active_round.objects}
+    # The cup has adjectives; the lamp sits in the middle with nothing to describe.
+    assert objects[target["key"]].clue_ready is True
+    assert objects[middle["key"]].clue_ready is False
+    # Learners above A0 can write their own clue, so nothing is ruled out for them.
+    second = create(db, actor=1)
+    joined = join(db, second, actor=3)
+    started = db.repos[3].start_round(second.chat.id, command(joined, StartChatRound,
+        media_asset_id=db.assets[3][0].id))
+    job = db.repos[3].claim_photo(second.chat.id, started.active_round.id)
+    db.repos[3].finish_photo(job, content=content)
+    assert all(obj.clue_ready for obj in db.repos[3].get(second.chat.id).active_round.objects)
