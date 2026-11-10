@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
-import { CameraIcon } from "../components/icons";
 import { ImageUpload } from "../components/ImageUpload";
 import { createPractice, getActivePractice, retryPracticeAnalysis } from "../lib/api";
 import { SceneVisual } from "../components/SceneVisual";
@@ -147,9 +146,8 @@ export function PracticeSelect() {
         <p>You already have three unfinished practices. Continue one before uploading or choosing another scene.</p></div>
       <Button variant="secondary" onClick={() => void continueActive()}>Continue practice</Button>
     </div> : null}
-    <div ref={captureRef} className="dashed-capture">
-      <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
-      <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
+    <div ref={captureRef}>
+      <ImageUpload disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
         onBusyChange={setUploading} onUploaded={image => { setStartingScene(null); trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}

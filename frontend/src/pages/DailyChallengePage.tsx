@@ -64,8 +64,7 @@ export function DailyChallengePage() {
           {data.status === "completed" ? <>
             <p className="daily-challenge__done"><CheckIcon size={20} /><span>You’re on the board with {data.yourWordCount} {data.yourWordCount === 1 ? "word" : "words"}. Bonuses land when the day ends. Come back tomorrow for a new scene.</span></p>
           </> : data.status === "inProgress" && data.sessionId ? <Button block onClick={() => void resume(data.sessionId!)}>Continue your challenge</Button> : <>
-            <ImageUpload compact disabled={starting || !activeProfile} cameraEnabled={learner.cameraOn} onBusyChange={setUploading}
-              dropzoneLabel={`Add a photo taken ${data.scenePhrase}`}
+            <ImageUpload disabled={starting || !activeProfile} cameraEnabled={learner.cameraOn} onBusyChange={setUploading}
               onUploaded={image => { trackAction("daily_challenge_photo_uploaded", { sceneKey: data.sceneKey, assetId: image.id }); void start(image.id); }} />
             {starting && !uploading ? <InlineLoader label="Starting your challenge" /> : null}
             <p className="daily-challenge__note"><BasilIcon size={18} />Finish the lesson to earn at least {DAILY_CHALLENGE_FINISHER_BASIL} Basil. Rare finds earn more.</p>
