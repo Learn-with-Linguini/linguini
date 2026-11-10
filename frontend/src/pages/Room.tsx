@@ -129,7 +129,7 @@ function RoomSession({ roomId }: { roomId: string }) {
         <p>Each photo is one round. Add at least two different photos, then both get ready.</p>
         <p className="small muted">Photos you add are shared with the person in this room.</p>
         {data.photos.length < 4 ? <ImageUpload disabled={blocked} cameraEnabled={user?.cameraEnabled ?? false}
-          onBusyChange={setUploading} dropzoneLabel="Add a photo to the room" onUploaded={image => void act("photos", { mediaAssetId: image.id })} /> : null}
+          onBusyChange={setUploading} label="Add a photo to the room" onUploaded={image => void act("photos", { mediaAssetId: image.id })} /> : null}
         {data.photos.map((photo, index) => <RoomPhotoCard key={photo.id} roomId={roomId} photo={photo} number={index + 1}
           own={photo.ownerUserId === owner} ownerName={data.members.find(member => member.userId === photo.ownerUserId)?.displayName ?? "Your friend"}
           disabled={blocked} onRemove={() => void act(`photos/${encodeURIComponent(photo.id)}/remove`)}
