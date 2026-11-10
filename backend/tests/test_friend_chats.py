@@ -343,7 +343,14 @@ def test_receiver_never_gets_unrevealed_object_inventory_or_private_content(db):
     guest = db.repos[1].get(access.chat.id).active_round.model_dump(by_alias=True)
     assert guest["imageUrl"].startswith("/api/v1/friend-chats/")
     assert guest["target"] is None and guest["objects"] == [] and guest["clueOptions"] == []
-    assert target["word"] not in str(guest) and target["key"] not in str(guest)
+    assert target["key"] not in str(guest)
+    # The target's name appears only among the marker choices, where every object has
+    # one in the same shape, so nothing singles the target out.
+    choices = guest.pop("guessChoices")
+    assert target["word"] not in str(guest)
+    assert target["word"] in {choice["word"] for choice in choices}
+    assert len({tuple(sorted(choice)) for choice in choices}) == 1
+    assert all(choice["word"] for choice in choices)
     assert db.repos[1].image_asset(access.chat.id, round_id).id == db.assets[0][0].id
     with pytest.raises(RoomError):
         db.repos[3].image_asset(access.chat.id, sent.active_round.id)
@@ -605,6 +612,9 @@ def test_the_guesser_picks_from_marked_objects_without_learning_which_is_the_tar
     assert len(choices) == 2
     assert {(round(c.x, 2), round(c.y, 2)) for c in choices} == {(.25, .4), (.75, .7)}
     assert target["key"] not in {c.key for c in choices}
+    assert {(c.word, c.translation) for c in choices} == {
+        ("la taza", "the cup"), ("la silla", "the chair")}
+    assert all(c.width and c.height for c in choices)
     assert guest.active_round.objects == [] and guest.active_round.target is None
     assert db.repos[1].get(access.chat.id).active_round.guess_choices == choices
     wrong = next(c for c in choices if c.x == .75)
@@ -640,6 +650,19 @@ def test_a_custom_target_replaces_a_detected_marker_on_the_same_spot(db):
     found = db.repos[1].guess(access.chat.id, snapshot.active_round.id,
         command(db.repos[1].get(access.chat.id), GuessChatTarget, choice_key=marker.key))
     assert found.rounds[-1].status == "completed"
+
+
+def test_marker_names_omit_translations_in_another_explanation_language(db):
+    access = paired(db)
+    awaiting_guess(db, access.chat.id)
+    with db.engine.begin() as c:
+        profile = c.execute(select(chats.c.partner_profile)
+            .where(chats.c.id == access.chat.id)).scalar_one()
+        c.execute(update(chats).where(chats.c.id == access.chat.id)
+            .values(partner_profile={**profile, "source_language_code": "fr"}))
+    choices = db.repos[1].get(access.chat.id).active_round.guess_choices
+    assert {c.word for c in choices} == {"la taza", "la silla"}
+    assert {c.translation for c in choices} == {None}
 
 
 @pytest.mark.parametrize("guess", [{}, {"choice_key": "a", "x": .2, "y": .2}, {"x": .2}])

@@ -14,9 +14,12 @@ composer. Suggestions require review and an explicit send.
 
 The receiver sees the photo and original clue, picks one of the marked objects and
 confirms the guess. Every detected object is marked, with the target always among
-them, so the markers do not give the answer away; reading the clue does. Each marker
-carries only a centre point and an opaque per-round key (a hash of the round and
-object keys), and markers are ordered by that key. A custom target replaces any
+them, so the markers do not give the answer away; reading the clue does. Markers are
+unlabelled on the photo. Tapping one shows that object's crop, word and a speaker
+button before the guess is submitted; the translation is included only when both
+learners share an explanation language. Each marker carries an opaque per-round key
+(a hash of the round and object keys), its position, size and name, in the same
+shape for every object, and markers are ordered by that key. A custom target replaces any
 detected marker centred on the same spot. The server scores a guess by comparing the
 chosen key with the target's key; older clients may still send a photo point, which
 is scored against the target region. Markers already guessed wrong are shown as

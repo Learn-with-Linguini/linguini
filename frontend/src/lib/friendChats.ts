@@ -25,7 +25,11 @@ export interface ChatRound {
   /** Marked objects the guesser picks from; the target is among them but not identified. */
   guessChoices?: ChatGuessChoice[];
 }
-export interface ChatGuessChoice { key: string; x: number; y: number }
+export interface ChatGuessChoice {
+  key: string; x: number; y: number; width?: number | null; height?: number | null;
+  /** Shown only after the guesser taps this choice; every choice has one. */
+  word: string; translation?: string | null;
+}
 export interface ChatSnapshot {
   id: string; status: "waiting" | "active" | "left" | "blocked"; revision: number; meId: string;
   targetLanguageCode: string; viewerLevel: string; partner: ChatPerson | null; creator: ChatPerson;

@@ -94,11 +94,20 @@ class ChatObject(ApiModel):
 
 
 class ChatGuessChoice(ApiModel):
-    """One marked object the guesser may pick. The key is opaque and per round."""
+    """One marked object the guesser may pick. The key is opaque and per round.
+
+    Every choice carries its own name, so showing the tapped one reveals nothing
+    about which choice is the target.
+    """
 
     key: str
     x: Coordinate
     y: Coordinate
+    width: Coordinate | None = None
+    height: Coordinate | None = None
+    word: str = ""
+    # Only when both players share an explanation language; otherwise omitted.
+    translation: str | None = None
 
 
 class ChatCheatSheet(ApiModel):

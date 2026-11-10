@@ -1128,7 +1128,7 @@ class PostgresFriendChatRepository:
                 ]
                 if sender and shared
                 else [],
-                guess_choices=_guess_choices(item)
+                guess_choices=_guess_choices(item, translated=_same_explanations(chat, item))
                 if not sender
                 and image_visible
                 and item["status"] in {"awaitingGuess", "awaitingFollowUp"}
@@ -1170,10 +1170,22 @@ def _choice_key(round_id, object_key):
     return hashlib.sha256(f"{round_id}:{object_key}".encode()).hexdigest()[:16]
 
 
-def _guess_choices(item):
+def _same_explanations(chat, item):
+    """Whether the round's translations, made for its sender, suit the other player too."""
+    sender_is_creator = item["sender_user_id"] == chat["creator_user_id"]
+    sender = (chat["creator_profile"] if sender_is_creator else chat["partner_profile"]) or {}
+    other = (chat["partner_profile"] if sender_is_creator else chat["creator_profile"]) or {}
+    return (
+        str(sender.get("source_language_code", "")).lower()
+        == str(other.get("source_language_code", "")).lower()
+    )
+
+
+def _guess_choices(item, *, translated=False):
     """Every marked object in the round, with the target always included.
 
-    Choices carry only an opaque key and a centre point. They are ordered by that key,
+    Choices carry an opaque key, position and name, the same for every object, so
+    nothing distinguishes the target. They are ordered by that key,
     which is stable across refreshes but unrelated to which object is the target. A
     custom target replaces detected objects centred on top of it, so the guesser never
     sees two markers for one thing.
@@ -1194,6 +1206,13 @@ def _guess_choices(item):
         ):
             continue
         key = _choice_key(item["id"], obj["key"])
-        choices.setdefault(key, {"key": key, "x": float(obj["x"]), "y": float(obj["y"])})
+        width, height = obj.get("width"), obj.get("height")
+        choices.setdefault(key, {
+            "key": key, "x": float(obj["x"]), "y": float(obj["y"]),
+            "width": float(width) if width else None,
+            "height": float(height) if height else None,
+            "word": str(obj.get("word") or ""),
+            "translation": str(obj.get("translation") or "") or None if translated else None,
+        })
     ordered = sorted(choices.values(), key=lambda choice: choice["key"])
     return [ChatGuessChoice(**choice) for choice in ordered]

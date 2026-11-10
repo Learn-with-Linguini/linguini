@@ -255,17 +255,26 @@ test("a joined learner sees their own name tagged You beside the inviter", async
   assert.doesNotMatch(players(), /Leo\s*You|Waiting to join/);
 });
 
-test("the guesser picks one of the unlabelled circles and the guess sends only its key", async () => {
-  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47 }, { key: "c2", x: .7, y: .3 }] });
+test("the guesser picks an unlabelled circle, sees only that object's name, and the guess sends only its key", async () => {
+  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47, width: .12, height: .2, word: "la taza", translation: "cup" },
+    { key: "c2", x: .7, y: .3, width: .2, height: .2, word: "la silla", translation: "chair" }] });
   await mount();
   await waitFor(() => assert.match(bodyText(), /Tap the circle on the object you think they mean/));
+  assert.doesNotMatch(bodyText(), /la taza|la silla/);
   await waitFor(() => assert.equal(dom.window.document.querySelectorAll(".friend-photo__choice").length, 2));
   const circles = [...dom.window.document.querySelectorAll<HTMLButtonElement>(".friend-photo__choice")];
   assert.deepEqual(circles.map(item => item.getAttribute("aria-label")), ["Object 1", "Object 2"]);
   assert.doesNotMatch(dom.window.document.querySelector(".friend-photo")?.textContent ?? "", /taza|cup/);
   await clickElement(circles[1]);
   assert.equal(circles[1].getAttribute("aria-pressed"), "true");
-  await click("Confirm this object"); await click("Submit guess");
+  const details = () => dom.window.document.querySelector(".friend-guess-choice")?.textContent ?? "";
+  assert.match(details(), /la silla/); assert.match(details(), /chair/);
+  assert.doesNotMatch(bodyText(), /la taza/);
+  assert.equal(writes.length, 0);
+  await click("Choose another object");
+  assert.equal(dom.window.document.querySelector(".friend-guess-choice"), null);
+  await clickElement(circles[1]);
+  await click("Submit guess");
   const write = writes.at(-1)!;
   assert.match(write.path, /\/rounds\/round1\/guess$/);
   assert.equal(write.body.choiceKey, "c2");
@@ -273,7 +282,7 @@ test("the guesser picks one of the unlabelled circles and the guess sends only i
 });
 
 test("a circle already guessed wrong is marked and cannot be picked again", async () => {
-  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47 }, { key: "c2", x: .7, y: .3 }],
+  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47, word: "la taza" }, { key: "c2", x: .7, y: .3, word: "la silla" }],
     messages: [...round().messages, { id: "g1", type: "guess", senderId: "u1", x: .7, y: .3, isCorrect: false, createdAt: now }] });
   await mount();
   await waitFor(() => assert.equal(dom.window.document.querySelectorAll(".friend-photo__choice").length, 2));

@@ -9,6 +9,8 @@ import { InlineLoader } from "../LoadingScreen";
 import { TargetPicker } from "./TargetPicker";
 import { ClueComposer } from "./ClueComposer";
 import { ChatPhoto } from "./ChatPhoto";
+import { speak } from "../../lib/speech";
+import { SpeakerIcon } from "../icons";
 import { ChatMessages } from "./ChatTimeline";
 import { PrivateClueHelp } from "./PrivateClueHelp";
 
@@ -28,7 +30,8 @@ export function ActiveChatRound({ chat, round, command, disabled, microphoneEnab
   const samePoint = (a: ChatPoint, b: ChatPoint) => Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6;
   const triedKeys = new Set(round.messages.filter(message => message.type === "guess" && message.senderId === chat.meId && message.x != null && message.y != null)
     .flatMap(message => choices.filter(choice => samePoint(choice, { x: message.x!, y: message.y! })).map(choice => choice.key)));
-  const chosenKey = guess?.key && choices.some(choice => choice.key === guess.key && !triedKeys.has(choice.key)) ? guess.key : null;
+  const chosen = guess?.key ? choices.find(choice => choice.key === guess.key && !triedKeys.has(choice.key)) ?? null : null;
+  const chosenKey = chosen?.key ?? null;
   const cancel = async () => {
     if (await command(chatRoundIntent(round.id, "cancel"))) { clearChatDrafts(chat.meId, chat.id, round.id); trackAction("ispy_friend_round_cancelled"); }
   };
@@ -60,7 +63,14 @@ export function ActiveChatRound({ chat, round, command, disabled, microphoneEnab
             }} /> : <ChatPhoto chatId={chat.id} roundId={round.id} selected={guess ?? lastPoint} disabled={disabled || confirming} onPoint={point => {
             setGuess(point); saveChatDraft(key, point); trackAction("ispy_friend_guess_selected");
           }} label="Choose the object your friend described" /> : <p role="status">This photo is unavailable. Ask your friend to start a new round.</p>}
-          {guess && (!choices.length || chosenKey) ? confirming ? <Card className="stack-2"><h3>Guess this object?</h3><Button disabled={disabled} onClick={() => void submit()}>Submit guess</Button>
+          {choices.length ? chosen ? <Card className="stack friend-target friend-guess-choice" aria-live="polite"><h3>Guess this object?</h3>
+            {chosen.width && chosen.height ? <ChatPhoto chatId={chat.id} roundId={round.id} label="Object you picked"
+              crop={{ key: chosen.key, label: "", word: chosen.word, translation: chosen.translation ?? "", x: chosen.x, y: chosen.y, width: chosen.width, height: chosen.height }} /> : null}
+            {chosen.word ? <><strong lang={chat.targetLanguageCode}>{chosen.word}</strong>{chosen.translation ? <span>{chosen.translation}</span> : null}
+              <Button variant="quiet" onClick={() => { speak(chosen.word, chat.targetLanguageCode); trackAction("ispy_friend_audio_played", { kind: "object" }); }}><SpeakerIcon size={18} /> Hear the word</Button></> : null}
+            <Button disabled={disabled} onClick={() => void submit()}>Submit guess</Button>
+            <Button variant="quiet" disabled={disabled} onClick={() => { setGuess(null); saveChatDraft(key, null); }}>Choose another object</Button></Card> : null
+            : guess ? confirming ? <Card className="stack-2"><h3>Guess this object?</h3><Button disabled={disabled} onClick={() => void submit()}>Submit guess</Button>
             <Button variant="quiet" disabled={disabled} onClick={() => setConfirming(false)}>Choose again</Button></Card> : <Button disabled={disabled} onClick={() => setConfirming(true)}>Confirm this object</Button> : null}
           <PrivateClueHelp key={`${round.id}:${round.messages.length}`} chat={chat} round={round} />
         </> : <p role="status">{round.status === "awaitingFollowUp" ? "Not quite. Your friend can send another clue or reveal the answer." : "Your friend is choosing an object and composing a clue."}</p>}
