@@ -2264,10 +2264,6 @@ p[role="alert"]::before { content: "!"; }
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .practice-select .dashed-capture {
-    min-height: 220px;
-  }
-
   .vocabulary-scenes,
   .vocabulary-list {
     display: grid;
@@ -3581,7 +3577,9 @@ p[role="alert"]::before { content: "!"; }
 .dashed-capture {
   border: 2px dashed var(--line);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  /* Optically even: the camera icon carries ~11px of blank canvas above its drawing,
+     and the buttons' 4px ledge shadow hangs into the bottom padding. */
+  padding: var(--space-3) var(--space-6) calc(var(--space-6) + 4px);
   display: flex;
   flex-direction: column;
   align-items: center;
