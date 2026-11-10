@@ -163,11 +163,15 @@ test("analysis loading copy switches to translating while tasks generate", () =>
 });
 
 test("failed sessions carry a notice per failure code", () => {
-  for (const code of ["imageUploadFailed", "sceneAnalysisFailed", "imageModerationFailed", "noValidObjects", "vocabularyMappingFailed", "taskGenerationFailed"] as const) {
+  for (const code of ["imageUploadFailed", "sceneAnalysisFailed", "imageModerationFailed", "noValidObjects", "vocabularyMappingFailed", "taskGenerationFailed", "challengeSceneMismatch"] as const) {
     const dest = sessionDestination(detail("failed", [], code));
     assert.equal(dest.path, "/practice");
     assert.ok(dest.notice?.length);
   }
+  // A challenge mismatch prefers the session's own retake message.
+  const mismatched = detail("failed", [], "challengeSceneMismatch");
+  mismatched.session.sessionSummary = "Take a photo at your desk for today's challenge.";
+  assert.equal(sessionDestination(mismatched).notice, "Take a photo at your desk for today's challenge.");
   assert.ok(sessionDestination(detail("failed", [], null)).notice?.length);
 });
 

@@ -9,7 +9,10 @@ Completion takes a shared advisory lock on the day and settlement an exclusive
 one, so a completion either lands before the day is settled or is refused.
 """
 
+import re
+import unicodedata
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import UTC, date, datetime, timedelta
 from fractions import Fraction
 from uuid import UUID
@@ -34,13 +37,14 @@ from sqlalchemy.dialects.postgresql import insert
 from app.repositories.postgres.game_resources import game_resource_events, reward_basil
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scene_objects import scene_objects
-from app.repositories.practice import PracticeConflictError
+from app.repositories.practice import PracticeConflictError, PracticeNotFoundError
 from app.schemas.base import utc_now
 from app.schemas.daily_challenges import (
     DailyChallengeResponse,
     DailyChallengeResult,
     DailyChallengeWord,
 )
+from app.schemas.enums import SessionMode
 
 POLICY_VERSION = "daily-challenge.v1"
 # Flat bonus by rarity rank; ties share a rank and its bonus.
@@ -71,6 +75,65 @@ SCENES = (
     ("gym", "Gym", "at the gym"),
 )
 SCENE_TITLES = {key: title for key, title, *_ in SCENES}
+# What an analysed photo may mention to count as that day's scene. The first
+# keyword of every scene is its title so the match degrades gracefully.
+SCENE_KEYWORDS = {
+    "cafe": [
+        "cafe", "coffee", "espresso", "latte", "cappuccino", "mocha",
+        "barista", "croissant", "pastry",
+    ],
+    "kitchen": [
+        "kitchen", "stove", "oven", "fridge", "refrigerator", "sink", "pan",
+        "pot", "kettle", "toaster", "microwave", "countertop", "cabinet", "cupboard",
+    ],
+    "park": [
+        "park", "playground", "swing", "slide", "trail", "pond", "picnic",
+        "lawn", "grass", "bench",
+    ],
+    "supermarket": [
+        "supermarket", "grocery", "trolley", "cart", "aisle", "checkout",
+        "cashier", "produce",
+    ],
+    "desk": [
+        "desk", "laptop", "computer", "monitor", "keyboard", "notebook",
+        "workspace", "office", "stationery",
+    ],
+    "bedroom": [
+        "bedroom", "bed", "pillow", "blanket", "duvet", "wardrobe", "closet",
+        "nightstand", "mattress",
+    ],
+    "street": [
+        "street", "road", "sidewalk", "pavement", "crosswalk", "traffic",
+        "lamppost", "curb", "avenue", "pedestrian",
+    ],
+    "bathroom": [
+        "bathroom", "toilet", "shower", "bathtub", "mirror", "towel", "soap",
+        "faucet", "toothbrush",
+    ],
+    "restaurant": [
+        "restaurant", "waiter", "waitress", "menu", "dining", "cutlery", "plate",
+    ],
+    "garden": [
+        "garden", "flower", "hedge", "watering", "soil", "plant pot", "bloom",
+        "vegetable patch",
+    ],
+    "bus-stop": ["bus stop", "bus", "shelter", "timetable"],
+    "living-room": [
+        "living room", "sofa", "couch", "television", "coffee table",
+        "armchair", "remote",
+    ],
+    "market": ["market", "stall", "vendor", "hawker", "bazaar"],
+    "bakery": ["bakery", "bread", "baguette", "loaf", "baker", "bun"],
+    "classroom": [
+        "classroom", "whiteboard", "blackboard", "chalkboard", "teacher", "school",
+    ],
+    "train-station": ["train station", "train", "platform", "rail"],
+    "beach": ["beach", "sand", "ocean", "wave", "shore", "coast", "seaside"],
+    "gym": [
+        "gym", "dumbbell", "treadmill", "barbell", "workout",
+        "exercise machine", "weights",
+    ],
+}
 TERMINAL = {"completed", "abandoned", "failed"}
 
 metadata = MetaData()
@@ -153,6 +216,20 @@ def enter_challenge(c, user_id: UUID, session_id: UUID, day: date, media_source:
         raise PracticeConflictError("That daily challenge has ended. Try today's scene.")
     if media_source not in {"camera", "userUpload"}:
         raise PracticeConflictError("Take your own photo for the daily challenge.")
+    session = c.execute(
+        select(sessions.c.user_id, sessions.c.mode, sessions.c.started_at).where(
+            sessions.c.id == session_id
+        )
+    ).mappings().first()
+    if session is None or session["user_id"] != user_id:
+        raise PracticeNotFoundError("Session not found.")
+    if session["mode"] != SessionMode.LESSON:
+        raise PracticeConflictError("Only a photo lesson can be today's challenge.")
+    started_at = session["started_at"]
+    if started_at is not None and started_at.astimezone(UTC).date() != day:
+        raise PracticeConflictError(
+            "That lesson is not from today. Start a fresh photo lesson for today's challenge."
+        )
     c.execute(
         insert(challenge_entries)
         .values(
@@ -164,6 +241,31 @@ def enter_challenge(c, user_id: UUID, session_id: UUID, day: date, media_source:
         )
         .on_conflict_do_nothing(index_elements=["session_id"])
     )
+
+
+def _normalise(text: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", text.casefold())
+    return "".join(char for char in decomposed if not unicodedata.combining(char))
+
+
+def challenge_scene_failure(
+    c, session_id: UUID, *, labels: Iterable[str], title: str, summary: str | None
+) -> str | None:
+    """Rejection message when a challenge session's photo doesn't fit the day's scene."""
+    row = c.execute(
+        select(challenge_entries.c.scene_key).where(
+            challenge_entries.c.session_id == session_id
+        )
+    ).first()
+    if row is None:
+        return None
+    scene_key = row[0]
+    blob = _normalise(" ".join([title, summary or "", *labels]))
+    keywords = SCENE_KEYWORDS.get(scene_key) or [scene_key.replace("-", " ")]
+    if any(re.search(rf"\b{re.escape(_normalise(keyword))}\b", blob) for keyword in keywords):
+        return None
+    phrase = next(phrase for key, _, phrase in SCENES if key == scene_key)
+    return f"Take a photo {phrase} for today's challenge."
 
 
 def record_completion(c, user_id: UUID, session_id: UUID) -> None:

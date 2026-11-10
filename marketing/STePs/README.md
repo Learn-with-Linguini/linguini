@@ -3,6 +3,42 @@
 Media for the Linguini project page at
 https://uvents.nus.edu.sg/event/29th-steps/module/CS3216/project/3 (CS3216-03).
 
+## Project description
+
+### Learn the language of your day.
+
+Traditional language apps often teach fixed vocabulary that can feel disconnected
+from daily life. **Linguini starts with something personal:** a photo of your desk,
+your lunch, a street you walked down or any other moment from your day.
+
+### From one photo to a personalised lesson
+
+Linguini identifies useful objects in a user-uploaded photo and builds language
+and grammar activities around them. **You remain in control:** review the
+suggestions, remove incorrect words and add anything the AI missed before your
+lesson begins.
+
+### What can you do with Linguini?
+
+- **Learn from your surroundings:** Turn familiar places and everyday moments into
+  vocabulary you can recognise and remember.
+- **Review before you learn:** Decide which AI-suggested objects belong in your
+  lesson instead of accepting an automatic result.
+- **Practise through play:** Follow Linguini's clues and hunt for objects in your
+  own photo with I-Spy.
+- **Learn with friends:** Play with one another's photos and climb a shared
+  leaderboard.
+- **Build a visual language journal:** Revisit the words you learned alongside the
+  experiences that made them memorable.
+- **Keep your momentum:** Daily challenges, streaks and collectible badges give
+  you new reasons to return.
+
+Over time, Linguini becomes more than a collection of vocabulary. It becomes a
+**visual diary of the places, people and moments through which you learned a new
+language.**
+
+**[Try Linguini at learnwithlinguini.com](https://www.learnwithlinguini.com/)**
+
 ## GIFs (original motion graphics — NOT video clips; 960px, 15fps, ~6s loop)
 
 Designed, animated promo posters in the style other STEPS projects use
@@ -18,7 +54,7 @@ Designed, animated promo posters in the style other STEPS projects use
 | `gif-6.gif` | gif-5 zoomed to 70% inside the 16:9 frame (butter padding) — survives the uvents card's `background-size: cover` center-crop in both directions | derived from `renders/gif-5.mp4` via ffmpeg `scale + pad` (no composition) |
 | `gif-7.gif` | Full `/practice` page incl. the pasta-yellow wordmark header + enlarged text: cursor clicks Upload, desk photo lands in the dropzone → "Starting analysis…" → Scene analysis (5 markers + "Check what this lesson will use") → a practice task ("Choose the right word", `la libreta` correct, marker 1 rings) → CTA | `gif-studio/compositions/gif-7-practice-full.html` (13s) |
 | `gif-8.gif` | gif-7 zoomed to 70% inside the 16:9 frame — crop-safe variant | derived from `renders/gif-7.mp4` via ffmpeg `scale + pad` (no composition) |
-| `gif-9.gif` | Single-screen marketing preview, past-STePs style (cf. `reference/runsquad.gif`): cream background, wordmark, split pill tagline "Turning your photos / into words" with orange accent words, tilted desk-flatlay photo card with floating vocab chips, cool sunglasses mascot, and `learnwithlinguini.com` — all with gentle looping motion | `gif-studio/compositions/gif-9-ad.html` (1.0s seamless loop) |
+| `gif-9.gif` | Single-screen marketing preview, past-STePs style (cf. `reference/runsquad.gif`): cream background, left column with centered wordmark + straight pill tagline "Learn the language / of your day" (orange accent words) + centered `learnwithlinguini.com`, right side tilted desk-flatlay photo card with floating vocab chips, cool sunglasses mascot beside the logo + classic noodle mascot bottom-right — chips, card and mascots carry gentle looping motion | `gif-studio/compositions/gif-9-ad.html` (1.0s seamless loop) |
 
 Re-render after editing a composition:
 
