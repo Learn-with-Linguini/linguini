@@ -93,3 +93,8 @@
   .friend-chats__or { display: flex; align-items: center; gap: var(--space-3); }
   .friend-chats__or::before, .friend-chats__or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
 }
+/* The chat column is narrow, so the object review always stacks like practice on small screens:
+   photo at full width, then the tabs, then Confirm. */
+.friend-object-review .analysis-layout { display: flex; flex-direction: column; }
+.friend-object-review .analysis-stage-column { display: contents; }
+.friend-object-review .analysis-confirm { order: 1; }
