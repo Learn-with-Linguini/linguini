@@ -15,6 +15,7 @@ const failureNotices: Record<string, string> = {
   noValidObjects: "We couldn't find anything to learn in that photo. Try a busier scene.",
   vocabularyMappingFailed: "We couldn't turn that scene into words. Start a new practice when you are ready.",
   taskGenerationFailed: "We couldn't build your lesson. Start a new practice when you are ready.",
+  challengeSceneMismatch: "That photo doesn't match today's challenge. Take a photo that fits the challenge scene.",
 };
 
 const fallbackNotice = "That practice couldn't continue. Start a new one when you are ready.";
@@ -75,9 +76,14 @@ export function sessionDestination(detail: PracticeDetail): SessionDestination {
       return { path: `${base}/summary`, notice: null };
     case "abandoned":
       return { path: "/practice", notice: "That practice was discarded. Start a new one when you are ready." };
-    case "failed":
+    case "failed": {
       if (detail.analysisRetryable) return { path: `${base}/analysis`, notice: null };
-      return { path: "/practice", notice: (detail.session.failureCode && failureNotices[detail.session.failureCode]) || fallbackNotice };
+      const code = detail.session.failureCode;
+      const notice = code === "challengeSceneMismatch"
+        ? detail.session.sessionSummary || failureNotices[code] || fallbackNotice
+        : (code && failureNotices[code]) || fallbackNotice;
+      return { path: "/practice", notice };
+    }
     default:
       return { path: "/practice", notice: fallbackNotice };
   }

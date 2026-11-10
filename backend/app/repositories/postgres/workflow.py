@@ -30,7 +30,11 @@ from app.ai.features.scene_analysis import (
     RoutedSceneAnalyzer,
 )
 from app.missions import get_mission
-from app.repositories.postgres.daily_challenges import enter_challenge, record_completion
+from app.repositories.postgres.daily_challenges import (
+    challenge_scene_failure,
+    enter_challenge,
+    record_completion,
+)
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil
 from app.repositories.postgres.gamification import (
     compatible_question,
@@ -1751,6 +1755,25 @@ class PostgresWorkflowRepository:
             )
             if cached is not None:
                 result = scene_result_from_inventory(claimed, cached["inventory"])
+                mismatch = challenge_scene_failure(
+                    c,
+                    claimed.id,
+                    labels=[item.label for item in result.objects],
+                    title=result.title,
+                    summary=result.summary,
+                )
+                if mismatch is not None:
+                    return self._detail(
+                        c,
+                        self._transition(
+                            c,
+                            claimed,
+                            "failed",
+                            session_title=result.title,
+                            session_summary=mismatch,
+                            failure_code="challengeSceneMismatch",
+                        ),
+                    )
                 focused = self._analysis_draft(
                     claimed, profile, result, **self._revisit_focus(c, claimed)
                 )
@@ -1920,16 +1943,33 @@ class PostgresWorkflowRepository:
                             },
                         )
                     )
-                self._transition(
+                mismatch = challenge_scene_failure(
                     c,
-                    current,
-                    "awaitingObjectReview",
-                    session_title=result.title,
-                    session_summary=result.summary,
-                    analysis_draft=self._analysis_draft(
-                        current, profile, result, **self._revisit_focus(c, current)
-                    ),
+                    current.id,
+                    labels=[item.label for item in result.objects],
+                    title=result.title,
+                    summary=result.summary,
                 )
+                if mismatch is not None:
+                    self._transition(
+                        c,
+                        current,
+                        "failed",
+                        session_title=result.title,
+                        session_summary=mismatch,
+                        failure_code="challengeSceneMismatch",
+                    )
+                else:
+                    self._transition(
+                        c,
+                        current,
+                        "awaitingObjectReview",
+                        session_title=result.title,
+                        session_summary=result.summary,
+                        analysis_draft=self._analysis_draft(
+                            current, profile, result, **self._revisit_focus(c, current)
+                        ),
+                    )
         except Exception as error:
             error_code = getattr(error, "code", None)
             logger.exception(

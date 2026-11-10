@@ -305,6 +305,7 @@ enum SessionFailureCode {
   noValidObjects
   vocabularyMappingFailed
   taskGenerationFailed
+  challengeSceneMismatch
 
   @@map("session_failure_code")
 }

@@ -9,7 +9,10 @@ Completion takes a shared advisory lock on the day and settlement an exclusive
 one, so a completion either lands before the day is settled or is refused.
 """
 
+import re
+import unicodedata
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import UTC, date, datetime, timedelta
 from fractions import Fraction
 from uuid import UUID
@@ -72,6 +75,65 @@ SCENES = (
     ("gym", "Gym", "at the gym"),
 )
 SCENE_TITLES = {key: title for key, title, *_ in SCENES}
+# What an analysed photo may mention to count as that day's scene. The first
+# keyword of every scene is its title so the match degrades gracefully.
+SCENE_KEYWORDS = {
+    "cafe": [
+        "cafe", "coffee", "espresso", "latte", "cappuccino", "mocha",
+        "barista", "croissant", "pastry",
+    ],
+    "kitchen": [
+        "kitchen", "stove", "oven", "fridge", "refrigerator", "sink", "pan",
+        "pot", "kettle", "toaster", "microwave", "countertop", "cabinet", "cupboard",
+    ],
+    "park": [
+        "park", "playground", "swing", "slide", "trail", "pond", "picnic",
+        "lawn", "grass", "bench",
+    ],
+    "supermarket": [
+        "supermarket", "grocery", "trolley", "cart", "aisle", "checkout",
+        "cashier", "produce",
+    ],
+    "desk": [
+        "desk", "laptop", "computer", "monitor", "keyboard", "notebook",
+        "workspace", "office", "stationery",
+    ],
+    "bedroom": [
+        "bedroom", "bed", "pillow", "blanket", "duvet", "wardrobe", "closet",
+        "nightstand", "mattress",
+    ],
+    "street": [
+        "street", "road", "sidewalk", "pavement", "crosswalk", "traffic",
+        "lamppost", "curb", "avenue", "pedestrian",
+    ],
+    "bathroom": [
+        "bathroom", "toilet", "shower", "bathtub", "mirror", "towel", "soap",
+        "faucet", "toothbrush",
+    ],
+    "restaurant": [
+        "restaurant", "waiter", "waitress", "menu", "dining", "cutlery", "plate",
+    ],
+    "garden": [
+        "garden", "flower", "hedge", "watering", "soil", "plant pot", "bloom",
+        "vegetable patch",
+    ],
+    "bus-stop": ["bus stop", "bus", "shelter", "timetable"],
+    "living-room": [
+        "living room", "sofa", "couch", "television", "coffee table",
+        "armchair", "remote",
+    ],
+    "market": ["market", "stall", "vendor", "hawker", "bazaar"],
+    "bakery": ["bakery", "bread", "baguette", "loaf", "baker", "bun"],
+    "classroom": [
+        "classroom", "whiteboard", "blackboard", "chalkboard", "teacher", "school",
+    ],
+    "train-station": ["train station", "train", "platform", "rail"],
+    "beach": ["beach", "sand", "ocean", "wave", "shore", "coast", "seaside"],
+    "gym": [
+        "gym", "dumbbell", "treadmill", "barbell", "workout",
+        "exercise machine", "weights",
+    ],
+}
 TERMINAL = {"completed", "abandoned", "failed"}
 
 metadata = MetaData()
@@ -179,6 +241,31 @@ def enter_challenge(c, user_id: UUID, session_id: UUID, day: date, media_source:
         )
         .on_conflict_do_nothing(index_elements=["session_id"])
     )
+
+
+def _normalise(text: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", text.casefold())
+    return "".join(char for char in decomposed if not unicodedata.combining(char))
+
+
+def challenge_scene_failure(
+    c, session_id: UUID, *, labels: Iterable[str], title: str, summary: str | None
+) -> str | None:
+    """Rejection message when a challenge session's photo doesn't fit the day's scene."""
+    row = c.execute(
+        select(challenge_entries.c.scene_key).where(
+            challenge_entries.c.session_id == session_id
+        )
+    ).first()
+    if row is None:
+        return None
+    scene_key = row[0]
+    blob = _normalise(" ".join([title, summary or "", *labels]))
+    keywords = SCENE_KEYWORDS.get(scene_key) or [scene_key.replace("-", " ")]
+    if any(re.search(rf"\b{re.escape(_normalise(keyword))}\b", blob) for keyword in keywords):
+        return None
+    phrase = next(phrase for key, _, phrase in SCENES if key == scene_key)
+    return f"Take a photo {phrase} for today's challenge."
 
 
 def record_completion(c, user_id: UUID, session_id: UUID) -> None:

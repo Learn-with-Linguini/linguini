@@ -214,3 +214,40 @@ def test_entries_must_use_a_session_started_today(database):
             c.execute(delete(sessions).where(sessions.c.user_id.in_(ids[1:])))
             c.execute(delete(media_assets).where(media_assets.c.owner_user_id.in_(ids[1:])))
             c.execute(delete(users).where(users.c.id.in_(ids[1:])))
+
+
+def test_challenge_photo_must_match_the_days_scene(database):
+    engine, owner, owner_profile, client = database
+    today = challenge_day()
+    scene_key = daily_challenges.scene_for(today)[0]
+    keyword = daily_challenges.SCENE_KEYWORDS[scene_key][0]
+    phrase = next(phrase for key, _, phrase in daily_challenges.SCENES if key == scene_key)
+    try:
+        session = _learner_session(engine, owner, owner_profile, ["mug"], entry=True)
+        with engine.begin() as c:
+            # A matching photo is accepted.
+            assert daily_challenges.challenge_scene_failure(
+                c, session, labels=[keyword, "mug"], title="A photo", summary=None
+            ) is None
+            # A photo of something else is rejected with the scene phrase.
+            message = daily_challenges.challenge_scene_failure(
+                c, session, labels=["zebra"], title="A zebra at the zoo", summary=None
+            )
+            assert message == f"Take a photo {phrase} for today's challenge."
+            # Accent and case differences still match (e.g. "café" -> "cafe").
+            assert daily_challenges.challenge_scene_failure(
+                c, session, labels=[keyword.title()], title="Scene", summary=None
+            ) is None
+            # Non-challenge sessions are never checked.
+            plain = _learner_session(
+                engine, owner, owner_profile, ["zebra"], entry=False
+            )
+            assert daily_challenges.challenge_scene_failure(
+                c, plain, labels=["zebra"], title="A zebra", summary=None
+            ) is None
+    finally:
+        with engine.begin() as c:
+            c.execute(delete(challenge_finds).where(challenge_finds.c.user_id == owner.id))
+            c.execute(delete(challenge_entries).where(challenge_entries.c.user_id == owner.id))
+            c.execute(delete(sessions).where(sessions.c.user_id == owner.id))
+            c.execute(delete(media_assets).where(media_assets.c.owner_user_id == owner.id))
