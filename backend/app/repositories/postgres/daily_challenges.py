@@ -34,13 +34,14 @@ from sqlalchemy.dialects.postgresql import insert
 from app.repositories.postgres.game_resources import game_resource_events, reward_basil
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scene_objects import scene_objects
-from app.repositories.practice import PracticeConflictError
+from app.repositories.practice import PracticeConflictError, PracticeNotFoundError
 from app.schemas.base import utc_now
 from app.schemas.daily_challenges import (
     DailyChallengeResponse,
     DailyChallengeResult,
     DailyChallengeWord,
 )
+from app.schemas.enums import SessionMode
 
 POLICY_VERSION = "daily-challenge.v1"
 # Flat bonus by rarity rank; ties share a rank and its bonus.
@@ -153,6 +154,20 @@ def enter_challenge(c, user_id: UUID, session_id: UUID, day: date, media_source:
         raise PracticeConflictError("That daily challenge has ended. Try today's scene.")
     if media_source not in {"camera", "userUpload"}:
         raise PracticeConflictError("Take your own photo for the daily challenge.")
+    session = c.execute(
+        select(sessions.c.user_id, sessions.c.mode, sessions.c.started_at).where(
+            sessions.c.id == session_id
+        )
+    ).mappings().first()
+    if session is None or session["user_id"] != user_id:
+        raise PracticeNotFoundError("Session not found.")
+    if session["mode"] != SessionMode.LESSON:
+        raise PracticeConflictError("Only a photo lesson can be today's challenge.")
+    started_at = session["started_at"]
+    if started_at is not None and started_at.astimezone(UTC).date() != day:
+        raise PracticeConflictError(
+            "That lesson is not from today. Start a fresh photo lesson for today's challenge."
+        )
     c.execute(
         insert(challenge_entries)
         .values(

@@ -4,7 +4,8 @@ from datetime import timedelta
 from fractions import Fraction
 from uuid import UUID, uuid4
 
-from sqlalchemy import delete, insert, select
+import pytest
+from sqlalchemy import delete, insert, select, update
 from test_postgres_sessions import create_with_asset, upload_asset
 from test_postgres_sessions import database as database
 
@@ -25,6 +26,8 @@ from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scene_objects import scene_objects
 from app.repositories.postgres.users import users
+from app.repositories.practice import PracticeConflictError, PracticeNotFoundError
+from app.schemas.base import utc_now
 from app.schemas.sessions import Session
 from app.schemas.users import LanguageProfile, User
 
@@ -166,6 +169,47 @@ def test_completed_entries_count_words_once_and_settle_one_bonus_each(database, 
             c.execute(delete(challenge_settlements).where(
                 challenge_settlements.c.challenge_day == today))
             c.execute(delete(challenge_finds).where(challenge_finds.c.user_id.in_(ids)))
+            c.execute(delete(game_resource_events).where(game_resource_events.c.user_id.in_(ids)))
+            c.execute(delete(sessions).where(sessions.c.user_id.in_(ids[1:])))
+            c.execute(delete(media_assets).where(media_assets.c.owner_user_id.in_(ids[1:])))
+            c.execute(delete(users).where(users.c.id.in_(ids[1:])))
+
+
+def test_entries_must_use_a_session_started_today(database):
+    engine, owner, owner_profile, client = database
+    others = [User(display_name=f"Late {i}", auth_provider_id=str(uuid4())) for i in range(2)]
+    with engine.begin() as c:
+        c.execute(insert(users), [u.model_dump(by_alias=False) for u in others])
+    today = challenge_day()
+    try:
+        stale = _learner_session(engine, owner, owner_profile, ["clock"], entry=False)
+        yesterday = utc_now() - timedelta(days=1)
+        with engine.begin() as c:
+            c.execute(update(sessions).where(sessions.c.id == stale).values(started_at=yesterday))
+            with pytest.raises(PracticeConflictError):
+                daily_challenges.enter_challenge(c, owner.id, stale, today, "camera")
+
+        # A session owned by someone else can never be tagged as yours.
+        foreign = _learner_session(
+            engine, others[0], _profile(engine, others[0]), ["lamp"], entry=False
+        )
+        with engine.begin() as c:
+            with pytest.raises(PracticeNotFoundError):
+                daily_challenges.enter_challenge(c, owner.id, foreign, today, "camera")
+
+        # A fresh own-photo lesson today still enters fine.
+        fresh = _learner_session(engine, owner, owner_profile, ["mug"], entry=False)
+        with engine.begin() as c:
+            daily_challenges.enter_challenge(c, owner.id, fresh, today, "camera")
+            row = c.execute(
+                select(challenge_entries).where(challenge_entries.c.session_id == fresh)
+            ).mappings().first()
+        assert row is not None and row["user_id"] == owner.id
+    finally:
+        ids = [owner.id, *(p.id for p in others)]
+        with engine.begin() as c:
+            c.execute(delete(challenge_finds).where(challenge_finds.c.user_id.in_(ids)))
+            c.execute(delete(challenge_entries).where(challenge_entries.c.user_id.in_(ids)))
             c.execute(delete(game_resource_events).where(game_resource_events.c.user_id.in_(ids)))
             c.execute(delete(sessions).where(sessions.c.user_id.in_(ids[1:])))
             c.execute(delete(media_assets).where(media_assets.c.owner_user_id.in_(ids[1:])))
