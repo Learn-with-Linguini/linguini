@@ -416,25 +416,90 @@ def test_correctness_uses_the_stored_bounding_region_including_its_edges(db, x, 
     assert completed.rounds[-1].messages[-1].is_correct is True
 
 
-def test_completed_history_survives_new_rounds_from_either_member_without_turn_order(db):
+def test_players_alternate_turns_and_completed_history_survives_new_rounds(db):
     access = paired(db)
     first, _target, _options = awaiting_guess(db, access.chat.id)
     first_round = first.active_round.id
+    assert first.next_sender_id is None
     complete = db.repos[1].guess(access.chat.id, first_round,
         command(first, GuessChatTarget, x=.25, y=.4))
-    next_round = start(db, access.chat.id, 0)
+    assert complete.next_sender_id == db.people[1].id
+    assert db.repos[0].get(access.chat.id).next_sender_id == db.people[1].id
+    with pytest.raises(RoomError) as wrong_turn:
+        start(db, access.chat.id, 0)
+    assert wrong_turn.value.code == "chat_not_your_turn"
+    next_round = start(db, access.chat.id, 1)
     assert next_round.rounds[0].id == first_round
     assert next_round.rounds[0].target.word == "la taza"
-    assert next_round.active_round.sender_id == db.people[0].id
-    cancelled = db.repos[0].finish_round(access.chat.id, next_round.active_round.id,
+    assert next_round.active_round.sender_id == db.people[1].id
+    cancelled = db.repos[1].finish_round(access.chat.id, next_round.active_round.id,
         command(next_round))
-    guest_round = start(db, access.chat.id, 1)
+    # A cancelled round does not pass the turn.
+    assert cancelled.next_sender_id == db.people[1].id
+    with pytest.raises(RoomError):
+        start(db, access.chat.id, 0)
+    guest_round = start(db, access.chat.id, 1, asset_index=1)
     assert guest_round.active_round.sender_id == db.people[1].id
     assert len(guest_round.rounds) == 2
     restored = PostgresFriendChatRepository(db.engine, db.people[1].id).get(access.chat.id)
     assert restored.rounds[0] == complete.rounds[0]
     assert restored.rounds[1].status == "cancelled"
     assert cancelled.active_round is None
+
+
+def test_the_next_player_can_continue_on_the_finished_photo_without_reanalysis(db):
+    access = paired(db)
+    first, target, _options = awaiting_guess(db, access.chat.id)
+    complete = db.repos[1].guess(access.chat.id, first.active_round.id,
+        command(first, GuessChatTarget, x=.25, y=.4))
+    source_id = complete.rounds[-1].id
+    assert complete.reusable_photo_round_id == source_id
+    # Only the player whose turn it is is offered the photo.
+    assert db.repos[0].get(access.chat.id).reusable_photo_round_id is None
+    snapshot = db.repos[1].start_round(access.chat.id, command(complete, StartChatRound,
+        source_round_id=source_id))
+    current = snapshot.active_round
+    assert current.sender_id == db.people[1].id
+    assert current.status == "selectingTarget" and current.photo_status == "ready"
+    assert {obj.key for obj in current.objects} >= {target["key"]}
+    assert snapshot.reusable_photo_round_id is None
+    assert db.repos[1].claim_photo(access.chat.id, current.id) is None
+    with db.engine.connect() as c:
+        row = c.execute(select(rounds).where(rounds.c.id == current.id)).mappings().one()
+    assert row["media_asset_id"] == db.assets[0][0].id
+    assert row["content"]["roundId"] == str(current.id)
+    # The new sender can see the friend's photo; the guesser waits for the clue.
+    assert db.repos[1].image_asset(access.chat.id, current.id).id == db.assets[0][0].id
+    with pytest.raises(RoomError):
+        db.repos[0].image_asset(access.chat.id, current.id)
+
+
+def test_photo_reuse_requires_the_latest_finished_round_and_shared_explanations(db):
+    access = paired(db)
+    first, _target, _options = awaiting_guess(db, access.chat.id)
+    complete = db.repos[1].guess(access.chat.id, first.active_round.id,
+        command(first, GuessChatTarget, x=.25, y=.4))
+    with pytest.raises(RoomError) as wrong_round:
+        db.repos[1].start_round(access.chat.id, command(complete, StartChatRound,
+            source_round_id=uuid4()))
+    assert wrong_round.value.code == "chat_photo_reuse_unavailable"
+    with db.engine.begin() as c:
+        profile = c.execute(select(chats.c.partner_profile)
+            .where(chats.c.id == access.chat.id)).scalar_one()
+        c.execute(update(chats).where(chats.c.id == access.chat.id)
+            .values(partner_profile={**profile, "source_language_code": "fr"}))
+    snapshot = db.repos[1].get(access.chat.id)
+    assert snapshot.next_sender_id == db.people[1].id
+    assert snapshot.reusable_photo_round_id is None
+    with pytest.raises(RoomError):
+        db.repos[1].start_round(access.chat.id, command(snapshot, StartChatRound,
+            source_round_id=complete.rounds[-1].id))
+
+
+@pytest.mark.parametrize("photo", [{}, {"media_asset_id": uuid4(), "source_round_id": uuid4()}])
+def test_a_round_starts_from_exactly_one_photo_source(photo):
+    with pytest.raises(ValidationError):
+        StartChatRound(command_id=uuid4(), expected_revision=0, **photo)
 
 
 def test_replayed_correct_guess_adds_one_result_and_reused_action_cannot_change_guess(db):
@@ -680,9 +745,9 @@ def test_explicit_reveal_and_cancel_are_sender_only_and_cancel_keeps_answer_hidd
     revealed = db.repos[0].finish_round(access.chat.id, round_id, command(snapshot), reveal=True)
     assert revealed.rounds[-1].messages[-1].type == "reveal"
     assert target["word"] in revealed.rounds[-1].messages[-1].text
-    next_round, _target, _options = prepared(db, access.chat.id)
-    db.repos[0].finish_round(access.chat.id, next_round.active_round.id, command(next_round))
-    guest = db.repos[1].get(access.chat.id)
+    next_round, _target, _options = prepared(db, access.chat.id, actor=1)
+    db.repos[1].finish_round(access.chat.id, next_round.active_round.id, command(next_round))
+    guest = db.repos[0].get(access.chat.id)
     assert guest.rounds[-1].status == "cancelled"
     assert guest.rounds[-1].target is None and guest.rounds[-1].objects == []
 
@@ -916,6 +981,37 @@ def test_real_content_can_confirm_send_follow_up_and_complete_through_the_api(db
         active = snapshot["activeRound"]
         assert active["photoStatus"] == "ready"
         round_path = path + f"/rounds/{active['id']}"
+        # The sender checks the analyzed objects before anything is translated or shared.
+        assert active["status"] == "reviewingObjects" and active["objects"] == []
+        review = active["reviewObjects"]
+        assert [row["label"] for row in review] == ["cup", "book"]
+        assert "word" not in review[0]
+        waiting = client.get(path, headers=receiver).json()["activeRound"]
+        assert waiting["reviewObjects"] == [] and waiting["reviewRelations"] == []
+        early = client.post(round_path + "/target", headers=sender, json={
+            "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+            "objectKey": review[0]["key"], "confirm": False,
+        })
+        assert early.status_code == 409
+        assert early.json()["detail"]["code"] == "chat_objects_unconfirmed"
+        review_body = {
+            "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+            "acceptedObjectKeys": [row["key"] for row in review],
+            "relations": [{"subjectObjectKey": row["subjectObjectKey"], "relation": row["relation"],
+                "referenceObjectKey": row["referenceObjectKey"]}
+                for row in active["reviewRelations"]],
+        }
+        reviewed = client.post(round_path + "/objects", headers=sender, json=review_body)
+        assert reviewed.status_code == 200, reviewed.text
+        snapshot = reviewed.json()
+        active = snapshot["activeRound"]
+        assert active["status"] == "selectingTarget" and active["reviewObjects"] == []
+        assert [row["word"] for row in active["objects"]] == ["la tasse", "le livre"]
+        assert client.post(round_path + "/objects", headers=sender,
+            json=review_body).json() == snapshot
+        again = client.post(round_path + "/objects", headers=sender, json={
+            **review_body, "commandId": str(uuid4()), "expectedRevision": snapshot["revision"]})
+        assert again.status_code == 409
         target = active["objects"][0]
         confirm_body = {
             "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
@@ -972,3 +1068,129 @@ def test_real_content_can_confirm_send_follow_up_and_complete_through_the_api(db
             assert restored.status_code == 200, restored.text
             assert restored.json()["rounds"][-1]["target"]["key"] == target["key"]
             assert "factId" not in restored.text
+
+
+def assets_left(db, ids):
+    with db.engine.connect() as c:
+        return set(c.execute(select(media_assets.c.id).where(media_assets.c.id.in_(ids))).scalars())
+
+
+def ended(db):
+    """A paired chat with one round on each member's photo, then left by the creator."""
+    access = paired(db)
+    first, _target, _options = awaiting_guess(db, access.chat.id)
+    complete = db.repos[1].guess(access.chat.id, first.active_round.id,
+        command(first, GuessChatTarget, x=.25, y=.4))
+    second = db.repos[1].start_round(access.chat.id, command(complete, StartChatRound,
+        media_asset_id=db.assets[1][0].id))
+    db.repos[0].close(access.chat.id, command(second))
+    return access
+
+
+def test_only_ended_chats_and_unanswered_invites_can_be_deleted(db):
+    access = paired(db)
+    with pytest.raises(RoomError) as active:
+        db.repos[0].delete_chat(access.chat.id)
+    assert active.value.code == "chat_active"
+    with pytest.raises(RoomError) as stranger:
+        db.repos[2].delete_chat(access.chat.id)
+    assert stranger.value.code == "chat_not_found"
+    invite = create(db)
+    db.repos[0].delete_chat(invite.chat.id)
+    assert count(db, chats, chats.c.id == invite.chat.id) == 0
+
+
+def test_deleting_an_ended_chat_removes_it_and_my_photos_only_for_me(db):
+    access = ended(db)
+    mine, theirs = db.assets[0][0].id, db.assets[1][0].id
+    removed = []
+    db.repos[0].delete_chat(access.chat.id, remove_files=removed.extend)
+    assert removed == [db.assets[0][0].storage_key]
+    assert assets_left(db, [mine, theirs]) == {theirs}
+    assert access.chat.id not in {chat.id for chat in db.repos[0].list()}
+    with pytest.raises(RoomError) as hidden:
+        db.repos[0].get(access.chat.id)
+    assert hidden.value.code == "chat_not_found"
+    with pytest.raises(RoomError):
+        db.repos[0].delete_chat(access.chat.id)
+    # The friend keeps their history; the deleted photo is simply gone from it.
+    kept = db.repos[1].get(access.chat.id)
+    assert len(kept.rounds) == 2 and kept.status == "left"
+    with db.engine.connect() as c:
+        assets = c.execute(select(rounds.c.media_asset_id).where(rounds.c.chat_id == access.chat.id)
+            .order_by(rounds.c.created_at)).scalars().all()
+    assert assets == [None, theirs]
+    db.repos[1].delete_chat(access.chat.id, remove_files=removed.extend)
+    assert removed[-1] == db.assets[1][0].storage_key
+    assert assets_left(db, [theirs]) == set()
+    assert count(db, chats, chats.c.id == access.chat.id) == 0
+    assert count(db, rounds, rounds.c.chat_id == access.chat.id) == 0
+    assert count(db, messages, messages.c.chat_id == access.chat.id) == 0
+
+
+def test_a_photo_used_elsewhere_is_kept(db):
+    access = ended(db)
+    other = create(db)
+    joined = join(db, other, actor=3)
+    db.repos[0].start_round(other.chat.id, command(joined, StartChatRound,
+        media_asset_id=db.assets[0][0].id))
+    removed = []
+    db.repos[0].delete_chat(access.chat.id, remove_files=removed.extend)
+    assert removed == []
+    assert assets_left(db, [db.assets[0][0].id]) == {db.assets[0][0].id}
+
+
+def test_a_reported_chat_is_hidden_but_kept_for_review(db):
+    access = paired(db)
+    db.repos[1].report(access.chat.id, command(db.repos[1].get(access.chat.id), ReportChat,
+        reason="Inappropriate photo"))
+    start(db, access.chat.id)
+    db.repos[1].close(access.chat.id, command(db.repos[1].get(access.chat.id)), block=True)
+    removed = []
+    db.repos[0].delete_chat(access.chat.id, remove_files=removed.extend)
+    db.repos[1].delete_chat(access.chat.id, remove_files=removed.extend)
+    assert removed == []
+    assert db.repos[0].list() == [] and db.repos[1].list() == []
+    assert count(db, chats, chats.c.id == access.chat.id) == 1
+    assert count(db, reports, reports.c.chat_id == access.chat.id) == 1
+    assert assets_left(db, [db.assets[0][0].id]) == {db.assets[0][0].id}
+
+
+def test_a_storage_failure_keeps_the_chat_and_photos_to_retry(db):
+    access = ended(db)
+
+    def failing(_keys):
+        raise RuntimeError("storage down")
+
+    with pytest.raises(RuntimeError):
+        db.repos[0].delete_chat(access.chat.id, remove_files=failing)
+    assert db.repos[0].get(access.chat.id).status == "left"
+    assert assets_left(db, [db.assets[0][0].id]) == {db.assets[0][0].id}
+
+
+def test_delete_route_returns_no_content_and_maps_errors():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.api.dependencies import get_friend_chat_service
+    from app.api.routes.friend_chats import router
+
+    calls = []
+
+    class Service:
+        def delete(self, chat_id):
+            calls.append(chat_id)
+            if len(calls) > 1:
+                raise RoomError("chat_active", "Leave this chat before deleting it.", 409)
+
+    app = FastAPI()
+    app.dependency_overrides[get_friend_chat_service] = Service
+    app.include_router(router, prefix="/api/v1")
+    chat_id = uuid4()
+    with TestClient(app) as client:
+        done = client.delete(f"/api/v1/friend-chats/{chat_id}")
+        assert done.status_code == 204 and done.content == b""
+        refused = client.delete(f"/api/v1/friend-chats/{chat_id}")
+        assert refused.status_code == 409
+        assert refused.json()["detail"]["code"] == "chat_active"
+    assert calls == [chat_id, chat_id]

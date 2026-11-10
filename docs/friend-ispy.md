@@ -6,9 +6,19 @@ language. The learners may use different proficiency levels. Opening an invitati
 does not switch a profile or join automatically. A full or closed invitation does
 not expose the participants to another account.
 
-Either participant can start a round with one owned uploaded photo. The sender
-reviews a detected object or taps another region for analysis, then confirms the
-object's identity. Beginner clues use confirmed description pieces; other learners
+Either participant can start a round with one owned uploaded photo. After analysis,
+the sender checks the objects with the same review as practice scene analysis:
+numbered markers on the photo, and Objects, Adjectives and Relations tabs to remove,
+move, add and restore objects and to edit adjectives and connections. Nothing is
+translated or shown to the friend until the sender presses Confirm objects; the
+confirmed set is then translated, and only it is used for markers, guesses and clue
+pieces. While unconfirmed, the API reports the round as `reviewingObjects` (stored as
+`selectingTarget`, so no schema change was needed) and sends the analysis only to the
+sender as `reviewObjects` and `reviewRelations`. An added object is a tapped point and
+gets a small estimated box for crops; a moved object keeps its box size around the new
+centre. The sender then chooses the secret object from the confirmed objects and
+confirms its identity. Rounds stored before this change already hold translated
+objects and are treated as confirmed. Beginner clues use confirmed description pieces; other learners
 can edit or write a clue. Audio and the existing mission cheatsheets support the
 composer. Suggestions require review and an explicit send.
 
@@ -25,8 +35,16 @@ chosen key with the target's key; older clients may still send a photo point, wh
 is scored against the target region. Markers already guessed wrong are shown as
 tried. Unfinished rounds do not expose object names, the answer or the target region
 to the receiver. An incorrect guess lets the sender add a useful clue or
-reveal the answer. Completed rounds remain in the conversation, and either learner
-can start the next round. Starting a round never requires both learners online.
+reveal the answer. Completed rounds remain in the conversation. Players take turns:
+either learner can start the first round, and after a round finishes (found or
+revealed) the learner who guessed starts the next one. A cancelled round does not
+pass the turn. The next player can upload a new photo or continue on the finished
+round's photo; continuing copies that round's analyzed objects, so the new round is
+ready at once without another AI call. The photo stays owned by whoever uploaded it,
+and the chat image route serves a photo owned by either member of the chat. Photo
+reuse is offered only when both learners share an explanation language, because
+object names and translations were prepared in the original sender's explanation
+language. Starting a round never requires both learners online.
 
 Private assistance is requested separately and never enters the shared timeline,
 revision or partner response. Reports remain private. Leaving revokes the invitation
@@ -46,6 +64,19 @@ RLS enabled and browser-role grants revoked. Participant authorization is checke
 on the server. A partial unique index permits only one unfinished round per chat;
 ordered locks, revisions and fingerprinted command IDs protect concurrent writes
 and retries. Do not apply the migration to Supabase without review.
+
+Either member can delete an ended chat (left or blocked) or an invite nobody joined
+from their own list with `DELETE /api/v1/friend-chats/{chatId}`; active chats must be
+left first. Deleting hides the chat for that member and deletes their round photos
+from it unless something else still refers to them. "Something else" is read from the
+database's foreign keys to `media_assets` (practice sessions, journals, room photos,
+friend rounds in other chats and so on); cascading caches such as scene analyses go
+with the photo. The original and every resized copy are removed from storage before
+the transaction commits, so a storage failure leaves everything to retry. The other
+member keeps their copy of the chat, without the deleted photos, until they delete it
+too; then, or immediately for an invite with no partner, the chat's rows are removed.
+A reported chat is only hidden: its rows, report and photos stay for moderation.
+Deletion state is stored in `creator_deleted_at` and `partner_deleted_at`.
 
 Only invitation hashes are stored. The creator receives the raw token once and
 keeps it in browser session storage. If a creation response is lost and a retry

@@ -3,6 +3,10 @@
 .friend-chats__list, .friend-timeline__messages, .friend-composer__selected { list-style: none; padding: 0; margin: 0; }
 .friend-chats__item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 18px 0; border: 0; border-bottom: 1px solid var(--line); text-align: left; color: var(--ink); background: transparent; cursor: pointer; }
 .friend-chats__item > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.friend-chats__entry--inactive { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-2); border-bottom: 1px solid var(--line); }
+.friend-chats__entry--inactive > .friend-chats__item { border-bottom: 0; }
+.friend-chats__entry--inactive > .friend-delete { grid-column: 1 / -1; padding-bottom: var(--space-3); }
+.friend-delete__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .friend-avatar { display: inline-flex; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; align-items: center; justify-content: center; color: var(--teal-dark); background: var(--sage); font-size: 24px; font-weight: 800; }
 .friend-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .friend-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); list-style: none; padding: 0; margin: 0; }
@@ -76,6 +80,10 @@
 .friend-help__words > button { display: grid; gap: 4px; min-height: 48px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink); background: var(--butter); cursor: pointer; }
 .friend-chat textarea { min-height: 96px; resize: vertical; }
 .friend-chat__new-round { padding-top: 16px; border-top: 1px solid var(--line); }
+.friend-chat__new-round h2 { margin: 0 0 4px; }
+.friend-chat__new-round p { margin: 0; }
+.friend-next-turn { background: var(--paper); }
+.friend-next-turn__reuse { padding: var(--space-4); background: var(--paper); }
 .friend-chat :is(button, summary, [role="button"]):focus-visible, .friend-chats :is(button, summary):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 @media (max-width: 420px) { .friend-composer__heading { align-items: flex-start; } .friend-chat__header { gap: 8px; } .friend-chat__header h1 { font-size: 22px; } }
 .friend-chats__choices { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--space-3); }
@@ -89,3 +97,8 @@
   .friend-chats__or { display: flex; align-items: center; gap: var(--space-3); }
   .friend-chats__or::before, .friend-chats__or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
 }
+/* The chat column is narrow, so the object review always stacks like practice on small screens:
+   photo at full width, then the tabs, then Confirm. */
+.friend-object-review .analysis-layout { display: flex; flex-direction: column; }
+.friend-object-review .analysis-stage-column { display: contents; }
+.friend-object-review .analysis-confirm { order: 1; }
