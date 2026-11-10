@@ -29,7 +29,16 @@ class ChatCommand(ApiModel):
 
 
 class StartChatRound(ChatCommand):
-    media_asset_id: UUID
+    """Start a round with a new owned photo, or continue on a finished round's photo."""
+
+    media_asset_id: UUID | None = None
+    source_round_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def one_photo_source(self):
+        if (self.media_asset_id is None) == (self.source_round_id is None):
+            raise ValueError("Choose a new photo or continue on the previous photo.")
+        return self
 
 
 class SelectChatTarget(ChatCommand):
@@ -176,6 +185,11 @@ class ChatSnapshot(ApiModel):
     updated_at: AwareDatetime
     active_round: ChatRound | None = None
     rounds: list[ChatRound] = Field(default_factory=list)
+    # Who starts the next round: the player who guessed in the last finished round.
+    # None means either player may start (no round has finished yet).
+    next_sender_id: UUID | None = None
+    # A finished round whose photo this viewer may reuse for their next round.
+    reusable_photo_round_id: UUID | None = None
 
 
 class ChatAccess(ApiModel):

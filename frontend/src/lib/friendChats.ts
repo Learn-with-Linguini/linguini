@@ -35,6 +35,10 @@ export interface ChatSnapshot {
   targetLanguageCode: string; viewerLevel: string; partner: ChatPerson | null; creator: ChatPerson;
   inviteStatus: "open" | "accepted" | "expired" | "revoked"; createdAt: string; updatedAt: string;
   activeRound: ChatRound | null; rounds: ChatRound[];
+  /** Who starts the next round; null when either player may. */
+  nextSenderId?: string | null;
+  /** A finished round whose photo this viewer may play again. */
+  reusablePhotoRoundId?: string | null;
 }
 export interface ChatInvitePreview {
   status: "open" | "full" | "expired" | "revoked";

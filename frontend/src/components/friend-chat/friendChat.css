@@ -76,6 +76,10 @@
 .friend-help__words > button { display: grid; gap: 4px; min-height: 48px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink); background: var(--butter); cursor: pointer; }
 .friend-chat textarea { min-height: 96px; resize: vertical; }
 .friend-chat__new-round { padding-top: 16px; border-top: 1px solid var(--line); }
+.friend-chat__new-round h2 { margin: 0 0 4px; }
+.friend-chat__new-round p { margin: 0; }
+.friend-next-turn { background: var(--paper); }
+.friend-next-turn__reuse { padding: var(--space-4); background: var(--paper); }
 .friend-chat :is(button, summary, [role="button"]):focus-visible, .friend-chats :is(button, summary):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 @media (max-width: 420px) { .friend-composer__heading { align-items: flex-start; } .friend-chat__header { gap: 8px; } .friend-chat__header h1 { font-size: 22px; } }
 .friend-chats__choices { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--space-3); }

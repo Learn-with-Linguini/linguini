@@ -25,8 +25,16 @@ chosen key with the target's key; older clients may still send a photo point, wh
 is scored against the target region. Markers already guessed wrong are shown as
 tried. Unfinished rounds do not expose object names, the answer or the target region
 to the receiver. An incorrect guess lets the sender add a useful clue or
-reveal the answer. Completed rounds remain in the conversation, and either learner
-can start the next round. Starting a round never requires both learners online.
+reveal the answer. Completed rounds remain in the conversation. Players take turns:
+either learner can start the first round, and after a round finishes (found or
+revealed) the learner who guessed starts the next one. A cancelled round does not
+pass the turn. The next player can upload a new photo or continue on the finished
+round's photo; continuing copies that round's analyzed objects, so the new round is
+ready at once without another AI call. The photo stays owned by whoever uploaded it,
+and the chat image route serves a photo owned by either member of the chat. Photo
+reuse is offered only when both learners share an explanation language, because
+object names and translations were prepared in the original sender's explanation
+language. Starting a round never requires both learners online.
 
 Private assistance is requested separately and never enters the shared timeline,
 revision or partner response. Reports remain private. Leaving revokes the invitation

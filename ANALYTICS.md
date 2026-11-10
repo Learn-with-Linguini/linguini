@@ -253,6 +253,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_answer_revealed` | — | The sender deliberately reveals the answer |
 | `ispy_friend_round_completed` | — | A new correct result or revealed answer appears |
 | `ispy_friend_next_round_started` | — | Another round starts in a chat with history |
+| `ispy_friend_photo_reused` | — | The next player continues on the previous round's photo |
 | `ispy_friend_round_cancelled` | — | The sender cancels an unfinished round |
 | `ispy_friend_audio_played` | `{ kind }` | Object, option, preview, clue, word or answer audio is requested |
 | `ispy_friend_speech_started` | — | The sender starts speech input |

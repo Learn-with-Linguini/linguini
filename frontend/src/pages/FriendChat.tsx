@@ -10,6 +10,7 @@ import { ChatPlayers } from "../components/friend-chat/ChatPlayers";
 import { ChatTimeline } from "../components/friend-chat/ChatTimeline";
 import { InviteControls } from "../components/friend-chat/InviteControls";
 import { ActiveChatRound } from "../components/friend-chat/ActiveChatRound";
+import { ChatPhoto } from "../components/friend-chat/ChatPhoto";
 import { trackAction } from "../lib/analytics";
 import { clearChatDrafts } from "../lib/friendChats";
 import type { ChatPerson, ChatSnapshot } from "../lib/friendChats";
@@ -93,12 +94,23 @@ function FriendChatSession({ chatId }: { chatId: string }) {
     {terminal ? <Card><p>{chat.status === "blocked" ? "This conversation is blocked." : "A participant left this conversation."}</p><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Back to your chats</Button></Card> : chat.activeRound ?
       <ActiveChatRound key={chat.activeRound.id} chat={chat} round={chat.activeRound} command={command} disabled={disabled || !compatible}
         microphoneEnabled={user?.microphoneEnabled ?? false} /> : chat.partner && chat.status === "active" ? <section className="stack friend-chat__new-round" aria-label="Start another round">
-        {!picking ? <Button disabled={disabled || !compatible} onClick={() => setPicking(true)}>{chat.rounds.length ? "Start another I-Spy" : "Start an I-Spy"}</Button> : <>
+        {chat.nextSenderId && chat.nextSenderId !== chat.meId ? <Card className="stack-2 friend-next-turn"><h2>{chat.partner.displayName}’s turn</h2>
+          <p>{chat.partner.displayName} is choosing the next object. You’ll guess next.</p></Card> : !picking ? <>
+          <div><h2>{chat.nextSenderId === chat.meId ? "Your turn" : chat.rounds.length ? "Start another I-Spy" : "Start the first I-Spy"}</h2>
+            <p className="small muted">{chat.nextSenderId === chat.meId ? `Choose an object for ${chat.partner.displayName} to find.` : "Choose a photo and an object for your friend to find."}</p></div>
+          {chat.reusablePhotoRoundId ? <Card className="stack-2 friend-next-turn__reuse">
+            <ChatPhoto chatId={chat.id} roundId={chat.reusablePhotoRoundId} label="Photo from the last round" />
+            <Button disabled={disabled || !compatible} onClick={() => {
+              void command<ChatSnapshot>("rounds", { sourceRoundId: chat.reusablePhotoRoundId }).then(next => { if (next) { trackAction("ispy_friend_photo_reused"); trackAction("ispy_friend_next_round_started"); } });
+            }}>Find something else in this photo</Button>
+            <Button variant="secondary" disabled={disabled || !compatible} onClick={() => setPicking(true)}>Use a new photo</Button>
+          </Card> : <Button disabled={disabled || !compatible} onClick={() => setPicking(true)}>{chat.rounds.length ? "Start another I-Spy" : "Start an I-Spy"}</Button>}
+        </> : <>
           <h2>Choose one photo</h2><p className="small muted">Your friend can see this photo after it’s checked.</p>
           <ImageUpload cameraEnabled={user?.cameraEnabled ?? false} disabled={disabled || !compatible} onBusyChange={setUploading} onUploaded={image => {
             void command<ChatSnapshot>("rounds", { mediaAssetId: image.id }).then(next => { if (next) { setPicking(false); trackAction("ispy_friend_photo_uploaded");
               if (chat.rounds.length) trackAction("ispy_friend_next_round_started"); } });
-          }} /><Button variant="quiet" disabled={uploading} onClick={() => setPicking(false)}>Cancel photo selection</Button>
+          }} /><Button variant="quiet" disabled={uploading} onClick={() => setPicking(false)}>{chat.reusablePhotoRoundId ? "Back to the last photo" : "Cancel photo selection"}</Button>
         </>}
       </section> : null}
   </div>;

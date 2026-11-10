@@ -291,6 +291,29 @@ test("a circle already guessed wrong is marked and cannot be picked again", asyn
   assert.equal(dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Object 1"]')?.disabled, false);
 });
 
+test("after guessing, it is your turn and you can find something else in the same photo", async () => {
+  const finished = round({ status: "completed", completedAt: now });
+  snapshot = fixture({ activeRound: null, rounds: [finished], nextSenderId: "u1", reusablePhotoRoundId: "round1" });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Your turn/));
+  assert.ok(buttons("Use a new photo")[0]);
+  replies.push(() => { snapshot = fixture({ revision: 5, rounds: [finished], activeRound: round({ id: "round2", senderId: "u1", status: "selectingTarget" }) }); return Response.json(snapshot); });
+  await click("Find something else in this photo");
+  const write = writes.at(-1)!;
+  assert.match(write.path, /\/rounds$/);
+  assert.equal(write.body.sourceRoundId, "round1");
+  assert.equal(write.body.mediaAssetId, undefined);
+});
+
+test("while the friend chooses the next object, the guesser waits instead of starting a round", async () => {
+  snapshot = fixture({ activeRound: null, rounds: [round({ senderId: "u1", status: "completed", completedAt: now })], nextSenderId: "u2" });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Leo’s turn/));
+  assert.equal(buttons("Start another I-Spy").length, 0);
+  assert.equal(buttons("Find something else in this photo").length, 0);
+  assert.equal(buttons("Use a new photo").length, 0);
+});
+
 test("choosing a detected object previews its identity and requires an explicit confirmation before changing server state", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] });
   await mount(); await waitFor(() => assert.ok(dom.window.document.querySelector('button[aria-label="Choose cup"]')));

@@ -95,7 +95,7 @@ function FriendChatList() {
         <Card><p>No photo chats yet. Invite one friend to start your first I-Spy.</p></Card> :
         <ul className="friend-chats__list">{chats.data.map(chat => <li key={chat.id}><button type="button" className="friend-chats__item" onClick={() => open(chat)}>
           <ChatAvatar person={chat.partner} /><span><strong>{chat.partner?.displayName ?? "Your invitation"}</strong>
-            <span className="small muted">{languageDisplayName(chat.targetLanguageCode)} · {chat.status === "waiting" ? "Waiting for your friend" : chat.status === "left" ? "Conversation ended" : chat.status === "blocked" ? "Blocked" : chat.activeRound ? "An I-Spy is in progress" : "Ready for another photo"}</span></span></button></li>)}</ul>}
+            <span className="small muted">{languageDisplayName(chat.targetLanguageCode)} · {chat.status === "waiting" ? "Waiting for your friend" : chat.status === "left" ? "Conversation ended" : chat.status === "blocked" ? "Blocked" : chat.activeRound ? "An I-Spy is in progress" : chat.nextSenderId === chat.meId ? "Your turn" : chat.nextSenderId ? `${chat.partner?.displayName ?? "Your friend"}’s turn` : "Ready for another photo"}</span></span></button></li>)}</ul>}
     </section>
   </div>;
 }
