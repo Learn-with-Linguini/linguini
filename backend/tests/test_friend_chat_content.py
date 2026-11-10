@@ -17,6 +17,7 @@ from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.observability import NoOpAITracer
 from app.ai.routing import as_routed
 from app.repositories.postgres.friend_chats import _public_clue_option
+from app.schemas.friend_chats import ConfirmChatObjects
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.services.friend_chat_content import FriendChatContent
 from app.services.friend_chat_realizer import FriendChatRealizer
@@ -198,8 +199,29 @@ def scene():
         RoomPhotoPreparer(analyzer, translator, storage=storage),
         realizer=realizer,
     )
-    content = helper.analyze(round_id, owner, asset, profile)
+    draft = helper.analyze(round_id, owner, asset, profile)
+    content = confirm_all(helper, draft, profile)
     return SimpleNamespace(**locals())
+
+
+def confirm_all(helper, draft, profile, **changes):
+    """Confirm the analysis as the sender would by pressing Confirm objects."""
+    review = draft["review"]
+    request = {
+        "command_id": uuid4(),
+        "expected_revision": 0,
+        "accepted_object_keys": [row["key"] for row in review["objects"]],
+        "relations": [
+            {
+                "subject_object_key": row["subjectObjectKey"],
+                "relation": row["relation"],
+                "reference_object_key": row["referenceObjectKey"],
+            }
+            for row in review["relations"]
+        ],
+        **changes,
+    }
+    return helper.confirm_objects(draft, ConfirmChatObjects(**request), profile)
 
 
 def test_analysis_preserves_actual_regions_and_general_confirmed_facts(scene):
@@ -265,8 +287,63 @@ def test_real_analyzer_retains_moderator_and_global_storage(scene, monkeypatch):
 def test_translation_cannot_omit_a_detected_object(scene):
     scene.translator.omit = True
     with pytest.raises(RoomPhotoError) as error:
-        scene.helper.analyze(scene.round_id, scene.owner, scene.asset, scene.profile)
+        confirm_all(scene.helper, scene.draft, scene.profile)
     assert error.value.code == "friend_chat_translation_failed"
+
+
+def test_analysis_waits_for_the_sender_to_confirm_objects_before_translating(scene):
+    calls = len(scene.translator.calls)
+    draft = scene.helper.analyze(scene.round_id, scene.owner, scene.asset, scene.profile)
+    assert len(scene.translator.calls) == calls
+    assert "objects" not in draft
+    review = draft["review"]
+    assert [row["label"] for row in review["objects"]] == ["cup", "book"]
+    assert review["objects"][0]["region"] == {"x": 0.1, "y": 0.2, "width": 0.2, "height": 0.3}
+    assert [row["relation"] for row in review["relations"]] == ["next_to"]
+    assert "word" not in review["objects"][0]
+
+
+def test_confirmation_applies_removed_moved_added_adjectives_and_relations(scene):
+    cup, book = (row["key"] for row in scene.draft["review"]["objects"])
+    added = f"added-{uuid4()}"
+    confirmed = confirm_all(
+        scene.helper, scene.draft, scene.profile,
+        accepted_object_keys=[cup],
+        moved_objects=[{"key": cup, "x": .5, "y": .5}],
+        added_objects=[{"key": added, "label": "  apple ", "x": .95, "y": .05}],
+        object_attributes={cup: {"color": "blue", "size": ""}, added: {"shape": "round"}},
+        relations=[{"subject_object_key": cup, "relation": "next_to",
+            "reference_object_key": added}],
+    )
+    assert "review" not in confirmed
+    rows = {row["key"]: row for row in confirmed["objects"]}
+    assert set(rows) == {cup, added}
+    assert rows[cup]["region"] == pytest.approx({"x": .4, "y": .35, "width": .2, "height": .3})
+    assert (rows[cup]["x"], rows[cup]["y"]) == (.5, .5)
+    assert rows[cup]["attributes"] == {"color": "blue"}
+    assert rows[added]["label"] == "apple" and rows[added]["added"] is True
+    assert rows[added]["word"] == "la pomme"
+    assert rows[added]["region"] == pytest.approx(
+        {"x": .84, "y": 0, "width": .16, "height": .16})
+    assert rows[added]["attributes"] == {"shape": "round"}
+    assert [(r["subjectObjectKey"], r["relation"], r["referenceObjectKey"])
+        for r in confirmed["relations"]] == [(cup, "next_to", added)]
+    payload, _options = scene.translator.calls[-1]
+    assert [row["source"] for row in payload["objects"]] == ["cup", "apple"]
+    assert {row["source"] for row in payload["attributes"]} == {"blue", "round"}
+    assert [row["source"] for row in payload["relationships"]] == ["next_to"]
+
+
+def test_objects_can_be_confirmed_only_once_and_only_from_the_analysis(scene):
+    review = ConfirmChatObjects(command_id=uuid4(), expected_revision=0,
+        accepted_object_keys=[scene.content["objects"][0]["key"]])
+    with pytest.raises(RoomPhotoError) as again:
+        scene.helper.confirm_objects(scene.content, review, scene.profile)
+    assert again.value.code == "friend_chat_review_unavailable"
+    with pytest.raises(RoomPhotoError) as unknown:
+        confirm_all(scene.helper, scene.draft, scene.profile, accepted_object_keys=["missing"],
+            relations=[])
+    assert unknown.value.code == "friend_chat_review_invalid"
 
 
 def test_a0_offers_general_agreed_adjectives_and_canonical_sheet_refs(scene):

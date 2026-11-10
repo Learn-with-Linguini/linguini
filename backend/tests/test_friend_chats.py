@@ -981,6 +981,37 @@ def test_real_content_can_confirm_send_follow_up_and_complete_through_the_api(db
         active = snapshot["activeRound"]
         assert active["photoStatus"] == "ready"
         round_path = path + f"/rounds/{active['id']}"
+        # The sender checks the analyzed objects before anything is translated or shared.
+        assert active["status"] == "reviewingObjects" and active["objects"] == []
+        review = active["reviewObjects"]
+        assert [row["label"] for row in review] == ["cup", "book"]
+        assert "word" not in review[0]
+        waiting = client.get(path, headers=receiver).json()["activeRound"]
+        assert waiting["reviewObjects"] == [] and waiting["reviewRelations"] == []
+        early = client.post(round_path + "/target", headers=sender, json={
+            "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+            "objectKey": review[0]["key"], "confirm": False,
+        })
+        assert early.status_code == 409
+        assert early.json()["detail"]["code"] == "chat_objects_unconfirmed"
+        review_body = {
+            "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+            "acceptedObjectKeys": [row["key"] for row in review],
+            "relations": [{"subjectObjectKey": row["subjectObjectKey"], "relation": row["relation"],
+                "referenceObjectKey": row["referenceObjectKey"]}
+                for row in active["reviewRelations"]],
+        }
+        reviewed = client.post(round_path + "/objects", headers=sender, json=review_body)
+        assert reviewed.status_code == 200, reviewed.text
+        snapshot = reviewed.json()
+        active = snapshot["activeRound"]
+        assert active["status"] == "selectingTarget" and active["reviewObjects"] == []
+        assert [row["word"] for row in active["objects"]] == ["la tasse", "le livre"]
+        assert client.post(round_path + "/objects", headers=sender,
+            json=review_body).json() == snapshot
+        again = client.post(round_path + "/objects", headers=sender, json={
+            **review_body, "commandId": str(uuid4()), "expectedRevision": snapshot["revision"]})
+        assert again.status_code == 409
         target = active["objects"][0]
         confirm_body = {
             "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],

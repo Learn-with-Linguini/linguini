@@ -101,6 +101,21 @@ class FriendChatService:
                 error.code, error.message, 422 if not error.retryable else 503
             ) from error
 
+    def confirm_objects(self, chat_id, round_id, request):
+        replay, result = self.repository.replay(chat_id, f"objects:{round_id}", request)
+        if replay:
+            return result
+        ctx = self._context(chat_id, round_id, request, sender=True, phases={"selectingTarget"})
+        item = ctx["round"]
+        if item["photo_status"] != "ready":
+            raise RoomError("chat_photo_not_ready", "Wait for the photo to finish analyzing.", 409)
+        if not (item["content"] or {}).get("review"):
+            raise RoomError("chat_objects_confirmed", "These objects are already confirmed.", 409)
+        content = self._content_call(
+            self.content.confirm_objects, item["content"], request, ctx["profile"]
+        )
+        return self.repository.confirm_objects(chat_id, round_id, request, content)
+
     def select_target(self, chat_id, round_id, request):
         replay, result = self.repository.replay(chat_id, f"target:{round_id}", request)
         if replay:
@@ -111,6 +126,10 @@ class FriendChatService:
         item = ctx["round"]
         if item["photo_status"] != "ready":
             raise RoomError("chat_photo_not_ready", "Wait for the photo to finish analyzing.", 409)
+        if (item["content"] or {}).get("review"):
+            raise RoomError(
+                "chat_objects_unconfirmed", "Check the objects in your photo first.", 409
+            )
         target = self._content_call(
             self.content.select_target,
             item["content"],

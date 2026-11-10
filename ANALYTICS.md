@@ -235,10 +235,9 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_chat_joined` | — | A compatible learner explicitly joins |
 | `ispy_friend_photo_uploaded` | — | An owned photo is accepted for a round |
 | `ispy_friend_photo_retried` | — | The sender retries failed photo analysis |
-| `ispy_friend_detected_object_selected` | — | The sender selects a suggested object |
+| `ispy_friend_detected_object_selected` | — | The sender selects one of their confirmed objects |
 | `ispy_friend_detected_object_confirmed` | — | The sender confirms a detected target |
-| `ispy_friend_custom_object_started` | — | The sender starts selecting another object |
-| `ispy_friend_custom_object_confirmed` | — | The sender confirms the checked custom target |
+| `ispy_friend_objects_reviewed` | `{ kept, added, removed, moved }` | The sender confirms the reviewed objects in their photo |
 | `ispy_friend_clue_builder_opened` | `{ level }` | The sender opens the clue builder |
 | `ispy_friend_cheatsheet_opened` | — | A shared canonical cheatsheet opens |
 | `ispy_friend_clue_suggested` | — | A suggested clue is returned for review |

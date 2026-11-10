@@ -15,6 +15,7 @@ from app.schemas.friend_chats import (
     ChatJoin,
     ChatSnapshot,
     ChatSuggestion,
+    ConfirmChatObjects,
     GuessChatTarget,
     InvitePreview,
     InviteToken,
@@ -96,6 +97,11 @@ def start_round(chat_id: UUID, request: StartChatRound, service: Service):
 @router.post("/{chat_id}/rounds/{round_id}/retry", response_model=ChatSnapshot)
 def retry_photo(chat_id: UUID, round_id: UUID, request: ChatCommand, service: Service):
     return _call(service.retry, chat_id, round_id, request)
+
+
+@router.post("/{chat_id}/rounds/{round_id}/objects", response_model=ChatSnapshot)
+def confirm_objects(chat_id: UUID, round_id: UUID, request: ConfirmChatObjects, service: Service):
+    return _call(service.confirm_objects, chat_id, round_id, request)
 
 
 @router.post("/{chat_id}/rounds/{round_id}/target", response_model=ChatSnapshot)

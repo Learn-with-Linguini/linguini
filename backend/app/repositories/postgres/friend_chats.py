@@ -42,6 +42,8 @@ from app.schemas.friend_chats import (
     ChatMessage,
     ChatObject,
     ChatPerson,
+    ChatReviewObject,
+    ChatReviewRelation,
     ChatRound,
     ChatSnapshot,
     InvitePreview,
@@ -894,6 +896,10 @@ class PostgresFriendChatRepository:
                         "chat_photo_not_ready", "Wait for the photo to finish analyzing.", 409
                     )
                 content = dict(item["content"])
+                if content.get("review"):
+                    raise RoomError(
+                        "chat_objects_unconfirmed", "Check the objects in your photo first.", 409
+                    )
                 objects = list(content.get("objects", []))
                 if not any(obj["key"] == target["key"] for obj in objects):
                     objects.append(target)
@@ -908,6 +914,21 @@ class PostgresFriendChatRepository:
                         status="composingClue" if request.confirm else "selectingTarget",
                     )
                 )
+                self._remember(c, chat_id, kind, request)
+                self._bump(c, chat_id)
+            return self._snapshot(c, chat_id)
+
+    def confirm_objects(self, chat_id, round_id, request, content):
+        kind = f"objects:{round_id}"
+        with self._locked(chat_id) as c:
+            _chat, prior = self._command(c, chat_id, kind, request)
+            if not prior:
+                item = self._round(c, chat_id, round_id, sender=True, phases={"selectingTarget"})
+                if item["photo_status"] != "ready" or not (item["content"] or {}).get("review"):
+                    raise RoomError(
+                        "chat_objects_confirmed", "These objects are already confirmed.", 409
+                    )
+                c.execute(update(rounds).where(rounds.c.id == round_id).values(content=content))
                 self._remember(c, chat_id, kind, request)
                 self._bump(c, chat_id)
             return self._snapshot(c, chat_id)
@@ -1153,10 +1174,14 @@ class PostgresFriendChatRepository:
                 and (sender or item["status"] not in {"selectingTarget", "composingClue"})
                 and item["photo_status"] == "ready"
             )
+            review = content.get("review") if item["photo_status"] == "ready" else None
             result = ChatRound(
                 id=item["id"],
                 sender_id=item["sender_user_id"],
-                status=item["status"],
+                # Analyzed but unconfirmed objects: the stored phase is still selectingTarget.
+                status="reviewingObjects"
+                if review and item["status"] == "selectingTarget"
+                else item["status"],
                 photo_status="failed" if stalled else item["photo_status"],
                 image_url=f"/api/v1/friend-chats/{chat_id}/rounds/{item['id']}/image?width=640"
                 if image_visible
@@ -1173,6 +1198,18 @@ class PostgresFriendChatRepository:
                     _public_clue_option(option) for option in item["clue_options"]
                 ]
                 if sender and shared
+                else [],
+                review_objects=[
+                    ChatReviewObject(
+                        key=row["key"], label=row["label"], x=row["x"], y=row["y"],
+                        attributes=row.get("attributes") or {},
+                    )
+                    for row in review["objects"]
+                ]
+                if review and sender
+                else [],
+                review_relations=[ChatReviewRelation(**row) for row in review["relations"]]
+                if review and sender
                 else [],
                 guess_choices=_guess_choices(item, translated=_same_explanations(chat, item))
                 if not sender

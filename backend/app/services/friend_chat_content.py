@@ -50,6 +50,63 @@ _RELATIONS = {
 }
 
 
+# Review rows use the clue builder's relation names; analysis may spell them in camelCase.
+def _relation_name(value):
+    snake = re.sub(r"(?<!^)(?=[A-Z])", "_", str(value).strip()).replace(" ", "_").lower()
+    return {"in": "inside", "beside": "next_to"}.get(snake, snake)
+
+
+def _review_row(obj):
+    """An analyzed object as a review row, or None when it has no position."""
+    row = {
+        "key": str(obj.id),
+        "label": obj.label,
+        "attributes": _clean_attributes(obj.attributes or {}),
+    }
+    if obj.bounding_box:
+        box = {key: float(value) for key, value in obj.bounding_box.model_dump().items()}
+        row.update(x=box["x"] + box["width"] / 2, y=box["y"] + box["height"] / 2, region=box)
+    elif obj.anchor_point:
+        row.update(x=float(obj.anchor_point.x), y=float(obj.anchor_point.y))
+    else:
+        return None
+    return row
+
+
+def _clean_attributes(values):
+    return {
+        kind: " ".join(value.split())[:60]
+        for kind, value in (values or {}).items()
+        if kind in _ATTRIBUTES and isinstance(value, str) and value.strip()
+    }
+
+
+_ADDED_SIZE = 0.16
+
+
+def _estimated_region(x, y):
+    """A learner-added object is a tapped point; give it a modest box for crops."""
+    width = height = _ADDED_SIZE
+    left = min(max(x - width / 2, 0.0), 1 - width)
+    top = min(max(y - height / 2, 0.0), 1 - height)
+    return {"x": float(x), "y": float(y),
+        "region": {"x": left, "y": top, "width": width, "height": height}}
+
+
+def _moved(row, x, y):
+    """Move a detected object's marker, keeping its box size around the new centre."""
+    moved = {**row, "x": float(x), "y": float(y)}
+    region = row.get("region")
+    if region:
+        width, height = region["width"], region["height"]
+        moved["region"] = {
+            "x": min(max(x - width / 2, 0.0), max(1 - width, 0.0)),
+            "y": min(max(y - height / 2, 0.0), max(1 - height, 0.0)),
+            "width": width,
+            "height": height,
+        }
+    return moved
+
 def _fold(value):
     return "".join(
         char
@@ -257,30 +314,35 @@ class FriendChatContent:
             ) from error
 
     def _translate(self, content, objects, relations, profile):
+        """Translate reviewed objects, adjectives and relations into chat content rows.
+
+        ``objects`` and ``relations`` are review rows (plain dicts), so detected and
+        learner-added objects go through the same path.
+        """
         if self.preparer.translator is None:
             raise RoomPhotoError(
                 "friend_chat_translation_unavailable", "Photo words could not be translated."
             )
         context = _language(profile)
-        ids = {str(obj.id) for obj in objects}
+        ids = {obj["key"] for obj in objects}
         relations = [
             row
             for row in relations
-            if str(row.subject_scene_object_id) in ids and str(row.reference_scene_object_id) in ids
+            if row["subjectObjectKey"] in ids and row["referenceObjectKey"] in ids
         ]
         attributes = [
-            {"key": f"{obj.id}:{kind}", "source": value}
+            {"key": f"{obj['key']}:{kind}", "source": value}
             for obj in objects
-            for kind, value in (obj.attributes or {}).items()
+            for kind, value in (obj.get("attributes") or {}).items()
             if kind in _ATTRIBUTES and isinstance(value, str) and value.strip()
         ]
         payload = {
             "targetLanguage": context.display.language_code,
             "sceneTitle": content["title"],
             "sceneSummary": content.get("summary", "")[:1000],
-            "objects": [{"key": str(obj.id), "source": obj.label} for obj in objects],
+            "objects": [{"key": obj["key"], "source": obj["label"]} for obj in objects],
             "attributes": attributes,
-            "relationships": [{"key": str(row.id), "source": row.relation} for row in relations],
+            "relationships": [{"key": row["key"], "source": row["relation"]} for row in relations],
         }
         try:
             translated = SceneTranslationResult.model_validate(
@@ -303,37 +365,35 @@ class FriendChatContent:
         }
         rows = []
         for obj in objects:
-            term = terms[str(obj.id)]
+            term = terms[obj["key"]]
             row = {
-                "key": str(obj.id),
-                "label": obj.label,
+                "key": obj["key"],
+                "label": obj["label"],
                 "word": term["nativeDisplay"],
                 "translation": term["source"],
                 "term": term,
-                "attributes": obj.attributes or {},
+                "attributes": {
+                    kind: value
+                    for kind, value in (obj.get("attributes") or {}).items()
+                    if isinstance(value, str) and value.strip()
+                },
+                "x": obj["x"],
+                "y": obj["y"],
             }
-            if obj.bounding_box:
-                box = {key: float(value) for key, value in obj.bounding_box.model_dump().items()}
-                row.update(
-                    x=box["x"] + box["width"] / 2,
-                    y=box["y"] + box["height"] / 2,
-                    width=box["width"],
-                    height=box["height"],
-                    region=box,
-                )
-            elif obj.anchor_point:
-                row.update(x=float(obj.anchor_point.x), y=float(obj.anchor_point.y))
-            else:
-                continue
+            if obj.get("region"):
+                region = obj["region"]
+                row.update(width=region["width"], height=region["height"], region=region)
+            if obj.get("added"):
+                row["added"] = True
             rows.append(row)
         return (
             rows,
             [
                 {
-                    "key": str(row.id),
-                    "subjectObjectKey": str(row.subject_scene_object_id),
-                    "referenceObjectKey": str(row.reference_scene_object_id),
-                    "relation": row.relation,
+                    "key": row["key"],
+                    "subjectObjectKey": row["subjectObjectKey"],
+                    "referenceObjectKey": row["referenceObjectKey"],
+                    "relation": row["relation"],
                 }
                 for row in relations
             ],
@@ -371,20 +431,86 @@ class FriendChatContent:
             "summary": result.summary[:1000],
             "contentHash": hashlib.sha256(data).hexdigest(),
         }
-        rows, relations, attributes, positions = self._translate(
-            content,
-            result.objects[:20],
-            result.relations,
-            profile,
-        )
-        content.update(
-            objects=rows, relations=relations, attributeTerms=attributes, relationTerms=positions
-        )
-        if not rows:
+        review_objects = [row for obj in result.objects[:20] if (row := _review_row(obj))]
+        if not review_objects:
             raise RoomPhotoError(
                 "friend_chat_no_objects", "No usable objects were found. Choose another photo."
             )
+        keys = {row["key"] for row in review_objects}
+        review_relations = [
+            {
+                "key": str(row.id),
+                "subjectObjectKey": str(row.subject_scene_object_id),
+                "referenceObjectKey": str(row.reference_scene_object_id),
+                "relation": _relation_name(row.relation),
+            }
+            for row in result.relations
+            if str(row.subject_scene_object_id) in keys
+            and str(row.reference_scene_object_id) in keys
+        ]
+        # The sender checks these before anything is translated or shown to the friend.
+        content["review"] = {"objects": review_objects, "relations": review_relations}
         return content
+
+    def confirm_objects(self, content, review, profile):
+        """Apply the sender's object review, then translate the confirmed set."""
+        draft = (content or {}).get("review")
+        if not draft:
+            raise RoomPhotoError(
+                "friend_chat_review_unavailable",
+                "These objects are already confirmed.",
+                retryable=False,
+            )
+        detected = {row["key"]: row for row in draft["objects"]}
+        moved = {item.key: item for item in review.moved_objects}
+        attributes = review.object_attributes
+        objects = []
+        for key in review.accepted_object_keys:
+            if key not in detected:
+                raise RoomPhotoError(
+                    "friend_chat_review_invalid", "Refresh the photo and check again.",
+                    retryable=False,
+                )
+            row = {**detected[key]}
+            if key in moved:
+                row = _moved(row, moved[key].x, moved[key].y)
+            if key in attributes:
+                row["attributes"] = _clean_attributes(attributes[key])
+            objects.append(row)
+        for item in review.added_objects:
+            label = " ".join(item.label.split())
+            objects.append(
+                {
+                    "key": item.key,
+                    "label": label,
+                    "attributes": _clean_attributes(attributes.get(item.key, {})),
+                    "added": True,
+                    **_estimated_region(item.x, item.y),
+                }
+            )
+        keys = {row["key"] for row in objects}
+        relations = [
+            {
+                "key": str(uuid5(UUID(content["roundId"]), "relation:" + "|".join(
+                    [row.subject_object_key, row.relation, row.reference_object_key]))),
+                "subjectObjectKey": row.subject_object_key,
+                "referenceObjectKey": row.reference_object_key,
+                "relation": row.relation,
+            }
+            for row in review.relations
+            if row.subject_object_key in keys and row.reference_object_key in keys
+        ]
+        confirmed = {key: value for key, value in content.items() if key != "review"}
+        rows, relations, attribute_terms, relation_terms = self._translate(
+            confirmed, objects, relations, profile
+        )
+        confirmed.update(
+            objects=rows,
+            relations=relations,
+            attributeTerms=attribute_terms,
+            relationTerms=relation_terms,
+        )
+        return confirmed
 
     def _region_target(self, content, x, y, label, profile):
         if (
@@ -471,7 +597,9 @@ class FriendChatContent:
                         }
                     )
                 )
-            rows, _relations, attributes, _positions = self._translate(content, mapped, [], profile)
+            rows, _relations, attributes, _positions = self._translate(
+                content, [row for obj in mapped if (row := _review_row(obj))], [], profile
+            )
             if label:
                 rows = [
                     row

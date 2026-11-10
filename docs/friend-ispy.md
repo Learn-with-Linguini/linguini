@@ -6,9 +6,19 @@ language. The learners may use different proficiency levels. Opening an invitati
 does not switch a profile or join automatically. A full or closed invitation does
 not expose the participants to another account.
 
-Either participant can start a round with one owned uploaded photo. The sender
-reviews a detected object or taps another region for analysis, then confirms the
-object's identity. Beginner clues use confirmed description pieces; other learners
+Either participant can start a round with one owned uploaded photo. After analysis,
+the sender checks the objects with the same review as practice scene analysis:
+numbered markers on the photo, and Objects, Adjectives and Relations tabs to remove,
+move, add and restore objects and to edit adjectives and connections. Nothing is
+translated or shown to the friend until the sender presses Confirm objects; the
+confirmed set is then translated, and only it is used for markers, guesses and clue
+pieces. While unconfirmed, the API reports the round as `reviewingObjects` (stored as
+`selectingTarget`, so no schema change was needed) and sends the analysis only to the
+sender as `reviewObjects` and `reviewRelations`. An added object is a tapped point and
+gets a small estimated box for crops; a moved object keeps its box size around the new
+centre. The sender then chooses the secret object from the confirmed objects and
+confirms its identity. Rounds stored before this change already hold translated
+objects and are treated as confirmed. Beginner clues use confirmed description pieces; other learners
 can edit or write a clue. Audio and the existing mission cheatsheets support the
 composer. Suggestions require review and an explicit send.
 

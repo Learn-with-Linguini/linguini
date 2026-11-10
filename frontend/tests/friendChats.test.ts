@@ -326,16 +326,44 @@ test("choosing a detected object previews its identity and requires an explicit 
   await waitFor(() => assert.match(bodyText(), /Build your clue/));
 });
 
-test("a custom photo selection requests an identity proposal and confirms it separately", async () => {
+test("the sender checks the analyzed objects, as in practice, before anything is shared", async () => {
+  snapshot.activeRound = round({ senderId: "u1", status: "reviewingObjects", target: null, objects: [], clueOptions: [], messages: [],
+    reviewObjects: [{ key: "cup", label: "cup", x: .2, y: .4, attributes: { color: "red" } }, { key: "chair", label: "chair", x: .7, y: .6 }],
+    reviewRelations: [{ key: "r1", subjectObjectKey: "cup", relation: "under", referenceObjectKey: "chair" }] });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Check the objects/));
+  const list = () => dom.window.document.querySelector('[aria-label="Objects in this photo"]')?.textContent ?? "";
+  assert.match(list(), /1cup/i); assert.match(list(), /2chair/i);
+  assert.equal(buttons("Use this object").length, 0);
+  await clickElement(dom.window.document.querySelector('button[aria-label="Remove marker 2, chair"]'));
+  assert.doesNotMatch(list(), /chair/i);
+  assert.ok(buttons("Restore removed objects")[0]);
+  await setValue(dom.window.document.querySelector<HTMLInputElement>("#friend-review-new-word")!, "window");
+  await click("Select location");
+  await waitFor(() => assert.match(bodyText(), /Tap the centre of window in the image/));
+  const photo = dom.window.document.querySelector('.scene[role="button"]')!;
+  await surface.act(async () => photo.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
+  await waitFor(() => assert.match(list(), /2window/i));
+  replies.push(() => { snapshot = fixture({ revision: 5, activeRound: round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] }) }); return Response.json(snapshot); });
+  await click("Confirm objects");
+  const write = writes.at(-1)!;
+  assert.match(write.path, /\/rounds\/round1\/objects$/);
+  assert.deepEqual(write.body.acceptedObjectKeys, ["cup"]);
+  assert.equal(write.body.addedObjects.length, 1);
+  assert.equal(write.body.addedObjects[0].label, "window");
+  assert.match(write.body.addedObjects[0].key, /^added-/);
+  assert.deepEqual([write.body.addedObjects[0].x, write.body.addedObjects[0].y], [.5, .5]);
+  assert.deepEqual(write.body.relations, []);
+  assert.deepEqual(write.body.objectAttributes.cup, { color: "red" });
+  await waitFor(() => assert.match(bodyText(), /Choose something for your friend to find/));
+});
+
+test("after review, the secret object is chosen only from the confirmed objects", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] });
-  await mount(); await click("Add another object");
-  replies.push(() => { snapshot = fixture({ revision: 5, activeRound: round({ senderId: "u1", status: "selectingTarget", target: { ...target, key: "custom-proposal" }, messages: [] }) }); return Response.json(snapshot); });
-  await selectPhotoWithKeyboard();
-  await waitFor(() => assert.ok(buttons("Use this object")[0]));
-  assert.equal(writes.length, 1); assert.equal(writes[0].body.confirm, false); assert.equal(writes[0].body.x, .5); assert.equal(writes[0].body.y, .5);
-  replies.push(() => { snapshot.activeRound!.status = "composingClue"; snapshot.revision = 6; return Response.json(snapshot); });
-  await click("Use this object");
-  assert.equal(writes[1].body.objectKey, "custom-proposal"); assert.equal(writes[1].body.confirm, true);
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Choose something for your friend to find/));
+  assert.equal(buttons("Add another object").length, 0);
+  assert.doesNotMatch(bodyText(), /Type what it is|suggest a name/);
 });
 
 test("coordinate guesses require location selection and a separate submit confirmation", async () => {
