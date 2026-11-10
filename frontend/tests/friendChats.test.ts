@@ -237,6 +237,24 @@ test("polling notices a friend joining while the inviter stays on the invitation
   assert.equal(writes.length, 0);
 });
 
+test("the lobby lists both players and tags the signed-in learner as You", async () => {
+  snapshot = fixture({ status: "waiting", revision: 0, creator: { id: "u1", displayName: "Learner" }, partner: null, inviteStatus: "open", activeRound: null });
+  await mount("chat");
+  const players = () => dom.window.document.querySelector('ul[aria-label="Players"]')?.textContent ?? "";
+  await waitFor(() => assert.match(players(), /Learner\s*You/));
+  assert.match(players(), /Your friend\s*Waiting to join/);
+});
+
+test("a joined learner sees their own name tagged You beside the inviter", async () => {
+  snapshot = fixture({ status: "active", revision: 1, activeRound: null });
+  state = { ...defaultState(), user: { ...defaultState().user, displayName: "Mia" } as typeof state.user };
+  await mount("chat");
+  const players = () => dom.window.document.querySelector('ul[aria-label="Players"]')?.textContent ?? "";
+  await waitFor(() => assert.match(players(), /Mia\s*You/));
+  assert.match(players(), /Leo/);
+  assert.doesNotMatch(players(), /Leo\s*You|Waiting to join/);
+});
+
 test("choosing a detected object previews its identity and requires an explicit confirmation before changing server state", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] });
   await mount(); await waitFor(() => assert.ok(dom.window.document.querySelector('button[aria-label="Choose cup"]')));
