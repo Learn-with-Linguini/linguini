@@ -1,4 +1,4 @@
-"""Daily photo challenges: one scene per UTC day, word counts, and a rank bonus.
+"""Daily photo challenges: one scene per Singapore day, word counts, and a rank bonus.
 
 A challenge entry ties a normal lesson session to the day's scene. When that
 session completes during the day, its confirmed object labels are recorded once
@@ -13,7 +13,7 @@ import re
 import unicodedata
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from fractions import Fraction
 from uuid import UUID
 from zoneinfo import ZoneInfo
