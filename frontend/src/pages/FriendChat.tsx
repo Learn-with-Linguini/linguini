@@ -6,13 +6,13 @@ import { useBackAction } from "../components/BackAction";
 import { Button, Card } from "../components/ui";
 import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { ImageUpload } from "../components/ImageUpload";
-import { ChatAvatar } from "../components/friend-chat/ChatAvatar";
+import { ChatPlayers } from "../components/friend-chat/ChatPlayers";
 import { ChatTimeline } from "../components/friend-chat/ChatTimeline";
 import { InviteControls } from "../components/friend-chat/InviteControls";
 import { ActiveChatRound } from "../components/friend-chat/ActiveChatRound";
 import { trackAction } from "../lib/analytics";
 import { clearChatDrafts } from "../lib/friendChats";
-import type { ChatSnapshot } from "../lib/friendChats";
+import type { ChatPerson, ChatSnapshot } from "../lib/friendChats";
 import { languageDisplayName } from "../lib/languageChoices";
 import { friendlyError } from "../lib/queryKeys";
 import "../components/friend-chat/friendChat.css";
@@ -51,6 +51,7 @@ function FriendChatSession({ chatId }: { chatId: string }) {
     <Button onClick={() => void query.refetch()}>Try again</Button><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Your chats</Button></div>;
   const chat = query.data;
   const language = languageDisplayName(chat.targetLanguageCode);
+  const me: ChatPerson = chat.creator.id === chat.meId ? chat.creator : { id: chat.meId, displayName: user?.displayName || "You", avatar: user?.avatar ?? null };
   const terminal = ["left", "blocked"].includes(chat.status);
   const compatible = activeProfile?.targetLanguageCode.toLowerCase().split("-")[0] === chat.targetLanguageCode.toLowerCase().split("-")[0];
   const disabled = blocked || uploading;
@@ -65,14 +66,15 @@ function FriendChatSession({ chatId }: { chatId: string }) {
     }
   };
   return <div className="stack friend-chat" data-cs-mask>
-    <header className="friend-chat__header"><div className="friend-chat__person"><ChatAvatar person={chat.partner} />
-      <div><h1>{chat.partner?.displayName ?? "Your I-Spy chat"}</h1><p className="small muted">{language}</p></div></div>
+    <header className="friend-chat__header">
+      <div><h1>{chat.partner ? `I-Spy with ${chat.partner.displayName}` : "Your I-Spy chat"}</h1><p className="small muted">Playing in {language}</p></div>
       <details className="friend-chat__menu"><summary aria-label="Conversation options">•••</summary><div className="stack-2">
         {!terminal ? <Button variant="quiet" disabled={disabled} onClick={() => setMenuAction("leave")}>Leave conversation</Button> : null}
         {chat.partner ? <><Button variant="quiet" disabled={disabled} onClick={() => { setMenuAction("report"); setReported(false); }}>Report user</Button>
           {!terminal ? <Button variant="quiet" disabled={disabled} onClick={() => setMenuAction("block")}>Block user</Button> : null}</> : null}
       </div></details>
     </header>
+    <ChatPlayers me={me} partner={chat.partner} status={chat.status} />
     {menuAction ? <Card className="stack"><h2>{menuAction === "leave" ? "Leave this conversation?" : menuAction === "block" ? "Block this person?" : "Report this person"}</h2>
       <p>{menuAction === "leave" ? "This closes the conversation and its invitation." : menuAction === "block" ? "This closes your chats together and prevents new invitations between you." : "Tell us what happened. Your report is private."}</p>
       {menuAction === "report" ? <label className="field">Reason<textarea className="input" rows={3} value={reason} minLength={3} maxLength={500} onChange={event => setReason(event.target.value)} /></label> : null}

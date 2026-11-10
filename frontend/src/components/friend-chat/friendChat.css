@@ -5,6 +5,14 @@
 .friend-chats__item > span:last-child { display: grid; gap: 4px; min-width: 0; }
 .friend-avatar { display: inline-flex; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; align-items: center; justify-content: center; color: var(--teal-dark); background: var(--sage); font-size: 24px; font-weight: 800; }
 .friend-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.friend-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); list-style: none; padding: 0; margin: 0; }
+.friend-players__player { display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--paper); }
+.friend-players__player--me { border: 2px solid var(--teal); background: var(--sage); }
+.friend-players__name { display: grid; gap: 2px; min-width: 0; justify-items: start; }
+.friend-players__name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.friend-players__tag { padding: 1px 10px; border-radius: 999px; background: var(--teal-dark); color: white; font-size: var(--text-label); font-weight: 800; }
+.friend-players__empty { border: 2px dashed var(--line); background: transparent; color: var(--ink-muted); }
+@media (max-width: 380px) { .friend-players { grid-template-columns: 1fr; } }
 .friend-chat__header, .friend-chat__person, .friend-composer__heading, .friend-round__answer { display: flex; align-items: center; gap: 12px; }
 .friend-chat__header, .friend-composer__heading { justify-content: space-between; }
 .friend-chat__header h1 { font-size: var(--text-h2); overflow-wrap: anywhere; }
