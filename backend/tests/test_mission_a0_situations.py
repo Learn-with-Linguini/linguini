@@ -96,7 +96,7 @@ def test_provisional_plan_surfaces_the_a0_preference_situation_within_final_cap(
     final_ids = {mission.mission_id for mission in final}
     assert "M05" in final_ids
     assert "M04" not in final_ids
-    assert len(final) <= 3
+    assert len(final) <= 4
     # Without choices (no review screen sends them) they can still be planned.
     unchosen = {mission.mission_id for mission in plan_missions(
         candidates, objects, [], mission_choices={})}

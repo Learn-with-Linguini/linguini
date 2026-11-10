@@ -54,6 +54,20 @@ def test_fresh_profiles_keep_catalogue_order(monkeypatch):
     assert [mission.mission_id for mission in planned] == ["M01", "M02", "M03"]
 
 
+def test_a0_can_plan_four_eligible_missions(monkeypatch):
+    monkeypatch.setattr(
+        mission_eligibility,
+        "photo_eligibility",
+        lambda *_args: Eligibility(True),
+    )
+    candidates = lesson_missions(
+        SessionMode.LESSON,
+        {"proficiency_level": "A0", "target_language_code": "es"},
+    )
+    planned = plan_missions(candidates, [], [], history=[])
+    assert [mission.mission_id for mission in planned] == ["M01", "M02", "M03", "M05"]
+
+
 def test_plan_rotation_prioritizes_least_planned_then_returns_catalogue_order(monkeypatch):
     monkeypatch.setattr(
         mission_eligibility,
