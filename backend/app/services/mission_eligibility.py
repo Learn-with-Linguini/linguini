@@ -34,6 +34,7 @@ IMPLEMENTED_MISSIONS = {
     "A2": (M01_A2, M02_A2, M03_A2, M04_A2, M06_A2),
 }
 MAX_LESSON_MISSIONS = {"A0": 4, "A1": 3, "A2": 4}
+CORE_DESCRIPTION_MISSIONS = {"M01", "M02"}
 
 # Confirmed attribute values clearly different in a photo, the only ones a lesson offers
 # as distractors. Values are the scene's English attribute values, not lesson words.
@@ -98,7 +99,7 @@ def plan_missions(
     candidates, objects, relations, counted_groups=(), history=(), mission_choices=None,
     language_context=None,
 ):
-    """Select least-planned eligible missions, returning them in catalogue order."""
+    """Select eligible missions, keeping description work before rotating the rest."""
     if not candidates:
         return []
     eligible = [
@@ -114,6 +115,7 @@ def plan_missions(
         for _index, mission in sorted(
             enumerate(eligible),
             key=lambda item: (
+                item[1].mission_id not in CORE_DESCRIPTION_MISSIONS,
                 counts[item[1].mission_id],
                 item[0],
             ),
