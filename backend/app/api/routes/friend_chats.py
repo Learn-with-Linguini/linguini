@@ -79,6 +79,13 @@ def leave_chat(chat_id: UUID, request: ChatCommand, service: Service):
     return _call(service.leave, chat_id, request)
 
 
+@router.delete("/{chat_id}", status_code=204)
+def delete_chat(chat_id: UUID, service: Service):
+    """Delete an ended chat (or an invite nobody joined) from this member's list."""
+    _call(service.delete, chat_id)
+    return Response(status_code=204)
+
+
 @router.post("/{chat_id}/block", response_model=ChatSnapshot)
 def block_chat(chat_id: UUID, request: ChatCommand, service: Service):
     return _call(service.block, chat_id, request)

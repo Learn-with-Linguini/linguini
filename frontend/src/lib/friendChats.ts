@@ -87,6 +87,9 @@ export const sendChatCommand = <T = ChatSnapshot>(id: string, command: ChatComma
   write<T>(`${chatPath(id)}/${command.intent}`, "POST", command.body);
 export const getChatHelp = (id: string, roundId: string) =>
   write<ChatHelp>(`${chatPath(id)}/${chatRoundIntent(roundId, "help")}`, "POST", {});
+/** Delete an ended chat or unanswered invite from my list, with my photos used only there. */
+export const deleteFriendChat = (id: string) => request<void>(chatPath(id), undefined, { method: "DELETE" });
+export const canDeleteFriendChat = (chat: Pick<ChatSnapshot, "status">) => chat.status !== "active";
 export const getChatPhoto = (id: string, roundId: string, signal?: AbortSignal) =>
   requestBlob(`${chatPath(id)}/${chatRoundIntent(roundId, "image")}?width=640`, signal);
 

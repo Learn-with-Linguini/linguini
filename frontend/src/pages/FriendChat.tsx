@@ -11,6 +11,7 @@ import { ChatTimeline } from "../components/friend-chat/ChatTimeline";
 import { InviteControls } from "../components/friend-chat/InviteControls";
 import { ActiveChatRound } from "../components/friend-chat/ActiveChatRound";
 import { ChatPhoto } from "../components/friend-chat/ChatPhoto";
+import { DeleteChat } from "../components/friend-chat/DeleteChat";
 import { trackAction } from "../lib/analytics";
 import { clearChatDrafts } from "../lib/friendChats";
 import type { ChatPerson, ChatSnapshot } from "../lib/friendChats";
@@ -91,7 +92,8 @@ function FriendChatSession({ chatId }: { chatId: string }) {
     {!compatible && !terminal ? <Card className="stack-2"><p>This chat is in {language}. Switch to a matching profile or create one to play.</p><Button variant="secondary" onClick={() => navigate("/profile")}>Choose a language profile</Button></Card> : null}
     {chat.status === "waiting" && chat.creator.id === owner ? <InviteControls key={chat.inviteStatus} chat={chat} command={command} disabled={disabled} /> : null}
     <ChatTimeline chat={chat} />
-    {terminal ? <Card><p>{chat.status === "blocked" ? "This conversation is blocked." : "A participant left this conversation."}</p><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Back to your chats</Button></Card> : chat.activeRound ?
+    {terminal ? <Card className="stack-2"><p>{chat.status === "blocked" ? "This conversation is blocked." : "A participant left this conversation."}</p><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Back to your chats</Button>
+      <DeleteChat chat={chat} onDeleted={() => navigate("/ispy/friends", { replace: true })} /></Card> : chat.activeRound ?
       <ActiveChatRound key={chat.activeRound.id} chat={chat} round={chat.activeRound} command={command} disabled={disabled || !compatible}
         microphoneEnabled={user?.microphoneEnabled ?? false} /> : chat.partner && chat.status === "active" ? <section className="stack friend-chat__new-round" aria-label="Start another round">
         {chat.nextSenderId && chat.nextSenderId !== chat.meId ? <Card className="stack-2 friend-next-turn"><h2>{chat.partner.displayName}’s turn</h2>

@@ -40,7 +40,7 @@ function usePhotoUrl(chatId: string, roundId: string) {
   return url;
 }
 
-const smooth = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+const smooth = (): ScrollBehavior => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
 export function ObjectReview({ chat, round, disabled, command }: { chat: ChatSnapshot; round: ChatRound; disabled: boolean; command: ChatAction }) {
   const detected = round.reviewObjects ?? [];
@@ -87,7 +87,7 @@ export function ObjectReview({ chat, round, disabled, command }: { chat: ChatSna
   const activeAttributeKey = selected.has(attributeKey) ? attributeKey : objects[0]?.key ?? "";
   const objectOptions = objects.map(item => ({ value: item.key, label: humanizeTerm(item.label), marker: item.marker }));
   const update = (change: (current: ReviewDraft) => ReviewDraft) => { setDraft(change); setError(null); };
-  const scrollToPhoto = () => photoRef.current?.scrollIntoView({ behavior: smooth(), block: "center" });
+  const scrollToPhoto = () => photoRef.current?.scrollIntoView?.({ behavior: smooth(), block: "center" });
 
   const remove = (itemKey: string) => {
     if (detected.some(item => item.key === itemKey)) {

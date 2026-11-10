@@ -238,6 +238,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_detected_object_selected` | — | The sender selects one of their confirmed objects |
 | `ispy_friend_detected_object_confirmed` | — | The sender confirms a detected target |
 | `ispy_friend_objects_reviewed` | `{ kept, added, removed, moved }` | The sender confirms the reviewed objects in their photo |
+| `ispy_friend_chat_deleted` | `{ status }` | A member deletes an ended chat or an unanswered invite from their list |
 | `ispy_friend_clue_builder_opened` | `{ level }` | The sender opens the clue builder |
 | `ispy_friend_cheatsheet_opened` | — | A shared canonical cheatsheet opens |
 | `ispy_friend_clue_suggested` | — | A suggested clue is returned for review |

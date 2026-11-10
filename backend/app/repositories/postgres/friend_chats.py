@@ -20,10 +20,12 @@ from sqlalchemy import (
     Text,
     Uuid,
     and_,
+    delete,
     func,
     insert,
     or_,
     select,
+    text,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -74,6 +76,8 @@ chats = Table(
     _time("invite_expires_at"),
     _time("created_at"),
     _time("updated_at"),
+    _time("creator_deleted_at", True),
+    _time("partner_deleted_at", True),
     schema="public",
 )
 rounds = Table(
@@ -198,7 +202,76 @@ class PostgresFriendChatRepository:
         row = c.execute(select(chats).where(chats.c.id == chat_id)).mappings().first()
         if row is None or self.user_id not in (row["creator_user_id"], row["partner_user_id"]):
             raise RoomError("chat_not_found", "I-Spy chat not found.", 404)
+        creator = self.user_id == row["creator_user_id"]
+        if row["creator_deleted_at" if creator else "partner_deleted_at"] is not None:
+            raise RoomError("chat_not_found", "I-Spy chat not found.", 404)
         return dict(row)
+
+    def delete_chat(self, chat_id, *, remove_files=None):
+        """Delete an ended chat from this member's list, with their photos used only here.
+
+        The chat's rows go once both members have deleted it (or it never had a partner).
+        A reported chat is only hidden, so moderation can still review it with its photos.
+        ``remove_files`` deletes stored files; it runs before commit, so a storage failure
+        leaves everything in place to retry.
+        """
+        with self._locked(chat_id) as c:
+            chat = self._row(c, chat_id)
+            if chat["status"] == "active":
+                raise RoomError("chat_active", "Leave this chat before deleting it.", 409)
+            creator = self.user_id == chat["creator_user_id"]
+            mine, theirs = (
+                ("creator_deleted_at", "partner_deleted_at")
+                if creator
+                else ("partner_deleted_at", "creator_deleted_at")
+            )
+            other = chat["partner_user_id"] if creator else chat["creator_user_id"]
+            reported = c.execute(
+                select(reports.c.id).where(reports.c.chat_id == chat_id).limit(1)
+            ).first()
+            if reported:
+                c.execute(update(chats).where(chats.c.id == chat_id).values({mine: utc_now()}))
+                return
+            unused = self._photos_only_used_here(c, chat_id)
+            if other is None or chat[theirs] is not None:
+                c.execute(delete(chats).where(chats.c.id == chat_id))
+            else:
+                c.execute(update(chats).where(chats.c.id == chat_id).values({mine: utc_now()}))
+            if unused:
+                ids = [asset["id"] for asset in unused]
+                c.execute(delete(media_assets).where(media_assets.c.id.in_(ids)))
+                if remove_files is not None:
+                    remove_files([asset["storage_key"] for asset in unused])
+
+    def _photos_only_used_here(self, c, chat_id):
+        """This member's round photos in the chat that nothing else refers to."""
+        ids = (
+            c.execute(
+                select(rounds.c.media_asset_id)
+                .where(rounds.c.chat_id == chat_id, rounds.c.media_asset_id.is_not(None))
+                .distinct()
+            )
+            .scalars()
+            .all()
+        )
+        if not ids:
+            return []
+        owned = (
+            c.execute(
+                select(media_assets.c.id, media_assets.c.storage_key)
+                .where(media_assets.c.id.in_(ids), media_assets.c.owner_user_id == self.user_id)
+                .order_by(media_assets.c.id)
+                .with_for_update()
+            )
+            .mappings()
+            .all()
+        )
+        references = _photo_references(c)
+        return [
+            dict(asset)
+            for asset in owned
+            if not _photo_in_use(c, references, asset["id"], chat_id)
+        ]
 
     @contextmanager
     def _locked(self, chat_id=None, *, extra_ids=()):
@@ -467,8 +540,14 @@ class PostgresFriendChatRepository:
                     select(chats.c.id)
                     .where(
                         or_(
-                            chats.c.creator_user_id == self.user_id,
-                            chats.c.partner_user_id == self.user_id,
+                            and_(
+                                chats.c.creator_user_id == self.user_id,
+                                chats.c.creator_deleted_at.is_(None),
+                            ),
+                            and_(
+                                chats.c.partner_user_id == self.user_id,
+                                chats.c.partner_deleted_at.is_(None),
+                            ),
                         )
                     )
                     .order_by(chats.c.updated_at.desc(), chats.c.id)
@@ -1346,3 +1425,33 @@ def _reusable_round(chat, items, user_id):
         )
         return dict(item) if same_explanations else None
     return None
+
+
+def _photo_references(c):
+    """Columns that use a photo, read from the database's own foreign keys.
+
+    Cascading references (analysis caches, photo fingerprints) belong to the photo and are
+    removed with it, so they do not count as uses.
+    """
+    return c.execute(
+        text(
+            "SELECT n.nspname, cl.relname, a.attname "
+            "FROM pg_constraint con "
+            "JOIN pg_class cl ON cl.oid = con.conrelid "
+            "JOIN pg_namespace n ON n.oid = cl.relnamespace "
+            "JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = ANY(con.conkey) "
+            "WHERE con.contype = 'f' AND con.confrelid = 'public.media_assets'::regclass "
+            "AND con.confdeltype <> 'c' ORDER BY 1, 2, 3"
+        )
+    ).all()
+
+
+def _photo_in_use(c, references, asset_id, chat_id):
+    quote = c.dialect.identifier_preparer.quote
+    for schema, table, column in references:
+        sql = f"SELECT 1 FROM {quote(schema)}.{quote(table)} WHERE {quote(column)} = :asset"
+        if schema == "public" and table == "friend_chat_rounds":
+            sql += " AND chat_id <> :chat"
+        if c.execute(text(sql + " LIMIT 1"), {"asset": asset_id, "chat": chat_id}).first():
+            return True
+    return False

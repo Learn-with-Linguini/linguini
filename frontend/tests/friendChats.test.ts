@@ -49,11 +49,13 @@ let state = defaultState();
 let snapshot = fixture();
 let preview: ChatInvitePreview = { status: "open", creator: { id: "u2", displayName: "Leo" }, targetLanguageCode: "es" };
 const writes: { path: string; body: Record<string, unknown> }[] = [];
+const deletes: string[] = [];
 const reads: string[] = [];
 const replies: (() => Response | Promise<Response>)[] = [];
 const apiPrefix = "/api/v1/friend-chats";
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = String(input).replace("http://api.test", "");
+  if (init?.method === "DELETE") { deletes.push(path); return new Response(null, { status: 204 }); }
   if (init?.method === "POST") {
     writes.push({ path, body: JSON.parse(String(init.body)) });
     if (path === `${apiPrefix}/invites/preview`) return Response.json(preview);
@@ -142,7 +144,7 @@ async function selectPhotoWithKeyboard(key = "Enter") {
 }
 test.beforeEach(() => {
   state = defaultState(); snapshot = fixture(); preview = { status: "open", creator: { id: "u2", displayName: "Leo" }, targetLanguageCode: "es" };
-  writes.length = 0; reads.length = 0; replies.length = 0; dom.window.sessionStorage.clear(); dom.window._uxa = [];
+  writes.length = 0; deletes.length = 0; reads.length = 0; replies.length = 0; dom.window.sessionStorage.clear(); dom.window._uxa = [];
   delete (dom.window as unknown as { linguiniFriendInvite?: string }).linguiniFriendInvite;
 });
 test.afterEach(async () => { for (const close of [...cleanups]) await close(); });
@@ -577,4 +579,37 @@ test("friend invitation fragments are consumed before analytics scripts without 
   const recovery = new JSDOM("<!doctype html>", { url: "https://www.learnwithlinguini.com/reset-password#access_token=private&type=recovery", runScripts: "outside-only" });
   recovery.window.eval(startup[1]); assert.equal(recovery.window.location.hash, "#access_token=private&type=recovery");
   invite.window.close(); invalid.window.close(); recovery.window.close();
+});
+
+test("an ended chat can be deleted from your chats after confirming, but an active one cannot", async () => {
+  await mount("list");
+  await waitFor(() => assert.match(bodyText(), /Leo/));
+  assert.equal(buttons("Delete chat").length, 0);
+  snapshot = fixture({ status: "left", activeRound: null });
+  const { close } = await mount("list");
+  await waitFor(() => assert.ok(buttons("Delete chat")[0]));
+  await click("Delete chat");
+  assert.match(bodyText(), /Leo keeps their copy/);
+  assert.equal(deletes.length, 0);
+  await click("Keep it");
+  assert.equal(deletes.length, 0);
+  await click("Delete chat"); await click("Delete chat");
+  await waitFor(() => assert.deepEqual(deletes, ["/api/v1/friend-chats/chat1"]));
+  await waitFor(() => assert.doesNotMatch(bodyText(), /Conversation ended/));
+  await close();
+});
+
+test("an unanswered invite can be deleted, and an ended chat can be deleted from inside it", async () => {
+  snapshot = fixture({ status: "waiting", partner: null, activeRound: null });
+  const list = await mount("list");
+  await waitFor(() => assert.ok(buttons("Delete invite")[0]));
+  await click("Delete invite");
+  assert.match(bodyText(), /The link will stop working/);
+  await list.close();
+  snapshot = fixture({ status: "blocked", activeRound: null });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /This conversation is blocked/));
+  await click("Delete chat"); await click("Delete chat");
+  await waitFor(() => assert.deepEqual(deletes, ["/api/v1/friend-chats/chat1"]));
+  await waitFor(() => assert.match(bodyText(), /Play I-Spy with a friend/));
 });

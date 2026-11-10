@@ -65,6 +65,19 @@ on the server. A partial unique index permits only one unfinished round per chat
 ordered locks, revisions and fingerprinted command IDs protect concurrent writes
 and retries. Do not apply the migration to Supabase without review.
 
+Either member can delete an ended chat (left or blocked) or an invite nobody joined
+from their own list with `DELETE /api/v1/friend-chats/{chatId}`; active chats must be
+left first. Deleting hides the chat for that member and deletes their round photos
+from it unless something else still refers to them. "Something else" is read from the
+database's foreign keys to `media_assets` (practice sessions, journals, room photos,
+friend rounds in other chats and so on); cascading caches such as scene analyses go
+with the photo. The original and every resized copy are removed from storage before
+the transaction commits, so a storage failure leaves everything to retry. The other
+member keeps their copy of the chat, without the deleted photos, until they delete it
+too; then, or immediately for an invite with no partner, the chat's rows are removed.
+A reported chat is only hidden: its rows, report and photos stay for moderation.
+Deletion state is stored in `creator_deleted_at` and `partner_deleted_at`.
+
 Only invitation hashes are stored. The creator receives the raw token once and
 keeps it in browser session storage. If a creation response is lost and a retry
 recovers the conversation without a token, create a replacement invitation. New

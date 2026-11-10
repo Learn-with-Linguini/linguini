@@ -11,10 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class FriendChatService:
-    def __init__(self, repository, content, *, background=None, image_reader=None):
+    def __init__(
+        self, repository, content, *, background=None, image_reader=None, photo_remover=None
+    ):
         self.repository, self.content = repository, content
         self.background = background or InlineBackgroundRunner()
         self.image_reader = image_reader
+        self.photo_remover = photo_remover
 
     def create(self, request):
         return self.repository.create(request)
@@ -44,6 +47,9 @@ class FriendChatService:
 
     def block(self, chat_id, request):
         return self.repository.close(chat_id, request, block=True)
+
+    def delete(self, chat_id):
+        self.repository.delete_chat(chat_id, remove_files=self.photo_remover)
 
     def report(self, chat_id, request):
         return self.repository.report(chat_id, request)
