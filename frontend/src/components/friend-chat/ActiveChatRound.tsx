@@ -7,6 +7,7 @@ import { trackAction } from "../../lib/analytics";
 import { Button, Card } from "../ui";
 import { InlineLoader } from "../LoadingScreen";
 import { TargetPicker } from "./TargetPicker";
+import { ObjectReview } from "./ObjectReview";
 import { ClueComposer } from "./ClueComposer";
 import { ChatPhoto } from "./ChatPhoto";
 import { speak } from "../../lib/speech";
@@ -44,7 +45,8 @@ export function ActiveChatRound({ chat, round, command, disabled, microphoneEnab
     <p className="small muted">{own ? "Your photo" : `${chat.partner?.displayName ?? "Your friend"}’s photo`} · {round.photoStatus === "analyzing" ? "Preparing" : "In progress"}</p>
     {round.photoStatus === "analyzing" ? <InlineLoader label={own ? "Checking and analyzing your photo…" : "Your friend is preparing a photo…"} /> : round.photoStatus === "failed" ?
       <Card className="stack-2"><h2>This photo needs another try.</h2><p role="alert">{round.error ?? "We couldn’t finish checking this photo."}</p>
-        {own && round.retryable ? <Button disabled={disabled} onClick={async () => { if (await command(chatRoundIntent(round.id, "retry"))) trackAction("ispy_friend_photo_retried"); }}>Retry photo analysis</Button> : null}</Card> : draftTarget ?
+        {own && round.retryable ? <Button disabled={disabled} onClick={async () => { if (await command(chatRoundIntent(round.id, "retry"))) trackAction("ispy_friend_photo_retried"); }}>Retry photo analysis</Button> : null}</Card> : own && round.status === "reviewingObjects" ?
+      <ObjectReview key={`${round.id}:review`} chat={chat} round={round} disabled={disabled} command={command} /> : draftTarget ?
       <TargetPicker key={`${round.id}:target`} chat={chat} round={round} disabled={disabled} command={async (intent, payload) => {
         const next = await command(intent, payload); if (next?.activeRound?.status === "composingClue" && payload?.confirm) setChangingTarget(false); return next;
       }} /> : <>

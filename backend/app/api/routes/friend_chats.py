@@ -15,6 +15,7 @@ from app.schemas.friend_chats import (
     ChatJoin,
     ChatSnapshot,
     ChatSuggestion,
+    ConfirmChatObjects,
     GuessChatTarget,
     InvitePreview,
     InviteToken,
@@ -78,6 +79,13 @@ def leave_chat(chat_id: UUID, request: ChatCommand, service: Service):
     return _call(service.leave, chat_id, request)
 
 
+@router.delete("/{chat_id}", status_code=204)
+def delete_chat(chat_id: UUID, service: Service):
+    """Delete an ended chat (or an invite nobody joined) from this member's list."""
+    _call(service.delete, chat_id)
+    return Response(status_code=204)
+
+
 @router.post("/{chat_id}/block", response_model=ChatSnapshot)
 def block_chat(chat_id: UUID, request: ChatCommand, service: Service):
     return _call(service.block, chat_id, request)
@@ -96,6 +104,11 @@ def start_round(chat_id: UUID, request: StartChatRound, service: Service):
 @router.post("/{chat_id}/rounds/{round_id}/retry", response_model=ChatSnapshot)
 def retry_photo(chat_id: UUID, round_id: UUID, request: ChatCommand, service: Service):
     return _call(service.retry, chat_id, round_id, request)
+
+
+@router.post("/{chat_id}/rounds/{round_id}/objects", response_model=ChatSnapshot)
+def confirm_objects(chat_id: UUID, round_id: UUID, request: ConfirmChatObjects, service: Service):
+    return _call(service.confirm_objects, chat_id, round_id, request)
 
 
 @router.post("/{chat_id}/rounds/{round_id}/target", response_model=ChatSnapshot)

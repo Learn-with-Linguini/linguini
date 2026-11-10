@@ -11,10 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class FriendChatService:
-    def __init__(self, repository, content, *, background=None, image_reader=None):
+    def __init__(
+        self, repository, content, *, background=None, image_reader=None, photo_remover=None
+    ):
         self.repository, self.content = repository, content
         self.background = background or InlineBackgroundRunner()
         self.image_reader = image_reader
+        self.photo_remover = photo_remover
 
     def create(self, request):
         return self.repository.create(request)
@@ -44,6 +47,9 @@ class FriendChatService:
 
     def block(self, chat_id, request):
         return self.repository.close(chat_id, request, block=True)
+
+    def delete(self, chat_id):
+        self.repository.delete_chat(chat_id, remove_files=self.photo_remover)
 
     def report(self, chat_id, request):
         return self.repository.report(chat_id, request)
@@ -101,6 +107,21 @@ class FriendChatService:
                 error.code, error.message, 422 if not error.retryable else 503
             ) from error
 
+    def confirm_objects(self, chat_id, round_id, request):
+        replay, result = self.repository.replay(chat_id, f"objects:{round_id}", request)
+        if replay:
+            return result
+        ctx = self._context(chat_id, round_id, request, sender=True, phases={"selectingTarget"})
+        item = ctx["round"]
+        if item["photo_status"] != "ready":
+            raise RoomError("chat_photo_not_ready", "Wait for the photo to finish analyzing.", 409)
+        if not (item["content"] or {}).get("review"):
+            raise RoomError("chat_objects_confirmed", "These objects are already confirmed.", 409)
+        content = self._content_call(
+            self.content.confirm_objects, item["content"], request, ctx["profile"]
+        )
+        return self.repository.confirm_objects(chat_id, round_id, request, content)
+
     def select_target(self, chat_id, round_id, request):
         replay, result = self.repository.replay(chat_id, f"target:{round_id}", request)
         if replay:
@@ -111,6 +132,10 @@ class FriendChatService:
         item = ctx["round"]
         if item["photo_status"] != "ready":
             raise RoomError("chat_photo_not_ready", "Wait for the photo to finish analyzing.", 409)
+        if (item["content"] or {}).get("review"):
+            raise RoomError(
+                "chat_objects_unconfirmed", "Check the objects in your photo first.", 409
+            )
         target = self._content_call(
             self.content.select_target,
             item["content"],

@@ -20,10 +20,12 @@ from sqlalchemy import (
     Text,
     Uuid,
     and_,
+    delete,
     func,
     insert,
     or_,
     select,
+    text,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -42,6 +44,8 @@ from app.schemas.friend_chats import (
     ChatMessage,
     ChatObject,
     ChatPerson,
+    ChatReviewObject,
+    ChatReviewRelation,
     ChatRound,
     ChatSnapshot,
     InvitePreview,
@@ -72,6 +76,8 @@ chats = Table(
     _time("invite_expires_at"),
     _time("created_at"),
     _time("updated_at"),
+    _time("creator_deleted_at", True),
+    _time("partner_deleted_at", True),
     schema="public",
 )
 rounds = Table(
@@ -196,7 +202,76 @@ class PostgresFriendChatRepository:
         row = c.execute(select(chats).where(chats.c.id == chat_id)).mappings().first()
         if row is None or self.user_id not in (row["creator_user_id"], row["partner_user_id"]):
             raise RoomError("chat_not_found", "I-Spy chat not found.", 404)
+        creator = self.user_id == row["creator_user_id"]
+        if row["creator_deleted_at" if creator else "partner_deleted_at"] is not None:
+            raise RoomError("chat_not_found", "I-Spy chat not found.", 404)
         return dict(row)
+
+    def delete_chat(self, chat_id, *, remove_files=None):
+        """Delete an ended chat from this member's list, with their photos used only here.
+
+        The chat's rows go once both members have deleted it (or it never had a partner).
+        A reported chat is only hidden, so moderation can still review it with its photos.
+        ``remove_files`` deletes stored files; it runs before commit, so a storage failure
+        leaves everything in place to retry.
+        """
+        with self._locked(chat_id) as c:
+            chat = self._row(c, chat_id)
+            if chat["status"] == "active":
+                raise RoomError("chat_active", "Leave this chat before deleting it.", 409)
+            creator = self.user_id == chat["creator_user_id"]
+            mine, theirs = (
+                ("creator_deleted_at", "partner_deleted_at")
+                if creator
+                else ("partner_deleted_at", "creator_deleted_at")
+            )
+            other = chat["partner_user_id"] if creator else chat["creator_user_id"]
+            reported = c.execute(
+                select(reports.c.id).where(reports.c.chat_id == chat_id).limit(1)
+            ).first()
+            if reported:
+                c.execute(update(chats).where(chats.c.id == chat_id).values({mine: utc_now()}))
+                return
+            unused = self._photos_only_used_here(c, chat_id)
+            if other is None or chat[theirs] is not None:
+                c.execute(delete(chats).where(chats.c.id == chat_id))
+            else:
+                c.execute(update(chats).where(chats.c.id == chat_id).values({mine: utc_now()}))
+            if unused:
+                ids = [asset["id"] for asset in unused]
+                c.execute(delete(media_assets).where(media_assets.c.id.in_(ids)))
+                if remove_files is not None:
+                    remove_files([asset["storage_key"] for asset in unused])
+
+    def _photos_only_used_here(self, c, chat_id):
+        """This member's round photos in the chat that nothing else refers to."""
+        ids = (
+            c.execute(
+                select(rounds.c.media_asset_id)
+                .where(rounds.c.chat_id == chat_id, rounds.c.media_asset_id.is_not(None))
+                .distinct()
+            )
+            .scalars()
+            .all()
+        )
+        if not ids:
+            return []
+        owned = (
+            c.execute(
+                select(media_assets.c.id, media_assets.c.storage_key)
+                .where(media_assets.c.id.in_(ids), media_assets.c.owner_user_id == self.user_id)
+                .order_by(media_assets.c.id)
+                .with_for_update()
+            )
+            .mappings()
+            .all()
+        )
+        references = _photo_references(c)
+        return [
+            dict(asset)
+            for asset in owned
+            if not _photo_in_use(c, references, asset["id"], chat_id)
+        ]
 
     @contextmanager
     def _locked(self, chat_id=None, *, extra_ids=()):
@@ -465,8 +540,14 @@ class PostgresFriendChatRepository:
                     select(chats.c.id)
                     .where(
                         or_(
-                            chats.c.creator_user_id == self.user_id,
-                            chats.c.partner_user_id == self.user_id,
+                            and_(
+                                chats.c.creator_user_id == self.user_id,
+                                chats.c.creator_deleted_at.is_(None),
+                            ),
+                            and_(
+                                chats.c.partner_user_id == self.user_id,
+                                chats.c.partner_deleted_at.is_(None),
+                            ),
                         )
                     )
                     .order_by(chats.c.updated_at.desc(), chats.c.id)
@@ -611,7 +692,31 @@ class PostgresFriendChatRepository:
                     )
                 ).first():
                     raise RoomError("chat_round_active", "A new I-Spy has already started.", 409)
-                self._asset(c, request.media_asset_id, self.user_id)
+                history = self._round_rows(c, chat_id)
+                next_sender = _next_sender(chat, history)
+                if next_sender is not None and next_sender != self.user_id:
+                    raise RoomError(
+                        "chat_not_your_turn", "It's your friend's turn to choose an object.", 409
+                    )
+                round_id = uuid5(chat_id, f"round:{self.user_id}:{request.command_id}")
+                if request.source_round_id is not None:
+                    source = _reusable_round(chat, history, self.user_id)
+                    if source is None or source["id"] != request.source_round_id:
+                        raise RoomError(
+                            "chat_photo_reuse_unavailable",
+                            "This photo can't be used for another round. Choose a new photo.",
+                            409,
+                        )
+                    self._chat_asset(c, chat, source["media_asset_id"])
+                    media_asset_id = source["media_asset_id"]
+                    # The photo is already analyzed: copy its objects so the round is
+                    # ready at once. The photo owner stays the content owner.
+                    content = {**source["content"], "roundId": str(round_id)}
+                    photo_status = "ready"
+                else:
+                    self._asset(c, request.media_asset_id, self.user_id)
+                    media_asset_id, content = request.media_asset_id, None
+                    photo_status = "analyzing"
                 recent = c.execute(
                     select(func.count())
                     .select_from(rounds)
@@ -626,13 +731,13 @@ class PostgresFriendChatRepository:
                     )
                 c.execute(
                     insert(rounds).values(
-                        id=uuid5(chat_id, f"round:{self.user_id}:{request.command_id}"),
+                        id=round_id,
                         chat_id=chat_id,
                         sender_user_id=self.user_id,
-                        media_asset_id=request.media_asset_id,
+                        media_asset_id=media_asset_id,
                         status="selectingTarget",
-                        photo_status="analyzing",
-                        content=None,
+                        photo_status=photo_status,
+                        content=content,
                         target=None,
                         clue_options=[],
                         claim_id=None,
@@ -664,6 +769,36 @@ class PostgresFriendChatRepository:
         if row is None:
             raise RoomError("chat_photo_invalid", "Choose one of your uploaded photos.", 422)
         return MediaAsset.model_validate(dict(row))
+
+    def _chat_asset(self, c, chat, asset_id):
+        """A round photo uploaded by either member of this chat."""
+        members = [chat["creator_user_id"], chat["partner_user_id"]]
+        row = (
+            c.execute(
+                select(media_assets).where(
+                    media_assets.c.id == asset_id,
+                    media_assets.c.owner_user_id.in_([m for m in members if m]),
+                    media_assets.c.media_type == "image",
+                    media_assets.c.source.in_(["camera", "userUpload"]),
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if row is None:
+            raise RoomError("chat_photo_unavailable", "This photo is no longer available.", 404)
+        return MediaAsset.model_validate(dict(row))
+
+    def _round_rows(self, c, chat_id):
+        return (
+            c.execute(
+                select(rounds)
+                .where(rounds.c.chat_id == chat_id)
+                .order_by(rounds.c.created_at, rounds.c.id)
+            )
+            .mappings()
+            .all()
+        )
 
     def _round(self, c, chat_id, round_id, *, sender=None, phases=None):
         row = (
@@ -840,6 +975,10 @@ class PostgresFriendChatRepository:
                         "chat_photo_not_ready", "Wait for the photo to finish analyzing.", 409
                     )
                 content = dict(item["content"])
+                if content.get("review"):
+                    raise RoomError(
+                        "chat_objects_unconfirmed", "Check the objects in your photo first.", 409
+                    )
                 objects = list(content.get("objects", []))
                 if not any(obj["key"] == target["key"] for obj in objects):
                     objects.append(target)
@@ -854,6 +993,21 @@ class PostgresFriendChatRepository:
                         status="composingClue" if request.confirm else "selectingTarget",
                     )
                 )
+                self._remember(c, chat_id, kind, request)
+                self._bump(c, chat_id)
+            return self._snapshot(c, chat_id)
+
+    def confirm_objects(self, chat_id, round_id, request, content):
+        kind = f"objects:{round_id}"
+        with self._locked(chat_id) as c:
+            _chat, prior = self._command(c, chat_id, kind, request)
+            if not prior:
+                item = self._round(c, chat_id, round_id, sender=True, phases={"selectingTarget"})
+                if item["photo_status"] != "ready" or not (item["content"] or {}).get("review"):
+                    raise RoomError(
+                        "chat_objects_confirmed", "These objects are already confirmed.", 409
+                    )
+                c.execute(update(rounds).where(rounds.c.id == round_id).values(content=content))
                 self._remember(c, chat_id, kind, request)
                 self._bump(c, chat_id)
             return self._snapshot(c, chat_id)
@@ -1042,7 +1196,7 @@ class PostgresFriendChatRepository:
                 )
             ):
                 raise RoomError("chat_photo_unavailable", "This photo is not shared yet.", 404)
-            return self._asset(c, item["media_asset_id"], item["sender_user_id"])
+            return self._chat_asset(c, chat, item["media_asset_id"])
 
     def _person(self, c, user_id):
         row = (
@@ -1061,15 +1215,7 @@ class PostgresFriendChatRepository:
         creator = chat["creator_user_id"] == self.user_id
         other_id = chat["partner_user_id"] if creator else chat["creator_user_id"]
         profile = chat["creator_profile"] if creator else chat["partner_profile"]
-        items = (
-            c.execute(
-                select(rounds)
-                .where(rounds.c.chat_id == chat_id)
-                .order_by(rounds.c.created_at, rounds.c.id)
-            )
-            .mappings()
-            .all()
-        )
+        items = self._round_rows(c, chat_id)
         history, active_round = [], None
         for item in items:
             sender = item["sender_user_id"] == self.user_id
@@ -1107,10 +1253,14 @@ class PostgresFriendChatRepository:
                 and (sender or item["status"] not in {"selectingTarget", "composingClue"})
                 and item["photo_status"] == "ready"
             )
+            review = content.get("review") if item["photo_status"] == "ready" else None
             result = ChatRound(
                 id=item["id"],
                 sender_id=item["sender_user_id"],
-                status=item["status"],
+                # Analyzed but unconfirmed objects: the stored phase is still selectingTarget.
+                status="reviewingObjects"
+                if review and item["status"] == "selectingTarget"
+                else item["status"],
                 photo_status="failed" if stalled else item["photo_status"],
                 image_url=f"/api/v1/friend-chats/{chat_id}/rounds/{item['id']}/image?width=640"
                 if image_visible
@@ -1127,6 +1277,18 @@ class PostgresFriendChatRepository:
                     _public_clue_option(option) for option in item["clue_options"]
                 ]
                 if sender and shared
+                else [],
+                review_objects=[
+                    ChatReviewObject(
+                        key=row["key"], label=row["label"], x=row["x"], y=row["y"],
+                        attributes=row.get("attributes") or {},
+                    )
+                    for row in review["objects"]
+                ]
+                if review and sender
+                else [],
+                review_relations=[ChatReviewRelation(**row) for row in review["relations"]]
+                if review and sender
                 else [],
                 guess_choices=_guess_choices(item, translated=_same_explanations(chat, item))
                 if not sender
@@ -1162,6 +1324,12 @@ class PostgresFriendChatRepository:
             updated_at=chat["updated_at"],
             active_round=active_round,
             rounds=history,
+            next_sender_id=_next_sender(chat, items) if other_id else None,
+            reusable_photo_round_id=reusable["id"]
+            if chat["status"] == "active"
+            and active_round is None
+            and (reusable := _reusable_round(chat, items, self.user_id))
+            else None,
         )
 
 
@@ -1216,3 +1384,74 @@ def _guess_choices(item, *, translated=False):
         })
     ordered = sorted(choices.values(), key=lambda choice: choice["key"])
     return [ChatGuessChoice(**choice) for choice in ordered]
+
+
+def _profile_of(chat, user_id):
+    creator = user_id == chat["creator_user_id"]
+    return chat["creator_profile"] if creator else chat["partner_profile"]
+
+
+def _next_sender(chat, items):
+    """Players alternate: whoever received the last finished round starts the next one."""
+    finished = [item for item in items if item["status"] == "completed"]
+    if not finished:
+        return None
+    last = finished[-1]["sender_user_id"]
+    return chat["partner_user_id"] if last == chat["creator_user_id"] else chat["creator_user_id"]
+
+
+def _reusable_round(chat, items, user_id):
+    """The latest finished round whose analyzed photo ``user_id`` may play again.
+
+    Object names and translations were prepared for the original sender's explanation
+    language, so the photo is offered only when both players share that language.
+    """
+    next_sender = _next_sender(chat, items)
+    if next_sender is not None and next_sender != user_id:
+        return None
+    for item in reversed(items):
+        if item["status"] != "completed":
+            continue
+        content = item["content"] or {}
+        if not item["media_asset_id"] or item["photo_status"] != "ready" or not content.get(
+            "objects"
+        ):
+            return None
+        sender_profile = _profile_of(chat, item["sender_user_id"]) or {}
+        viewer_profile = _profile_of(chat, user_id) or {}
+        same_explanations = (
+            str(sender_profile.get("source_language_code", "")).lower()
+            == str(viewer_profile.get("source_language_code", "")).lower()
+        )
+        return dict(item) if same_explanations else None
+    return None
+
+
+def _photo_references(c):
+    """Columns that use a photo, read from the database's own foreign keys.
+
+    Cascading references (analysis caches, photo fingerprints) belong to the photo and are
+    removed with it, so they do not count as uses.
+    """
+    return c.execute(
+        text(
+            "SELECT n.nspname, cl.relname, a.attname "
+            "FROM pg_constraint con "
+            "JOIN pg_class cl ON cl.oid = con.conrelid "
+            "JOIN pg_namespace n ON n.oid = cl.relnamespace "
+            "JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = ANY(con.conkey) "
+            "WHERE con.contype = 'f' AND con.confrelid = 'public.media_assets'::regclass "
+            "AND con.confdeltype <> 'c' ORDER BY 1, 2, 3"
+        )
+    ).all()
+
+
+def _photo_in_use(c, references, asset_id, chat_id):
+    quote = c.dialect.identifier_preparer.quote
+    for schema, table, column in references:
+        sql = f"SELECT 1 FROM {quote(schema)}.{quote(table)} WHERE {quote(column)} = :asset"
+        if schema == "public" and table == "friend_chat_rounds":
+            sql += " AND chat_id <> :chat"
+        if c.execute(text(sql + " LIMIT 1"), {"asset": asset_id, "chat": chat_id}).first():
+            return True
+    return False

@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { DeleteChat } from "../components/friend-chat/DeleteChat";
 import { ApiError } from "../lib/api";
 import { trackAction } from "../lib/analytics";
 import { languageDisplayName } from "../lib/languageChoices";
 import { friendlyError } from "../lib/queryKeys";
-import { activateChatDraftOwner, chatDraftKey, createFriendChat, friendChatKeys, getFriendChats, joinFriendChat, previewChatInvite, readFriendInvite, rememberFriendInvite, saveChatDraft } from "../lib/friendChats";
+import { activateChatDraftOwner, canDeleteFriendChat, chatDraftKey, createFriendChat, friendChatKeys, getFriendChats, joinFriendChat, previewChatInvite, readFriendInvite, rememberFriendInvite, saveChatDraft } from "../lib/friendChats";
 import type { ChatInvitePreview, ChatSnapshot } from "../lib/friendChats";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "../components/ui";
@@ -93,9 +94,12 @@ function FriendChatList() {
       {chats.isPending && activeProfile ? <InlineLoader label="Opening your chats…" /> : chats.error ? <Card className="stack-2"><p role="alert">{friendlyError(chats.error)}</p>
         <Button variant="secondary" onClick={() => void chats.refetch()}>Retry chats</Button></Card> : !chats.data?.length ?
         <Card><p>No photo chats yet. Invite one friend to start your first I-Spy.</p></Card> :
-        <ul className="friend-chats__list">{chats.data.map(chat => <li key={chat.id}><button type="button" className="friend-chats__item" onClick={() => open(chat)}>
+        <ul className="friend-chats__list">{chats.data.map(chat => <li key={chat.id} className={canDeleteFriendChat(chat) ? "friend-chats__entry friend-chats__entry--inactive" : "friend-chats__entry"}><button type="button" className="friend-chats__item" onClick={() => open(chat)}>
           <ChatAvatar person={chat.partner} /><span><strong>{chat.partner?.displayName ?? "Your invitation"}</strong>
-            <span className="small muted">{languageDisplayName(chat.targetLanguageCode)} · {chat.status === "waiting" ? "Waiting for your friend" : chat.status === "left" ? "Conversation ended" : chat.status === "blocked" ? "Blocked" : chat.activeRound ? "An I-Spy is in progress" : "Ready for another photo"}</span></span></button></li>)}</ul>}
+            <span className="small muted">{languageDisplayName(chat.targetLanguageCode)} · {chat.status === "waiting" ? "Waiting for your friend" : chat.status === "left" ? "Conversation ended" : chat.status === "blocked" ? "Blocked" : chat.activeRound ? "An I-Spy is in progress" : chat.nextSenderId === chat.meId ? "Your turn" : chat.nextSenderId ? `${chat.partner?.displayName ?? "Your friend"}’s turn` : "Ready for another photo"}</span></span></button>{canDeleteFriendChat(chat) ? <DeleteChat chat={chat} compact onDeleted={() => {
+            client.setQueryData<ChatSnapshot[]>(friendChatKeys.list(owner, profile), current => current?.filter(item => item.id !== chat.id));
+            client.removeQueries({ queryKey: friendChatKeys.chat(owner, profile, chat.id) });
+          }} /> : null}</li>)}</ul>}
     </section>
   </div>;
 }
