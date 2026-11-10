@@ -108,6 +108,7 @@ sequence_repeat = 2
 required_constructions = [
   { construction_id = "scene-location", min_version = 1 },
   { construction_id = "location-phrase", min_version = 1 },
+  { construction_id = "where-question", min_version = 1 },
   { construction_id = "find-object", min_version = 1 },
   { construction_id = "identify-object", min_version = 1 },
 ]
@@ -126,7 +127,7 @@ target_ids = ["recognise-preposition"]
 [[missions.slots]]
 purpose = "listenSelect"
 construction_id = "scene-location"
-additional_constructions = ["identify-object"]
+additional_constructions = ["identify-object", "where-question"]
 target_ids = ["find-described-object"]
 
 [[missions]]

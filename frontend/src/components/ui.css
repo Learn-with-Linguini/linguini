@@ -200,6 +200,30 @@
   line-height: 1.5;
 }
 
+.task-basil-earned {
+  text-align: center;
+}
+
+.task-basil-earned__leaf {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto var(--space-3);
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 44px;
+  animation: help-modal-enter 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.task-basil-earned__total {
+  display: block;
+  margin: var(--space-2) 0;
+  color: var(--teal-dark);
+  font-size: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes help-modal-fade {
   from {
     background: rgba(38, 50, 56, 0);

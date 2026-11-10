@@ -1163,6 +1163,14 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         _assert_m06_order(tasks)
 
     by_id = {q.question_id: q for q in questions}
+    if mission_id == "M02" and level == "A0":
+        for index in (1, 2):
+            phrase = by_id[f"chooseName-{index}"]
+            build = by_id[f"listenSelect-{index}"]
+            assert "___" in phrase.prompt
+            assert phrase.prompt != phrase.instruction
+            assert build.prompt.endswith(("?", "？"))
+            assert build.prompt != build.instruction
     if mission_id in {"M02", "M03"} and level == "A2":
         assert all(question.roleplay_premise is None for question in questions)
     if mission_id == "M04" and level == "A2":
@@ -1254,7 +1262,7 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     premises = {question.roleplay_premise for question in questions}
     assert len(premises) == 1
     (premise,) = premises
-    assert premise.startswith("Let's pretend ")
+    assert premise
     facts = assign_a0_scenario(get_mission(mission_id, "A0", 1), UUID(int=100), objects,
                                {str(obj.id): index for index, obj in enumerate(objects, 1)})
     snapshot = task.public_content.mission_snapshot
@@ -1272,15 +1280,11 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     answers = task.answer_key.correct_option_ids
     assert str(pick.option_object_ids[answers[pick.question_id]]) == str(focus.id)
     if scenario == "like":
-        assert premise == (
-            f"Let's pretend you like the {focus.label} at marker {objects.index(focus) + 1}, "
-            f"not the {other.label} at marker {objects.index(other) + 1}."
-        )
+        assert premise == f"You like the {focus.label}. You don't like the {other.label}."
         assert pick.prompt == "Which sentence matches the scenario?"
     else:
-        assert premise == (f"Let's pretend you don't like the {focus.label} "
-                           f"at marker {objects.index(focus) + 1}; "
-                           f"you choose the {other.label} at marker {objects.index(other) + 1}.")
+        assert premise == (f"You don't like the {focus.label}. "
+                           f"You choose the {other.label}.")
         assert pick.prompt == "Which sentence matches the scenario?"
         last = next(q for q in questions if q.question_id == "M05-Q6")
         assert str(last.option_object_ids[answers["M05-Q6"]]) == str(other.id)
@@ -1345,19 +1349,23 @@ def test_a0_preference_respects_either_same_name_object(
     assert snapshot.reaction == reaction
     assert not snapshot.pretend
     first, *_, last = task.public_content.questions
-    assert f"cup at marker {selected_marker}" in first.prompt
+    assert "cup" in first.prompt
+    assert "marker" not in first.prompt.casefold()
     correct_option = task.answer_key.correct_option_ids[first.question_id]
     assert first.option_object_ids[correct_option] == chosen_id
     assert chosen_id in first.option_object_ids.values()
     assert all(q.roleplay_premise is None for q in task.public_content.questions)
+    assert "marker" not in last.instruction.casefold()
     if reaction == "dislike":
-        assert "For this practice, choose the table at marker 3" in last.instruction
+        assert "For this practice, choose the table" in last.instruction
     _assert_gradable(task)
 
 
 @pytest.mark.parametrize("language", list(LOCALES))
 @pytest.mark.parametrize("reaction", ["like", "dislike"])
-def test_a0_assigned_preference_disambiguates_repeated_objects(language, reaction, monkeypatch):
+def test_a0_assigned_preference_keeps_repeated_objects_out_of_scenario_copy(
+    language, reaction, monkeypatch,
+):
     photo = build_scene(language, (("cup", "red"), ("cup", "white"), ("table", "green")))
     (task,) = _dispatch(language, "A0", photo, MockPackProvider(language), monkeypatch,
                         "M05", scenario=reaction)
@@ -1367,7 +1375,8 @@ def test_a0_assigned_preference_disambiguates_repeated_objects(language, reactio
     row = next(obj for obj in photo[0] if obj.id == focus)
     assert snapshot.pretend
     for question in task.public_content.questions:
-        assert f"{row.label} at marker {photo[0].index(row) + 1}" in question.roleplay_premise
+        assert row.label in question.roleplay_premise
+        assert "marker" not in question.roleplay_premise.casefold()
     _assert_gradable(task)
 
 
