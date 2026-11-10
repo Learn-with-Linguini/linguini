@@ -586,7 +586,7 @@ def test_required_aligned_romanization_uses_generated_spanish_sentences(runtime,
     runtime[3].objects[0].translation = "tacita"
     (task,) = dispatch("A0", runtime, MockRomanizedSpanishProvider())
     assert "tacita" in task.answer_key.correct_option_ids["buildIdentify-1"]
-    assert "tacita." in task.public_content.questions[2].romanizations
+    assert "tacita" in task.public_content.questions[2].romanizations
     with pytest.raises(LearningTaskGenerationError, match="romanization"):
         dispatch("A0", runtime, MockSpanishProvider())
 

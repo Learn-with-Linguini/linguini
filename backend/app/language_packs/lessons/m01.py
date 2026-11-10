@@ -80,15 +80,36 @@ def _plan_a0(specs, facts, vocabulary, objects, seed):
     named = differently_named(objects, vocabulary)
     if len(named) < 2:
         raise ValueError("M01 A0 needs two differently named objects")
-    for index, obj in enumerate(named[:2], 1):
-        other = named[2] if len(named) > 2 else named[1 if index == 1 else 0]
+    terms = {term.fact_id for term in vocabulary.terms}
+    attributes = {
+        attribute.object_fact_id: attribute
+        for attribute in facts.scene_facts.attributes
+        if attribute.fact_id in terms
+    }
+    described = [obj for obj in named if obj.fact_id in attributes]
+    if len(described) < 2:
+        raise ValueError("M01 A0 needs two differently named objects with translated details")
+    for index, obj in enumerate(described[:2], 1):
+        other = described[1 if index == 1 else 0]
         truth = truths[index - 1]
-        specs.add(f"matchName-{index}", "name", "identify-object", {"object": obj.fact_id})
+        specs.add(
+            f"matchName-{index}", "answer", "describe-attribute",
+            {"object": obj.fact_id, "attribute": attributes[obj.fact_id].fact_id},
+            suffix="target",
+        )
+        specs.add(
+            f"matchName-{index}", "option", "describe-attribute",
+            {"object": other.fact_id, "attribute": attributes[other.fact_id].fact_id},
+            truth=False, suffix="other",
+        )
         specs.add(
             f"confirmName-{index}", "question", "yes-no-identification",
             {"object": (obj if truth else other).fact_id, "shown": obj.fact_id}, truth=truth,
         )
-        specs.add(f"buildIdentify-{index}", "answer", "identify-object", {"object": obj.fact_id})
+        specs.add(
+            f"buildIdentify-{index}", "answer", "describe-attribute",
+            {"object": obj.fact_id, "attribute": attributes[obj.fact_id].fact_id},
+        )
 
 
 def _plan_a1(specs, facts, vocabulary, objects, seed):
@@ -323,6 +344,11 @@ def build_lesson(level, pack, facts, vocabulary, plan, accepted, *, builder_sele
 
 
 def _build_a0(ctx):
+    if ctx.spec("matchName-1").construction_id == "identify-object":
+        return _build_legacy_a0(ctx)
+    description_prompt = "Which sentence describes the highlighted object?"
+    if ctx.pack.language.romanization_required:
+        ctx.extra_spellings[description_prompt] = description_prompt
     focus = [ctx.by_fact[ctx.spec(f"matchName-{i}").bindings["object"]] for i in (1, 2)]
     translations = {ctx.label("what-is-this"): ctx.labels["what-is-this"].meaning}
     templates = next(
@@ -343,11 +369,19 @@ def _build_a0(ctx):
                 taught.append(name)
                 translations[name] = meaning
     for row, index in zip(focus, (1, 2), strict=True):
-        for field, slot in (("name", "matchName"), ("isIt", "confirmName"),
-                            ("identify", "buildIdentify")):
+        row["name"] = row["noun"]
+        translations[row["name"]] = f"the {row['source']}"
+        for field, slot in (("isIt", "confirmName"), ("identify", "buildIdentify")):
             sentence = ctx.sentence(f"{slot}-{index}")
             row[field] = sentence.text
             translations[sentence.text] = sentence.translation
+        other_description = ctx.sentence_by_id(f"matchName-{index}", "other")
+        row["description"] = ctx.sentence_by_id(f"matchName-{index}", "target").text
+        row["otherDescription"] = other_description.text
+        translations[row["description"]] = ctx.sentence_by_id(
+            f"matchName-{index}", "target"
+        ).translation
+        translations[other_description.text] = other_description.translation
     payload = ctx.payload(
         focus=[row["key"] for row in focus],
         approvedObjects=ctx.rows,
@@ -369,8 +403,12 @@ def _build_a0(ctx):
             and term.linguistic.get("alternative-kind") == "noun"
             and term.linguistic.get("contrast-for") == target["fact_id"]
         ), other["noun"])
-        marker = marker_question(payload, "matchName", section, target, target["name"],
-                                  index=index)
+        description = choice_question(
+            payload, "matchName", section, target,
+            description_prompt,
+            [target["description"], target["otherDescription"]], target["description"],
+            index=index,
+        )
         confirm = choice_question(
             payload, "confirmName", section, target, target["isIt"], payload["yesNo"],
             payload["yesNo"][0 if spec.truth else 1], index=index, shuffle=False,
@@ -382,6 +420,48 @@ def _build_a0(ctx):
         # Use only chunks derived after complete-sentence validation.
         built["token_bank"] = ctx.chunks(
             ctx.sentence(f"buildIdentify-{index}"), [extra_noun],
+        )["token_bank"]
+        questions.extend((description, confirm, built))
+    result = A0LessonResult(title="Identify and describe", questions=questions)
+    task = a0_lesson_task(ctx.session_id, ctx.mission, payload, result, ctx.vocabulary_ids)
+    return result, task, payload
+
+
+def _build_legacy_a0(ctx):
+    """Read already-saved v1 plans while new sessions use description-led plans."""
+    focus = [ctx.by_fact[ctx.spec(f"matchName-{i}").bindings["object"]] for i in (1, 2)]
+    translations = {ctx.label("what-is-this"): ctx.labels["what-is-this"].meaning}
+    for row, index in zip(focus, (1, 2), strict=True):
+        for field, slot in (("name", "matchName"), ("isIt", "confirmName"),
+                            ("identify", "buildIdentify")):
+            sentence = ctx.sentence(f"{slot}-{index}")
+            row[field] = sentence.text
+            translations[sentence.text] = sentence.translation
+    payload = ctx.payload(
+        focus=[row["key"] for row in focus], approvedObjects=ctx.rows,
+        approvedTranslations=translations, whatIsThis=ctx.label("what-is-this"),
+        yesNo=[ctx.label("yes-answer"), ctx.label("no-answer")],
+        approvedSentenceChunks=list(translations), approvedArticlesOrEndings=[],
+        approvedNumberWords={}, legacyA0=True,
+    )
+    questions = []
+    for index, (section, target) in enumerate(task_sections(payload), 1):
+        spec = ctx.spec(f"confirmName-{index}")
+        other = other_object(payload, target, f"tile-{index}")
+        marker = marker_question(payload, "matchName", section, target, target["name"],
+                                 index=index)
+        marker["instruction"] = "Listen, then tap the marker for this word."
+        confirm = choice_question(
+            payload, "confirmName", section, target, target["isIt"], payload["yesNo"],
+            payload["yesNo"][0 if spec.truth else 1], index=index, shuffle=False,
+            statement_true=spec.truth, stated_key=ctx.by_fact[spec.bindings["object"]]["key"],
+            audio_text=target["isIt"],
+        )
+        built = build_question(payload, "buildIdentify", section, target,
+                               payload["whatIsThis"], target["identify"], other["noun"],
+                               index=index)
+        built["token_bank"] = ctx.chunks(
+            ctx.sentence(f"buildIdentify-{index}"), [other["noun"]]
         )["token_bank"]
         questions.extend((marker, confirm, built))
     result = A0LessonResult(title="Name the objects", questions=questions)

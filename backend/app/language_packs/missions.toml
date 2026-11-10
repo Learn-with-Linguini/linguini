@@ -6,11 +6,13 @@ sequence_repeat = 2
 required_constructions = [
   { construction_id = "identify-object", min_version = 1 },
   { construction_id = "yes-no-identification", min_version = 1 },
+  { construction_id = "describe-attribute", min_version = 1 },
 ]
 [[missions.slots]]
 purpose = "matchName"
-construction_id = "identify-object"
-target_ids = ["recognise-name"]
+construction_id = "describe-attribute"
+additional_constructions = ["identify-object"]
+target_ids = ["recognise-description"]
 
 [[missions.slots]]
 purpose = "confirmName"
@@ -20,7 +22,8 @@ prompt_labels = ["yes-answer", "no-answer"]
 
 [[missions.slots]]
 purpose = "buildIdentify"
-construction_id = "identify-object"
+construction_id = "describe-attribute"
+additional_constructions = ["identify-object"]
 target_ids = ["identify-object"]
 prompt_labels = ["what-is-this"]
 
@@ -103,23 +106,28 @@ practice_level = "A0"
 content_version = 1
 sequence_repeat = 2
 required_constructions = [
+  { construction_id = "scene-location", min_version = 1 },
+  { construction_id = "location-phrase", min_version = 1 },
   { construction_id = "find-object", min_version = 1 },
   { construction_id = "identify-object", min_version = 1 },
 ]
 [[missions.slots]]
 purpose = "findNamed"
-construction_id = "find-object"
-target_ids = ["find-object"]
+construction_id = "scene-location"
+additional_constructions = ["find-object"]
+target_ids = ["find-described-object"]
 
 [[missions.slots]]
 purpose = "chooseName"
-construction_id = "identify-object"
-target_ids = ["recognise-name"]
+construction_id = "location-phrase"
+additional_constructions = ["identify-object"]
+target_ids = ["recognise-preposition"]
 
 [[missions.slots]]
 purpose = "listenSelect"
-construction_id = "identify-object"
-target_ids = ["find-object"]
+construction_id = "scene-location"
+additional_constructions = ["identify-object"]
+target_ids = ["find-described-object"]
 
 [[missions]]
 mission_id = "M02"

@@ -1,24 +1,30 @@
 mission_id = "M01"
 practice_level = "A0"
 content_version = 1
-title = "Name and identify"
+title = "Identify and describe"
 
 [photo_requirements]
 media_sources = ["preloaded", "camera", "userUpload"]
 min_confirmed_objects = 2
+min_coloured_objects = 2
 
 [objective]
 objective_id = "name-and-identify"
-can_do = "I can name a few objects in my photo and say what one is."
+can_do = "I can identify two objects and describe a visible detail about each one."
 
 [[objective.targets]]
 target_id = "recognise-name"
-summary = "Match a taught object name to its object in the photo."
+summary = "Recognise the familiar object names used inside each description."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "recognise-description"
+summary = "Choose the object-and-detail sentence that matches a highlighted object."
 evidence_types = ["recognition"]
 
 [[objective.targets]]
 target_id = "identify-object"
-summary = "Say what an object is with the taught chunk."
+summary = "Say what an object is and describe a visible detail with the taught chunk."
 evidence_types = ["recognition", "construction"]
 
 [[language_patterns]]
@@ -27,9 +33,15 @@ target_id = "identify-object"
 structure = "[This is] [a] [noun]."
 examples = { es = ["Es una taza."], fr = ["C'est une tasse."], de = ["Das ist eine Tasse."], ko = ["이것은 컵이에요."] }
 
+[[language_patterns]]
+pattern_id = "describe-object"
+target_id = "identify-object"
+structure = "[This is] [a] [noun] [visible detail]."
+examples = { es = ["Es una taza roja."], fr = ["C'est une tasse rouge."], de = ["Das ist eine rote Tasse."], ko = ["이것은 빨간 컵이에요."] }
+
 [teaching]
 task_sequence = ["vocabularyIntroduction", "grammarLesson"]
-teach_before_assessment = ["recognise-name", "identify-object"]
+teach_before_assessment = ["recognise-description", "identify-object"]
 max_new_words = 3
 
 [[teaching.supports]]
@@ -50,7 +62,13 @@ counts_as_assistance = false
 [[evaluation_criteria]]
 criterion_id = "name-matches-object"
 target_id = "recognise-name"
-description = "Matches a taught name to its object."
+description = "Matches a taught name to its object in saved version-one lessons."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "description-matches-object"
+target_id = "recognise-description"
+description = "Matches a taught object-and-detail description to the highlighted object."
 evidence_types = ["recognition"]
 
 [[evaluation_criteria]]

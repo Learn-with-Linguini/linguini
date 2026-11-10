@@ -1255,17 +1255,18 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
                     for key in facts["preference"]["sceneObjectIds"])
     pick = questions[0]
     answers = task.answer_key.correct_option_ids
-    assert str(pick.marker_object_ids[answers[pick.question_id]]) == str(focus.id)
+    assert str(pick.option_object_ids[answers[pick.question_id]]) == str(focus.id)
     if scenario == "like":
         assert premise == (
-            f"Let's pretend you like the {focus.label} at marker {objects.index(focus) + 1}."
+            f"Let's pretend you like the {focus.label} at marker {objects.index(focus) + 1}, "
+            f"not the {other.label} at marker {objects.index(other) + 1}."
         )
-        assert pick.prompt == "In this scenario, which object do you like? Tap it in your photo."
+        assert pick.prompt == "Which sentence matches the scenario?"
     else:
         assert premise == (f"Let's pretend you don't like the {focus.label} "
-                           f"at marker {objects.index(focus) + 1}, "
-                           f"so you pick the {other.label} at marker {objects.index(other) + 1}.")
-        assert pick.prompt == "In this scenario, which object don't you like? Tap it in your photo."
+                           f"at marker {objects.index(focus) + 1}; "
+                           f"you choose the {other.label} at marker {objects.index(other) + 1}.")
+        assert pick.prompt == "Which sentence matches the scenario?"
         last = next(q for q in questions if q.question_id == "M05-Q6")
         assert str(last.option_object_ids[answers["M05-Q6"]]) == str(other.id)
 
@@ -1331,8 +1332,8 @@ def test_a0_preference_respects_either_same_name_object(
     first, *_, last = task.public_content.questions
     assert f"cup at marker {selected_marker}" in first.prompt
     correct_option = task.answer_key.correct_option_ids[first.question_id]
-    assert first.marker_object_ids[correct_option] == chosen_id
-    assert chosen_id in first.marker_object_ids.values()
+    assert first.option_object_ids[correct_option] == chosen_id
+    assert chosen_id in first.option_object_ids.values()
     assert all(q.roleplay_premise is None for q in task.public_content.questions)
     if reaction == "dislike":
         assert "For this practice, choose the table at marker 3" in last.instruction
@@ -1347,7 +1348,7 @@ def test_a0_assigned_preference_disambiguates_repeated_objects(language, reactio
                         "M05", scenario=reaction)
     snapshot = task.public_content.mission_snapshot
     first = task.public_content.questions[0]
-    focus = first.marker_object_ids[task.answer_key.correct_option_ids[first.question_id]]
+    focus = first.option_object_ids[task.answer_key.correct_option_ids[first.question_id]]
     row = next(obj for obj in photo[0] if obj.id == focus)
     assert snapshot.pretend
     for question in task.public_content.questions:
