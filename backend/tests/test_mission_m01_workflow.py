@@ -111,10 +111,10 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
         "Task 2 · Describe them", "Task 2 · Describe them",
     ]
     objects = [q.scene_object_id for q in questions]
-    assert objects[0] == objects[2] != objects[1] == objects[3]
+    assert objects[0] != objects[1] == objects[2] == objects[3]
     # Identification never shows the English name before the answer.
     labels = [q.object_label for q in questions]
-    assert labels[:2] == [None, None] and labels[2] != labels[3]
+    assert labels[:2] == [None, None] and labels[2] == labels[3]
     assert [q.keep_option_order for q in questions] == [True, True, True, None]
     # M01 is built from the confirmed facts without a model call.
     assert not any(name.startswith("mission_lesson_m01") for name in model.requests)

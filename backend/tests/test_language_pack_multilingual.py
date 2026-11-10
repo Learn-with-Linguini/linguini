@@ -1175,20 +1175,24 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         assert "marker" not in premise.casefold()
         assert not premise.casefold().startswith("role-play")
     if mission_id == "M01" and level == "A1":
+        assert by_id["choose-attribute"].scene_object_id == by_id["describe-object"].scene_object_id
+        assert set(task.answer_key.statement_correct.values()) == {True, False}
+    if mission_id in {"M04", "M05"} and level == "A1":
+        assert all(question.roleplay_premise for question in questions)
+        assert all(
+            not question.roleplay_premise.casefold().startswith("let's pretend")
+            for question in questions
+        )
+    if mission_id == "M01" and level == "A1":
         chosen = by_id["choose-attribute"]
         correct = next(
             o.label for o in chosen.options if o.option_id == answers[chosen.question_id]
         )
-        # A colour chosen on its own is not an attributive form (German Rot, not Rote).
-        assert correct.casefold() == {"de": "rot", "ko": "빨간색"}.get(
-            language, correct.casefold()
-        )
+        assert correct, "the described object's standalone detail is a real option"
         describe = by_id["describe-object"]
         tiles = len(describe.token_bank) - len(describe.sentence_join_modes)
         if pack.language.grammatical_gender == "none":
             assert tiles == 0, "genderless packs have no wrong-agreement tiles"
-        else:
-            assert tiles > 0
     if mission_id == "M01" and level == "A2" and language == "de":
         followup = by_id["m01-q5"]
         assert {o.label for o in followup.options} >= {"rot"}

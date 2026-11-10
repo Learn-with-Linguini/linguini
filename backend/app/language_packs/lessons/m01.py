@@ -135,9 +135,11 @@ def _plan_a1(specs, facts, vocabulary, objects, seed):
             break
     if len(selected) != 2:
         raise ValueError("A1 needs two differently named object-detail pairs")
-    for index, (obj, detail) in enumerate(selected, 1):
+    truths = [True, False]
+    rng.shuffle(truths)
+    for index, (obj, _detail) in enumerate(selected, 1):
         other = selected[1 if index == 1 else 0][0]
-        truth = rng.random() < 0.5
+        truth = truths[index - 1]
         for use, named, value in (
             ("prompt", obj if truth else other, truth),
             ("answer", obj, truth),
@@ -148,10 +150,15 @@ def _plan_a1(specs, facts, vocabulary, objects, seed):
                 {"object": named.fact_id, "shown": obj.fact_id},
                 truth=value, labels=[] if use == "prompt" else ["yes" if value else "no"],
             )
-        specs.add(
-            "chooseAttribute" if index == 1 else "describeObject", "answer",
-            "describe-attribute", {"object": obj.fact_id, "attribute": detail.fact_id},
-        )
+    # Recognition and construction now describe the same object. The two earlier
+    # checks still practise distinguishing both objects in the photo.
+    # Prefer the second pair because planning favours a richer/non-colour detail
+    # there when the photo provides one.
+    described, described_detail = selected[1]
+    for slot in ("chooseAttribute", "describeObject"):
+        specs.add(slot, "answer", "describe-attribute", {
+            "object": described.fact_id, "attribute": described_detail.fact_id,
+        })
 
 
 def _plan_a2(specs, facts, vocabulary, objects, seed):
@@ -487,6 +494,10 @@ def _build_a1(ctx):
             before=term.position == "before",
         ))
     first, second = pairs
+    confirm_rows = [
+        ctx.by_fact[ctx.spec(f"confirmObject-{index}", "answer").bindings["object"]]
+        for index in (1, 2)
+    ]
     # The chosen detail stands alone; the described one agrees inside the sentence.
     first["agreedForm"] = _standalone_form(ctx.terms[first["attributeKey"]], first["gender"])
     options, meanings = _detail_options(
@@ -506,8 +517,12 @@ def _build_a1(ctx):
         c.templates for c in ctx.pack.constructions
         if c.construction_id == "yes-no-identification"
     )
+    correction_pairs = [*pairs]
+    for row in confirm_rows:
+        if row["key"] not in {pair["key"] for pair in correction_pairs}:
+            correction_pairs.append(row)
     payload = ctx.payload(
-        pairs=pairs,
+        pairs=correction_pairs,
         attributeOptions=options,
         attributeMeanings=meanings,
         describeExtras=extras,
@@ -532,7 +547,7 @@ def _build_a1(ctx):
     )
     layout = ctx.selection.get("layout", {})
     questions = []
-    for index, shown in enumerate(pairs, 1):
+    for index, shown in enumerate(confirm_rows, 1):
         slot = f"confirmObject-{index}"
         prompt, answer, contrast = (
             ctx.sentence(slot, use) for use in ("prompt", "answer", "option")

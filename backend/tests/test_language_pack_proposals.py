@@ -109,7 +109,7 @@ def test_new_words_and_required_forms_without_pack_dictionary(level, runtime, mo
     assert "evaluations" not in json.loads(provider.requests[0].user_content)
     if level == "A1":
         labels = {o.label.casefold() for o in task.public_content.questions[2].options}
-        assert "diminuta" in labels and "enorme" in labels
+        assert "diminuto" in labels and "enorme" in labels
         answer = answers["describe-object"]
         assert answer.startswith("Esto es ") and "diminuto" in answer
     if level == "A0":
@@ -153,7 +153,7 @@ def test_assembled_ambiguous_mcq_rejected_even_after_sentence_review(runtime, mo
             elif request.json_schema_name == "language_content_review" and data["rendered_task"]:
                 question = data["rendered_task"]["publicContent"]["questions"][2]
                 labels = {o["label"].casefold() for o in question["options"]}
-                assert {"diminuta", "minúscula"} <= labels
+                assert {"diminuto", "minúsculo"} <= labels
                 value.update(unambiguous=False, issues=["Two synonymous tiny answers"])
             return replace(response, output_text=json.dumps(value, ensure_ascii=False))
 
