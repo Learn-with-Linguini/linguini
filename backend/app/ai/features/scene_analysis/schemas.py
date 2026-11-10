@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, BeforeValidator, Field, field_validator
 
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.enums import SceneRelationType
@@ -19,6 +19,22 @@ class SceneAttributeType(StrEnum):
     MATERIAL = "material"
     PATTERN = "pattern"
     STATE = "state"
+
+
+MAX_SUGGESTED_GROUP_COUNT = 20
+
+
+def _clamp_suggested_group_count(value: object) -> object:
+    """Clamp the advisory group count instead of rejecting the whole response.
+
+    Providers strip ``minimum``/``maximum`` from the strict schema, so the model
+    can report e.g. 30 visible cans. The count is recomputed from the returned
+    instances during group normalization anyway; only clamp genuine integers and
+    leave everything else to normal validation.
+    """
+    if isinstance(value, int) and not isinstance(value, bool):
+        return max(1, min(MAX_SUGGESTED_GROUP_COUNT, value))
+    return value
 
 
 class ModelSceneAttribute(ApiModel):
@@ -51,7 +67,11 @@ class ModelSceneObject(ApiModel):
     bounding_box: ModelBoundingBox
     anchor_point: ModelAnchorPoint | None = None
     attributes: list[ModelSceneAttribute] = Field(default_factory=list, max_length=6)
-    suggested_group_count: Annotated[int, Field(ge=1, le=20)]
+    suggested_group_count: Annotated[
+        int,
+        BeforeValidator(_clamp_suggested_group_count),
+        Field(ge=1, le=MAX_SUGGESTED_GROUP_COUNT),
+    ]
     confidence_score: Annotated[
         float,
         Field(
