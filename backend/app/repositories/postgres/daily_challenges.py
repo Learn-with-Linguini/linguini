@@ -16,6 +16,7 @@ from collections.abc import Iterable
 from datetime import UTC, date, datetime, timedelta
 from fractions import Fraction
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     Column,
@@ -74,7 +75,11 @@ SCENES = (
     ("beach", "Beach", "at the beach"),
     ("gym", "Gym", "at the gym"),
 )
+CHALLENGE_TIME_ZONE = ZoneInfo("Asia/Singapore")
+STEPS_CAMPAIGN_DAY = date(2026, 11, 11)
+STEPS_CAMPAIGN_SCENE = ("steps", "STePS", "at STePS")
 SCENE_TITLES = {key: title for key, title, *_ in SCENES}
+SCENE_TITLES[STEPS_CAMPAIGN_SCENE[0]] = STEPS_CAMPAIGN_SCENE[1]
 # What an analysed photo may mention to count as that day's scene. The first
 # keyword of every scene is its title so the match degrades gracefully.
 SCENE_KEYWORDS = {
@@ -133,6 +138,10 @@ SCENE_KEYWORDS = {
         "gym", "dumbbell", "treadmill", "barbell", "workout",
         "exercise machine", "weights",
     ],
+    "steps": [
+        "steps", "booth", "poster", "banner", "laptop", "table", "student",
+        "campus", "showcase", "project",
+    ],
 }
 TERMINAL = {"completed", "abandoned", "failed"}
 
@@ -171,15 +180,17 @@ challenge_settlements = Table(
 
 
 def challenge_day(now: datetime | None = None) -> date:
-    return (now or utc_now()).astimezone(UTC).date()
+    return (now or utc_now()).astimezone(CHALLENGE_TIME_ZONE).date()
 
 
 def day_ends_at(day: date) -> datetime:
-    return datetime(day.year, day.month, day.day, tzinfo=UTC) + timedelta(days=1)
+    return datetime(day.year, day.month, day.day, tzinfo=CHALLENGE_TIME_ZONE) + timedelta(days=1)
 
 
 def scene_for(day: date) -> tuple[str, str, str]:
     """(key, title, phrase) for the day's scene."""
+    if day == STEPS_CAMPAIGN_DAY:
+        return STEPS_CAMPAIGN_SCENE
     return SCENES[day.toordinal() % len(SCENES)]
 
 
@@ -226,7 +237,7 @@ def enter_challenge(c, user_id: UUID, session_id: UUID, day: date, media_source:
     if session["mode"] != SessionMode.LESSON:
         raise PracticeConflictError("Only a photo lesson can be today's challenge.")
     started_at = session["started_at"]
-    if started_at is not None and started_at.astimezone(UTC).date() != day:
+    if started_at is not None and challenge_day(started_at) != day:
         raise PracticeConflictError(
             "That lesson is not from today. Start a fresh photo lesson for today's challenge."
         )

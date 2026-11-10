@@ -63,6 +63,11 @@
 .daily-challenge__done svg { flex: none; margin-top: 2px; }
 .daily-challenge__result { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; color: var(--teal-dark); font-size: var(--text-small); font-weight: 800; }
 .daily-challenge__result svg { flex: none; color: #b07a00; }
+.daily-challenge__campaign-prize { display: flex; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--pasta); color: var(--ink); box-shadow: 0 5px 12px rgba(176, 122, 0, .18); }
+.daily-challenge__campaign-prize > svg { flex: none; }
+.daily-challenge__campaign-prize span { display: grid; }
+.daily-challenge__campaign-prize strong { font-family: var(--font-display); font-size: var(--text-h3); line-height: 1.1; }
+.daily-challenge__campaign-prize small { font-size: var(--text-small); font-weight: 800; }
 
 /* Community board */
 .daily-challenge__board { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
@@ -88,6 +93,11 @@
 .daily-challenge__empty { margin: 0; color: var(--ink); }
 
 .daily-challenge__prizes { display: grid; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); background: var(--basil-surface); }
+.daily-challenge__voucher { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--pasta); color: var(--ink); }
+.daily-challenge__voucher > svg { flex: none; }
+.daily-challenge__voucher > div { display: grid; }
+.daily-challenge__voucher strong { font-family: var(--font-display); font-size: var(--text-h3); line-height: 1.1; }
+.daily-challenge__voucher span { font-size: var(--text-small); font-weight: 800; }
 /* One Basil panel: the amount over its meaning, with the prize list opening beneath. */
 .daily-challenge__reward { display: flex; align-items: center; gap: var(--space-2); color: var(--basil); }
 .daily-challenge__reward > svg { flex: none; }
