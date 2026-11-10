@@ -12,31 +12,40 @@ from app.ai.adapters.openrouter import OPENROUTER_BASE_URL
 from app.ai.contracts import VisionModelConfig
 from app.ai.contracts.text import TextModelConfig
 from app.ai.registry import build_text_client, build_vision_client
+from tests.test_ai_config import openrouter_file
 
 
 def settings(**env):
     return load_ai_settings(env=env)
 
 
-def test_openrouter_features_read_the_openrouter_key_and_model():
-    loaded = settings(AI_OPENROUTER_API_KEY="sk-or-test")
+def test_openrouter_features_read_the_openrouter_key_and_model(tmp_path):
+    loaded = settings(AI_CONFIG_FILE=openrouter_file(tmp_path), AI_OPENROUTER_API_KEY="sk-or-test")
 
     config = loaded.feature(AiFeature.SCENE_ANALYSIS)
     assert config.provider is AiProvider.OPENROUTER
-    assert config.model_name == "anthropic/claude-haiku-4.5"
+    assert config.model_name == "openai/gpt-4.1-mini"
     assert loaded.api_key_for(AiProvider.OPENROUTER) == "sk-or-test"
     assert loaded.is_configured(config)
 
 
-def test_real_mode_requires_the_openrouter_key():
+def test_real_mode_requires_the_openrouter_key(tmp_path):
     with pytest.raises(AiConfigurationError) as error:
-        load_ai_settings(env={"AI_MODE": "real", "AI_OPENAI_API_KEY": "sk-openai"})
+        load_ai_settings(env={
+            "AI_MODE": "real",
+            "AI_CONFIG_FILE": openrouter_file(tmp_path),
+            "AI_OPENAI_API_KEY": "sk-openai",
+        })
 
     assert "AI_OPENROUTER_API_KEY" in str(error.value)
 
 
-def test_real_mode_accepts_openrouter_once_its_key_is_set():
-    loaded = load_ai_settings(env={"AI_MODE": "real", "AI_OPENROUTER_API_KEY": "sk-or-test"})
+def test_real_mode_accepts_openrouter_once_its_key_is_set(tmp_path):
+    loaded = load_ai_settings(env={
+        "AI_MODE": "real",
+        "AI_CONFIG_FILE": openrouter_file(tmp_path),
+        "AI_OPENROUTER_API_KEY": "sk-or-test",
+    })
 
     assert loaded.feature(AiFeature.LEARNING_TASK).provider is AiProvider.OPENROUTER
 

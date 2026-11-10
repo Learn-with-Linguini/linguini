@@ -34,6 +34,23 @@ class ImageDerivatives:
             return f"{DERIVATIVE_ROOT}/w{width}/remote/{digest}.webp"
         return f"{DERIVATIVE_ROOT}/w{width}/{storage_key}.webp"
 
+    def stored_keys(self, storage_key: str) -> list[str]:
+        """The original and every resized copy that may exist for one photo."""
+        legacy = [f"derived/w{width}/{storage_key}" for width in ALLOWED_WIDTHS]
+        return [storage_key, *legacy, *(self.derived_key(storage_key, w) for w in ALLOWED_WIDTHS)]
+
+    def remove(self, storage_keys: list[str]) -> None:
+        """Delete photos and their resized copies from storage and from this cache."""
+        if not storage_keys:
+            return
+        if self.storage.configured:
+            files = [stored for photo in storage_keys for stored in self.stored_keys(photo)]
+            self.storage.delete_many(files)
+        removed = set(storage_keys)
+        with self._lock:
+            for cache_key in [cached for cached in self._cache if cached[0] in removed]:
+                del self._cache[cache_key]
+
     def get(self, storage_key: str, width: int) -> bytes:
         if storage_key.startswith("demo-art/"):
             # Seeded scenes have no Storage object behind their key.

@@ -124,7 +124,7 @@ export function JournalForm({ entry, date, photoOptions, wordSuggestions, onSave
             ) : null}
             <div className="journal-editor__upload">
               <ImageUpload cameraEnabled={learner.cameraOn} disabled={journalSaving} onBusyChange={setUploading}
-                dropzoneLabel={photos.length ? "Add another photo" : "Add a few photos from your day"}
+                label={photos.length ? "Add another photo" : "Add a few photos from your day"}
                 onUploaded={(image) => setPhotos(current => current.some(photo => photo.mediaAssetId === image.id) ? current
                   : [...current, { mediaAssetId: image.id, imageUrl: image.signedUrl, displayOrder: current.length }])} />
             </div>

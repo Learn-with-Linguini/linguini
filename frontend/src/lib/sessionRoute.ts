@@ -77,7 +77,7 @@ export function sessionDestination(detail: PracticeDetail): SessionDestination {
     case "abandoned":
       return { path: "/practice", notice: "That practice was discarded. Start a new one when you are ready." };
     case "failed": {
-      if (detail.analysisRetryable) return { path: `${base}/analysis`, notice: null };
+      if (detail.analysisRetryable || detail.generationRetryable) return { path: `${base}/analysis`, notice: null };
       const code = detail.session.failureCode;
       const notice = code === "challengeSceneMismatch"
         ? detail.session.sessionSummary || failureNotices[code] || fallbackNotice

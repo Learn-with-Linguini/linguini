@@ -16,13 +16,14 @@ const GENERATION_STAGES = [
   ["preparingTask", "Preparing your first task", "First task"],
 ] as const;
 
-export function SceneProcessingProgress({ detail, stalled = false }: { detail: PracticeDetail; stalled?: boolean }) {
-  const { status, id } = detail.session;
+export function SceneProcessingProgress({ detail, stalled = false }: { detail?: PracticeDetail; stalled?: boolean }) {
+  const status = detail?.session.status ?? "created";
+  const id = detail?.session.id;
   const generation = status === "generatingTasks";
-  const progress = detail.sceneAnalysisProgress;
+  const progress = detail?.sceneAnalysisProgress;
   const stage = generation
-    ? detail.tasks.some(task => task.kind === "vocabularyIntroduction") ? "ready"
-      : detail.translationPreview ? "preparingTask" : "translating"
+    ? detail?.tasks.some(task => task.kind === "vocabularyIntroduction") ? "ready"
+      : detail?.translationPreview ? "preparingTask" : "translating"
     : status === "awaitingObjectReview" ? "ready" : progress?.stage ?? "unknown";
   const stages = generation ? GENERATION_STAGES : ANALYSIS_STAGES;
   const complete = stage === "ready";
@@ -32,6 +33,7 @@ export function SceneProcessingProgress({ detail, stalled = false }: { detail: P
   const lastEvent = useRef("");
 
   useEffect(() => {
+    if (!id) return;
     const key = `${id}:${progress?.startedAt}:${generation}:${stage}:${stalled}`;
     if (lastEvent.current === key) return;
     lastEvent.current = key;

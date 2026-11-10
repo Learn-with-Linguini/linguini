@@ -7,9 +7,9 @@ import "./ISpyLevelHelp.css";
 
 /** Scene vocabulary for every learner; A1/A2 may reveal it when they need support.
  * With ``onPick`` (writing a clue) a tapped word is added to the learner's clue. */
-export function ISpyLevelHelp({ support, languageCode, onPick, canPick = () => true }: {
+export function ISpyLevelHelp({ support, languageCode, onPick, canPick = () => true, showCheatSheet = true }: {
   support: ISpyLevelSupport; languageCode: string;
-  onPick?: (text: string) => void; canPick?: (text: string) => boolean;
+  onPick?: (text: string) => void; canPick?: (text: string) => boolean; showCheatSheet?: boolean;
 }) {
   const words = support.wordBank ?? [];
   const sheet = support.cheatSheet;
@@ -23,7 +23,7 @@ export function ISpyLevelHelp({ support, languageCode, onPick, canPick = () => t
     viewed.current.add(text);
     trackAction("ispy_word_bank_translation_viewed", { learnerLevel: support.learnerLevel });
   };
-  if (!words.length && !sheet) return null;
+  if (!words.length && (!sheet || !showCheatSheet)) return null;
   return <section className="ispy-help" aria-label="Word help">
     {/* Collapsed, only the centred "Show word bank" action shows; the title appears with the words. */}
     <div className={`ispy-help__heading${wordsShown && words.length ? "" : " ispy-help__heading--collapsed"}`}>
@@ -34,7 +34,7 @@ export function ISpyLevelHelp({ support, languageCode, onPick, canPick = () => t
           setWordsShown(next);
           trackAction("ispy_word_bank_toggled", { learnerLevel: support.learnerLevel, shown: next });
         }}>{wordsShown ? "Hide word bank" : "Show word bank"}</Button> : null}
-        {sheet ? <MissionCheatSheetLauncher missionId={sheet.missionId} practiceLevel={sheet.practiceLevel}
+        {sheet && showCheatSheet ? <MissionCheatSheetLauncher missionId={sheet.missionId} practiceLevel={sheet.practiceLevel}
           contentVersion={sheet.contentVersion} languageCode={languageCode} /> : null}
       </div>
     </div>

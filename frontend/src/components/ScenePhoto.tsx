@@ -1,14 +1,16 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { SceneVisual } from "./SceneVisual";
-import type { LanguageItem, Scene } from "../data/types";
+import type { LanguageItem, Scene, SceneSummary } from "../data/types";
 
 type Props = {
-  scene: Scene;
+  scene: Scene | SceneSummary;
   items?: LanguageItem[];
   activeItemId?: string | null;
   activeItemIds?: string[];
   guessItemId?: string | null;
   onMarkerClick?: (item: LanguageItem) => void;
+  /** When provided, other markers stay visible but are not interactive. */
+  interactiveItemIds?: string[];
   onLocationSelect?: (position: { x: number; y: number }) => void;
   locationLabel?: string;
   lazy?: boolean;
@@ -25,13 +27,14 @@ export function ScenePhoto({
   activeItemIds,
   guessItemId,
   onMarkerClick,
+  interactiveItemIds,
   onLocationSelect,
   locationLabel,
   lazy,
   hideWords,
   hideNumbers,
 }: Props) {
-  const markers = items ?? scene.items;
+  const markers = items ?? ("items" in scene ? scene.items : []);
 
   const selectLocation = (event: MouseEvent<HTMLDivElement>) => {
     if (!onLocationSelect || event.currentTarget.querySelector(".scene-image--error")) return;
@@ -65,6 +68,8 @@ export function ScenePhoto({
         <SceneVisual scene={scene} className="scene__art" lazy={lazy} />
         {markers.map((item, index) => {
         const active = item.id === activeItemId || Boolean(activeItemIds?.includes(item.id));
+        const interactive = Boolean(onMarkerClick && !onLocationSelect
+          && (!interactiveItemIds || interactiveItemIds.includes(item.id)));
         const custom = item.id.startsWith("custom-");
         const className = [
           "scene__marker",
@@ -89,13 +94,13 @@ export function ScenePhoto({
           "--marker-offset-y": `${offsetY}px`,
         } as CSSProperties;
         // Placement mode has one keyboard target, without nested marker buttons.
-        return onMarkerClick && !onLocationSelect ? (
+        return interactive ? (
           <button
             key={item.id}
             type="button"
             className={className}
             style={style}
-            onClick={() => onMarkerClick(item)}
+            onClick={() => onMarkerClick?.(item)}
             aria-label={hideWords ? `Marker ${item.marker}` : `Marker ${item.marker}: ${item.word}`}
             aria-pressed={active}
           >

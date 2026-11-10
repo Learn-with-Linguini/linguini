@@ -90,12 +90,12 @@ globalThis.fetch = async (input, init) => {
   throw new Error(`Unexpected request: ${path}`);
 };
 const cleanups = new Set<() => Promise<void>>();
-async function mount() {
+async function mount(props: { label?: string; cameraEnabled?: boolean } = {}) {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = createRoot(container);
   const uploaded: UploadedImage[] = [];
-  const render = () => root.render(h(ImageUpload, { onUploaded: image => { uploaded.push(image); } }));
+  const render = () => root.render(h(ImageUpload, { ...props, onUploaded: image => { uploaded.push(image); } }));
   await act(async () => render());
   cleanups.add(async () => { await act(async () => root.unmount()); container.remove(); });
   return { container, uploaded, render };
@@ -250,7 +250,7 @@ test("camera capture uploads a JPEG with camera provenance and stops the webcam"
     return { getTracks: () => [{ stop: () => { stopped++; } }] };
   });
   const view = await mount();
-  await act(async () => button(view.container, "Open camera").click());
+  await act(async () => button(view.container, "Click").click());
   const preview = view.container.querySelector("video");
   assert.ok(preview);
   assert.equal(button(view.container, "Take photo").disabled, true);
@@ -278,12 +278,43 @@ test("camera capture uploads a JPEG with camera provenance and stops the webcam"
   }
 });
 
+test("touch devices open the device camera instead of the live preview", async () => {
+  let cameraRequested = false;
+  mockCamera(async () => { cameraRequested = true; return { getTracks: () => [] }; });
+  (window as unknown as { matchMedia: unknown }).matchMedia = (query: string) => ({ matches: query === "(pointer: coarse)" });
+  const view = await mount();
+  try {
+    const input = view.container.querySelector<HTMLInputElement>('input[capture="environment"]');
+    assert.ok(input);
+    let opened = 0;
+    input.click = () => { opened++; };
+    await act(async () => button(view.container, "Click").click());
+    assert.equal(opened, 1, "the device's camera app opens");
+    assert.equal(view.container.querySelector("dialog"), null, "the live preview stays closed");
+    assert.equal(cameraRequested, false, "no browser camera permission is requested");
+    Object.defineProperty(input, "files", { value: [new File(["photo"], "photo.jpg", { type: "image/jpeg" })], configurable: true });
+    await act(async () => { input.dispatchEvent(new dom.window.Event("change", { bubbles: true })); });
+    await waitForUpload(view);
+    assert.equal(view.uploaded.length, 1);
+    assert.equal(requests.find(request => request.path.endsWith("/upload-url"))?.body?.source, "camera");
+  } finally {
+    delete (window as unknown as { matchMedia?: unknown }).matchMedia;
+  }
+});
+
+async function waitForUpload(view: { uploaded: unknown[] }) {
+  const deadline = Date.now() + 2_000;
+  while (!view.uploaded.length && Date.now() < deadline) {
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+  }
+}
+
 test("closing a pending permission request stops a camera granted afterwards without uploading", async () => {
   let grant!: (stream: unknown) => void;
   let stopped = 0;
   mockCamera(() => new Promise(resolve => { grant = resolve; }));
   const view = await mount();
-  await act(async () => button(view.container, "Open camera").click());
+  await act(async () => button(view.container, "Click").click());
   await act(async () => button(view.container, "Cancel").click());
   await act(async () => grant({ getTracks: () => [{ stop: () => { stopped++; } }] }));
   assert.equal(stopped, 1);
@@ -296,7 +327,7 @@ for (const action of ["escape", "account change"]) {
     let stopped = 0;
     mockCamera(async () => ({ getTracks: () => [{ stop: () => { stopped++; } }] }));
     const view = await mount();
-    await act(async () => button(view.container, "Open camera").click());
+    await act(async () => button(view.container, "Click").click());
     await act(async () => {
       if (action === "escape") view.container.querySelector("dialog")?.dispatchEvent(new dom.window.Event("cancel", { cancelable: true }));
       else { auth.session.user.id = "learner-b"; view.render(); }
@@ -310,18 +341,39 @@ for (const action of ["escape", "account change"]) {
 test("camera permission failure explains recovery and preserves file upload", async () => {
   mockCamera(async () => { throw new DOMException("Denied", "NotAllowedError"); });
   const view = await mount();
-  await act(async () => button(view.container, "Open camera").click());
+  await act(async () => button(view.container, "Click").click());
   assert.match(view.container.querySelector('[role="alert"]')?.textContent ?? "", /site permissions/);
   await act(async () => button(view.container, "Cancel").click());
   await choose(view.container, new File(["photo"], "photo.jpg", { type: "image/jpeg" }));
   assert.equal(view.uploaded.length, 1);
 });
 
+test("a labelled picker keeps the same Click and Upload controls", async () => {
+  mockCamera(async () => ({ getTracks: () => [] }));
+  const view = await mount({ label: "Add a photo to the room" });
+  assert.equal(view.container.querySelector(".dashed-capture strong")?.textContent, "Add a photo to the room");
+  const files = view.container.querySelector<HTMLInputElement>('input[type="file"]:not([capture])');
+  assert.ok(files);
+  let picked = 0;
+  files.click = () => { picked++; };
+  await act(async () => button(view.container, "Upload").click());
+  assert.equal(picked, 1, "Upload opens the file picker");
+  await act(async () => button(view.container, "Click").click());
+  assert.ok(view.container.querySelector("dialog"), "Click opens the camera");
+  await act(async () => button(view.container, "Cancel").click());
+});
+
+test("Click is disabled when the learner turned the camera off, but Upload still works", async () => {
+  const view = await mount({ cameraEnabled: false });
+  assert.equal(button(view.container, "Click").disabled, true);
+  assert.equal(button(view.container, "Upload").disabled, false);
+});
+
 test("browsers without the camera API offer an actionable error", async () => {
   mockCamera(async () => { throw new Error("Must not be called"); });
   Object.defineProperty(dom.window.navigator, "mediaDevices", { value: undefined, configurable: true });
   const view = await mount();
-  await act(async () => button(view.container, "Open camera").click());
+  await act(async () => button(view.container, "Click").click());
   assert.match(view.container.querySelector('[role="alert"]')?.textContent ?? "", /HTTPS or localhost/);
   assert.equal(button(view.container, "Take photo").disabled, true);
   await act(async () => button(view.container, "Cancel").click());

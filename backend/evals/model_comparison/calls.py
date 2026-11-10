@@ -219,7 +219,9 @@ def run_scene_analysis(cand: Candidate, overrides: Overrides, case: EvalCase) ->
         # Refusing an unusable photo is correct app behaviour; an API failure is not.
         ok = unusable and client.record.error is None
     rec = client.record
-    score = scene_scoring.score_case(case, rec.raw_text or "")
+    score = scene_scoring.score_case(
+        case, rec.raw_text or "", normalize_gemini_coordinates=cand.provider == "gemini"
+    )
     if not score.parsed:
         primary = 0.0
     elif unusable:

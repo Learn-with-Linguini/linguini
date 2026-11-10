@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, retryPracticeAnalysis, reviewPractice, taskAction } from "../lib/api";
+import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, retryPracticeAnalysis, retryPracticeGeneration, reviewPractice, taskAction } from "../lib/api";
 import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
@@ -92,12 +92,12 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       setStalled(true);
     }
   }, [loadSession]);
-  const retryAnalysis = useCallback(async (id: string) => {
+  const retryFailed = useCallback(async (id: string, retry: (id: string) => Promise<PracticeDetail>) => {
     if (busy.current) return;
     busy.current = true; setSaving(true); setError(null);
     let data: PracticeDetail;
     try {
-      try { data = await retryPracticeAnalysis(id); }
+      try { data = await retry(id); }
       catch (error) {
         // A concurrent retry or a changed session: show its current state.
         if (!(error instanceof ApiError && error.code === "practice_conflict")) throw error;
@@ -114,6 +114,8 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     try { await loadSession(id, data); }
     catch (error) { setError(friendlyError(error)); }
   }, [loadSession, queryClient, userId]);
+  const retryAnalysis = useCallback((id: string) => retryFailed(id, retryPracticeAnalysis), [retryFailed]);
+  const retryGeneration = useCallback((id: string) => retryFailed(id, retryPracticeGeneration), [retryFailed]);
   const startSession = useCallback(async (sceneId: string) => {
     const scene = await getSceneDetail(sceneId);
     if (creation.current?.asset !== scene.mediaAssetId) creation.current = { asset: scene.mediaAssetId, key: crypto.randomUUID() };
@@ -220,5 +222,5 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       return false;
     } finally { busy.current = false; setSaving(false); }
   }, [session, loadSession, applySession, withClientProgress]);
-  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, reviewShortfall, micReady, setMicReady };
+  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, retryGeneration, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, reviewShortfall, micReady, setMicReady };
 }

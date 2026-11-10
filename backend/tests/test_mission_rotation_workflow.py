@@ -45,14 +45,14 @@ def test_next_lesson_selects_missions_planned_least_on_same_profile_and_photo(cu
     repository.review(second_id, profile.id, _everything(second_scene))
     second_plan = _planned_missions(engine, second_id)
 
-    assert [item["missionId"] for item in second_plan] == ["M01", "M04", "M05"]
+    assert [item["missionId"] for item in second_plan] == ["M01", "M02", "M04"]
     assert all(len(item["roleplayFacts"]) == 3 for item in second_plan if item["missionId"] in {
         "M04", "M05",
     })
     detail = repository.get(second_id, profile.id)
     assert {
         task.public_content.mission_id for task in detail.tasks
-    } >= {"M04", "M05"}
+    } >= {"M01", "M02", "M04"}
     assert all(
         len(task.public_content.questions) == 3
         for task in detail.tasks if task.public_content.mission_id in {"M04", "M05"}

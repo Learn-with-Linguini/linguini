@@ -49,11 +49,13 @@ let state = defaultState();
 let snapshot = fixture();
 let preview: ChatInvitePreview = { status: "open", creator: { id: "u2", displayName: "Leo" }, targetLanguageCode: "es" };
 const writes: { path: string; body: Record<string, unknown> }[] = [];
+const deletes: string[] = [];
 const reads: string[] = [];
 const replies: (() => Response | Promise<Response>)[] = [];
 const apiPrefix = "/api/v1/friend-chats";
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = String(input).replace("http://api.test", "");
+  if (init?.method === "DELETE") { deletes.push(path); return new Response(null, { status: 204 }); }
   if (init?.method === "POST") {
     writes.push({ path, body: JSON.parse(String(init.body)) });
     if (path === `${apiPrefix}/invites/preview`) return Response.json(preview);
@@ -132,7 +134,7 @@ async function mount(which: "chat" | "list" = "chat", staleTime = 0) {
           surface.h(surface.Route, { path: "/profile", element: surface.h("p", null, "Profile destination") }),
         )))))));
   await render();
-  await waitFor(() => assert.match(bodyText(), which === "list" ? /Your photo chats/ : /Leo|Your I-Spy chat|Chat unavailable/));
+  await waitFor(() => assert.match(bodyText(), which === "list" ? /Play I-Spy with a friend/ : /Leo|Your I-Spy chat|Chat unavailable/));
   return { client, close, render };
 }
 async function selectPhotoWithKeyboard(key = "Enter") {
@@ -142,7 +144,7 @@ async function selectPhotoWithKeyboard(key = "Enter") {
 }
 test.beforeEach(() => {
   state = defaultState(); snapshot = fixture(); preview = { status: "open", creator: { id: "u2", displayName: "Leo" }, targetLanguageCode: "es" };
-  writes.length = 0; reads.length = 0; replies.length = 0; dom.window.sessionStorage.clear(); dom.window._uxa = [];
+  writes.length = 0; deletes.length = 0; reads.length = 0; replies.length = 0; dom.window.sessionStorage.clear(); dom.window._uxa = [];
   delete (dom.window as unknown as { linguiniFriendInvite?: string }).linguiniFriendInvite;
 });
 test.afterEach(async () => { for (const close of [...cleanups]) await close(); });
@@ -237,6 +239,83 @@ test("polling notices a friend joining while the inviter stays on the invitation
   assert.equal(writes.length, 0);
 });
 
+test("the lobby lists both players and tags the signed-in learner as You", async () => {
+  snapshot = fixture({ status: "waiting", revision: 0, creator: { id: "u1", displayName: "Learner" }, partner: null, inviteStatus: "open", activeRound: null });
+  await mount("chat");
+  const players = () => dom.window.document.querySelector('ul[aria-label="Players"]')?.textContent ?? "";
+  await waitFor(() => assert.match(players(), /Learner\s*You/));
+  assert.match(players(), /Your friend\s*Waiting to join/);
+});
+
+test("a joined learner sees their own name tagged You beside the inviter", async () => {
+  snapshot = fixture({ status: "active", revision: 1, activeRound: null });
+  state = { ...defaultState(), user: { ...defaultState().user, displayName: "Mia" } as typeof state.user };
+  await mount("chat");
+  const players = () => dom.window.document.querySelector('ul[aria-label="Players"]')?.textContent ?? "";
+  await waitFor(() => assert.match(players(), /Mia\s*You/));
+  assert.match(players(), /Leo/);
+  assert.doesNotMatch(players(), /Leo\s*You|Waiting to join/);
+});
+
+test("the guesser picks an unlabelled circle, sees only that object's name, and the guess sends only its key", async () => {
+  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47, width: .12, height: .2, word: "la taza", translation: "cup" },
+    { key: "c2", x: .7, y: .3, width: .2, height: .2, word: "la silla", translation: "chair" }] });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Tap the circle on the object you think they mean/));
+  assert.doesNotMatch(bodyText(), /la taza|la silla/);
+  await waitFor(() => assert.equal(dom.window.document.querySelectorAll(".friend-photo__choice").length, 2));
+  const circles = [...dom.window.document.querySelectorAll<HTMLButtonElement>(".friend-photo__choice")];
+  assert.deepEqual(circles.map(item => item.getAttribute("aria-label")), ["Object 1", "Object 2"]);
+  assert.doesNotMatch(dom.window.document.querySelector(".friend-photo")?.textContent ?? "", /taza|cup/);
+  await clickElement(circles[1]);
+  assert.equal(circles[1].getAttribute("aria-pressed"), "true");
+  const details = () => dom.window.document.querySelector(".friend-guess-choice")?.textContent ?? "";
+  assert.match(details(), /la silla/); assert.match(details(), /chair/);
+  assert.doesNotMatch(bodyText(), /la taza/);
+  assert.equal(writes.length, 0);
+  await click("Choose another object");
+  assert.equal(dom.window.document.querySelector(".friend-guess-choice"), null);
+  await clickElement(circles[1]);
+  await click("Submit guess");
+  const write = writes.at(-1)!;
+  assert.match(write.path, /\/rounds\/round1\/guess$/);
+  assert.equal(write.body.choiceKey, "c2");
+  assert.equal(write.body.x, undefined);
+});
+
+test("a circle already guessed wrong is marked and cannot be picked again", async () => {
+  snapshot.activeRound = round({ guessChoices: [{ key: "c1", x: .23, y: .47, word: "la taza" }, { key: "c2", x: .7, y: .3, word: "la silla" }],
+    messages: [...round().messages, { id: "g1", type: "guess", senderId: "u1", x: .7, y: .3, isCorrect: false, createdAt: now }] });
+  await mount();
+  await waitFor(() => assert.equal(dom.window.document.querySelectorAll(".friend-photo__choice").length, 2));
+  const tried = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Object 2, already guessed"]');
+  assert.ok(tried?.disabled);
+  assert.equal(dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Object 1"]')?.disabled, false);
+});
+
+test("after guessing, it is your turn and you can find something else in the same photo", async () => {
+  const finished = round({ status: "completed", completedAt: now });
+  snapshot = fixture({ activeRound: null, rounds: [finished], nextSenderId: "u1", reusablePhotoRoundId: "round1" });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Your turn/));
+  assert.ok(buttons("Use a new photo")[0]);
+  replies.push(() => { snapshot = fixture({ revision: 5, rounds: [finished], activeRound: round({ id: "round2", senderId: "u1", status: "selectingTarget" }) }); return Response.json(snapshot); });
+  await click("Find something else in this photo");
+  const write = writes.at(-1)!;
+  assert.match(write.path, /\/rounds$/);
+  assert.equal(write.body.sourceRoundId, "round1");
+  assert.equal(write.body.mediaAssetId, undefined);
+});
+
+test("while the friend chooses the next object, the guesser waits instead of starting a round", async () => {
+  snapshot = fixture({ activeRound: null, rounds: [round({ senderId: "u1", status: "completed", completedAt: now })], nextSenderId: "u2" });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Leo’s turn/));
+  assert.equal(buttons("Start another I-Spy").length, 0);
+  assert.equal(buttons("Find something else in this photo").length, 0);
+  assert.equal(buttons("Use a new photo").length, 0);
+});
+
 test("choosing a detected object previews its identity and requires an explicit confirmation before changing server state", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] });
   await mount(); await waitFor(() => assert.ok(dom.window.document.querySelector('button[aria-label="Choose cup"]')));
@@ -249,16 +328,44 @@ test("choosing a detected object previews its identity and requires an explicit 
   await waitFor(() => assert.match(bodyText(), /Build your clue/));
 });
 
-test("a custom photo selection requests an identity proposal and confirms it separately", async () => {
+test("the sender checks the analyzed objects, as in practice, before anything is shared", async () => {
+  snapshot.activeRound = round({ senderId: "u1", status: "reviewingObjects", target: null, objects: [], clueOptions: [], messages: [],
+    reviewObjects: [{ key: "cup", label: "cup", x: .2, y: .4, attributes: { color: "red" } }, { key: "chair", label: "chair", x: .7, y: .6 }],
+    reviewRelations: [{ key: "r1", subjectObjectKey: "cup", relation: "under", referenceObjectKey: "chair" }] });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Check the objects/));
+  const list = () => dom.window.document.querySelector('[aria-label="Objects in this photo"]')?.textContent ?? "";
+  assert.match(list(), /1cup/i); assert.match(list(), /2chair/i);
+  assert.equal(buttons("Use this object").length, 0);
+  await clickElement(dom.window.document.querySelector('button[aria-label="Remove marker 2, chair"]'));
+  assert.doesNotMatch(list(), /chair/i);
+  assert.ok(buttons("Restore removed objects")[0]);
+  await setValue(dom.window.document.querySelector<HTMLInputElement>("#friend-review-new-word")!, "window");
+  await click("Select location");
+  await waitFor(() => assert.match(bodyText(), /Tap the centre of window in the image/));
+  const photo = dom.window.document.querySelector('.scene[role="button"]')!;
+  await surface.act(async () => photo.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
+  await waitFor(() => assert.match(list(), /2window/i));
+  replies.push(() => { snapshot = fixture({ revision: 5, activeRound: round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] }) }); return Response.json(snapshot); });
+  await click("Confirm objects");
+  const write = writes.at(-1)!;
+  assert.match(write.path, /\/rounds\/round1\/objects$/);
+  assert.deepEqual(write.body.acceptedObjectKeys, ["cup"]);
+  assert.equal(write.body.addedObjects.length, 1);
+  assert.equal(write.body.addedObjects[0].label, "window");
+  assert.match(write.body.addedObjects[0].key, /^added-/);
+  assert.deepEqual([write.body.addedObjects[0].x, write.body.addedObjects[0].y], [.5, .5]);
+  assert.deepEqual(write.body.relations, []);
+  assert.deepEqual(write.body.objectAttributes.cup, { color: "red" });
+  await waitFor(() => assert.match(bodyText(), /Choose something for your friend to find/));
+});
+
+test("after review, the secret object is chosen only from the confirmed objects", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [] });
-  await mount(); await click("Add another object");
-  replies.push(() => { snapshot = fixture({ revision: 5, activeRound: round({ senderId: "u1", status: "selectingTarget", target: { ...target, key: "custom-proposal" }, messages: [] }) }); return Response.json(snapshot); });
-  await selectPhotoWithKeyboard();
-  await waitFor(() => assert.ok(buttons("Use this object")[0]));
-  assert.equal(writes.length, 1); assert.equal(writes[0].body.confirm, false); assert.equal(writes[0].body.x, .5); assert.equal(writes[0].body.y, .5);
-  replies.push(() => { snapshot.activeRound!.status = "composingClue"; snapshot.revision = 6; return Response.json(snapshot); });
-  await click("Use this object");
-  assert.equal(writes[1].body.objectKey, "custom-proposal"); assert.equal(writes[1].body.confirm, true);
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Choose something for your friend to find/));
+  assert.equal(buttons("Add another object").length, 0);
+  assert.doesNotMatch(bodyText(), /Type what it is|suggest a name/);
 });
 
 test("coordinate guesses require location selection and a separate submit confirmation", async () => {
@@ -304,14 +411,15 @@ test("pending commands and unsent clue drafts are isolated between accounts", as
   assert.equal(writes.length, 0);
 });
 
-test("an A0 clue grows one fact at a time, restores after refresh and reuses the stored mission cheatsheet", async () => {
+test("an A0 clue shows each detail group and grows one fact at a time, restores after refresh and reuses the stored mission cheatsheet", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "composingClue", messages: [] });
   let view = await mount();
   await clickElement(dom.window.document.querySelector('.friend-clue-option__choice'));
   assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es roja.");
   assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.readOnly, true);
   assert.equal(writes.length, 0);
-  await click("Add another detail"); await clickElement(dom.window.document.querySelector('.friend-clue-option__choice'));
+  assert.match(bodyText(), /What does it look like\?/); assert.match(bodyText(), /Where is it\?/);
+  await clickElement(dom.window.document.querySelectorAll('.friend-clue-option__choice')[1]);
   assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es roja. Está debajo de la mesa.");
   await view.close(); view = await mount();
   await waitFor(() => assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es roja. Está debajo de la mesa."));
@@ -325,7 +433,7 @@ test("an A0 clue grows one fact at a time, restores after refresh and reuses the
 test("suggested clues require explicit application, review and send; successful sends clear the unsent draft", async () => {
   snapshot.activeRound = round({ senderId: "u1", status: "composingClue", messages: [] });
   await mount(); replies.push(() => Response.json({ text: "Es pequeña y roja." }));
-  await click("Suggest a clue"); assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "");
+  await click("Stuck? Suggest a clue"); assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "");
   assert.equal(writes.filter(item => item.path.endsWith("/clue")).length, 0);
   await click("Use this suggestion"); assert.equal(dom.window.document.querySelector<HTMLTextAreaElement>("textarea")?.value, "Es pequeña y roja.");
   await click("Review clue"); assert.equal(writes.filter(item => item.path.endsWith("/clue")).length, 0);
@@ -471,4 +579,53 @@ test("friend invitation fragments are consumed before analytics scripts without 
   const recovery = new JSDOM("<!doctype html>", { url: "https://www.learnwithlinguini.com/reset-password#access_token=private&type=recovery", runScripts: "outside-only" });
   recovery.window.eval(startup[1]); assert.equal(recovery.window.location.hash, "#access_token=private&type=recovery");
   invite.window.close(); invalid.window.close(); recovery.window.close();
+});
+
+test("an ended chat can be deleted from your chats after confirming, but an active one cannot", async () => {
+  await mount("list");
+  await waitFor(() => assert.match(bodyText(), /Leo/));
+  assert.equal(buttons("Delete chat").length, 0);
+  snapshot = fixture({ status: "left", activeRound: null });
+  const { close } = await mount("list");
+  await waitFor(() => assert.ok(buttons("Delete chat")[0]));
+  await click("Delete chat");
+  assert.match(bodyText(), /Leo keeps their copy/);
+  assert.equal(deletes.length, 0);
+  await click("Keep it");
+  assert.equal(deletes.length, 0);
+  await click("Delete chat"); await click("Delete chat");
+  await waitFor(() => assert.deepEqual(deletes, ["/api/v1/friend-chats/chat1"]));
+  await waitFor(() => assert.doesNotMatch(bodyText(), /Conversation ended/));
+  await close();
+});
+
+test("an unanswered invite can be deleted, and an ended chat can be deleted from inside it", async () => {
+  snapshot = fixture({ status: "waiting", partner: null, activeRound: null });
+  const list = await mount("list");
+  await waitFor(() => assert.ok(buttons("Delete invite")[0]));
+  await click("Delete invite");
+  assert.match(bodyText(), /The link will stop working/);
+  await list.close();
+  snapshot = fixture({ status: "blocked", activeRound: null });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /This conversation is blocked/));
+  await click("Delete chat"); await click("Delete chat");
+  await waitFor(() => assert.deepEqual(deletes, ["/api/v1/friend-chats/chat1"]));
+  await waitFor(() => assert.match(bodyText(), /Play I-Spy with a friend/));
+});
+
+test("a beginner sees which objects cannot make a beginner clue instead of a failing button", async () => {
+  const lamp = { ...target, key: "lamp", label: "lamp", word: "la lámpara", translation: "lamp", x: .5, y: .5, clueReady: false };
+  snapshot.activeRound = round({ senderId: "u1", status: "selectingTarget", target: null, messages: [], objects: [target, lamp] });
+  await mount();
+  await waitFor(() => assert.match(bodyText(), /Faded markers don’t have enough detail for a beginner clue/));
+  const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Choose lamp, not enough detail for a beginner clue"]');
+  assert.ok(marker?.classList.contains("friend-photo__object--no-clue"));
+  await clickElement(marker);
+  await waitFor(() => assert.match(bodyText(), /Beginner clues need a colour, size, position or a nearby object/));
+  assert.equal(buttons("Use this object").length, 0);
+  await click("Choose another object");
+  await clickElement(dom.window.document.querySelector(`button[aria-label="Choose ${target.translation}"]`));
+  await waitFor(() => assert.ok(buttons("Use this object")[0]));
+  assert.equal(writes.length, 0);
 });

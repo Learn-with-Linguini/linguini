@@ -25,8 +25,8 @@ SCENARIO_PROMPTS = {
     "cafeDrink": "Practise ordering this drink at a café.",
     "cafeFood": "Practise ordering this food at a café.",
     "shop": "Practise buying this at a shop.",
-    "classroom": "Imagine you need to borrow this pen.",
-    "home": "Imagine you ask someone at home to pass you this.",
+    "classroom": "You need to borrow this pen in class.",
+    "home": "You are asking someone at home to pass you this.",
 }
 
 

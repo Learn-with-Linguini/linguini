@@ -28,12 +28,20 @@ export function timeLeft(dayEndsAt: string, now: number) {
   return { remaining, fraction: Math.min(1, remaining / DAY_MS), urgent: remaining > 0 && remaining <= FINAL_HOURS_MS };
 }
 
-export function countdownText(remaining: number): string {
+/** Time left in the day; `compact` drops the "left" wording for tight spaces such as the home card. */
+export function countdownText(remaining: number, compact = false): string {
   if (remaining <= 0) return "Ended";
-  if (remaining < 60_000) return "Ends in under a minute";
+  if (remaining < 60_000) return compact ? "<1m" : "Under a minute left";
   const minutes = Math.floor(remaining / 60_000);
   const hours = Math.floor(minutes / 60);
-  return hours ? `Ends in ${hours}h ${String(minutes % 60).padStart(2, "0")}m` : `Ends in ${minutes}m`;
+  const time = hours ? `${hours}h ${String(minutes % 60).padStart(2, "0")}m` : `${minutes}m`;
+  return compact ? time : `${time} left`;
+}
+
+/** The day's scene changes, so the one-line instruction is built from its title. */
+export function scenePhotoPrompt(title: string): string {
+  const place = title.toLowerCase();
+  return `Photograph ${/^[aeiou]/.test(place) ? "an" : "a"} ${place} and complete the lesson.`;
 }
 
 /** Splits "at the library" so the place itself can be emphasised. */

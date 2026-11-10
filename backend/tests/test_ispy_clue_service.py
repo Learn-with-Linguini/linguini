@@ -558,7 +558,8 @@ def test_both_providers_share_prompt_and_schema() -> None:
 
 
 def test_route_without_a_secret_yields_no_generator() -> None:
-    settings = load_ai_settings(env={"AI_GEMINI_API_KEY": "gem-key"})
+    # The clue route runs on Gemini; an OpenAI key alone does not configure it.
+    settings = load_ai_settings(env={"AI_OPENAI_API_KEY": "sk-openai"})
     assert not settings.is_configured(settings.ispy_clue)
     assert build_ispy_clue_generator(settings, NoOpAITracer()) is None
 

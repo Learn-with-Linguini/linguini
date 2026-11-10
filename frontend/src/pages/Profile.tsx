@@ -1,8 +1,7 @@
-import { InlineLoader } from "../components/LoadingScreen";
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { BasilIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
+import { ChevronDownIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
@@ -15,7 +14,6 @@ import { useAppState } from "../state/useAppState";
 import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
-import { useGamification } from "../state/gamification";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -23,6 +21,14 @@ const socialIcons = {
   x: XIcon,
   linkedin: LinkedInIcon,
 };
+
+/** Longer explanations stay one tap away so they don't fill the page. */
+function ProfileNote({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return <details className="profile-note" onToggle={event => trackAction("profile_note_toggled", { note: id, open: event.currentTarget.open })}>
+    <summary className="profile-note__summary"><strong>{title}</strong><ChevronDownIcon size={20} /></summary>
+    <p>{children}</p>
+  </details>;
+}
 
 export function Profile() {
   const navigate = useNavigate();
@@ -43,7 +49,6 @@ export function Profile() {
   const { learner, user, activeProfile, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
   const practiceLanguages = usePracticeLanguages(learner.languageCode);
-  const basil = useGamification();
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -157,18 +162,6 @@ export function Profile() {
       </section>
       {profileError ? <p role="alert">{profileError}</p> : null}
 
-      <section className="profile-basil" aria-labelledby="profile-basil-heading">
-        <h2 id="profile-basil-heading">Your Basil</h2>
-        {basil.isPending ? <InlineLoader compact label="Loading your Basil" />
-          : basil.isError ? <p role="alert">We couldn’t load your Basil. Reload to retry.</p>
-          : <>
-            <div className="profile-basil__grid">
-              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{basil.data.basil.weekly}</strong></div>
-              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{basil.data.basil.lifetime}</strong></div>
-            </div>
-          </>}
-      </section>
-
       <section className="profile-section">
         <h2>Learning setup</h2>
         <Card plain className="profile-settings-card">
@@ -197,16 +190,6 @@ export function Profile() {
             </span>
             <select disabled={profileSaving || !activeProfile} value={learner.dailyMinutes ?? 10} onChange={event => void saveLanguageProfile({ dailyGoalMinutes: Number(event.target.value) })}>
               {[5, 10, 15, 20].map(minutes => <option key={minutes} value={minutes}>{minutes} min</option>)}
-            </select>
-          </label>
-
-          <label className="profile-setting">
-            <span>
-              <strong>Practice preference</strong>
-              <small>How you prefer to respond</small>
-            </span>
-            <select disabled={profileSaving || !activeProfile} value={activeProfile?.preferredInputMode ?? "both"} onChange={event => void saveLanguageProfile({ preferredInputMode: event.target.value as "speech" | "text" | "both" })}>
-              <option value="both">Both</option><option value="speech">Speaking</option><option value="text">Typing</option>
             </select>
           </label>
         </Card>
@@ -340,22 +323,20 @@ export function Profile() {
         </Card>
       </section>     
 
-      <aside className="profile-ai-note">
-        <strong>How AI helps</strong>
-        <p>
-          Linguini uses AI in a few specific places: it detects the objects in your scene
-          photos, translates that vocabulary into your learning language, and writes the
-          I-Spy clues and practice tasks from the words you keep. Every suggestion is yours
-          to review: you decide what to keep, change, or remove before a lesson starts.
-        </p>
-      </aside>
-
-      <aside className="profile-ai-note">
-        <strong>Your privacy</strong>
-        <p>
-          Your photos are stored securely for learning. Photos you add to a private room are shared with the friend in that room. Your solo photos stay private and are never used to train AI models.
-        </p>
-      </aside>
+      <section className="profile-section" aria-labelledby="ai-privacy-heading">
+        <h2 id="ai-privacy-heading">AI and privacy</h2>
+        <Card plain className="profile-settings-card">
+          <ProfileNote id="ai" title="How AI helps">
+            Linguini uses AI in a few specific places: it detects the objects in your scene
+            photos, translates that vocabulary into your learning language, and writes the
+            I-Spy clues and practice tasks from the words you keep. Every suggestion is yours
+            to review: you decide what to keep, change, or remove before a lesson starts.
+          </ProfileNote>
+          <ProfileNote id="privacy" title="Your privacy">
+            Your photos are stored securely for learning. Photos you add to a private room are shared with the friend in that room. Your solo photos stay private and are never used to train AI models.
+          </ProfileNote>
+        </Card>
+      </section>
 
       <section className="profile-section">
         <h2>Help and feedback</h2>
@@ -408,16 +389,21 @@ export function Profile() {
         </Card>
       </section>
 
-      <Button block className="profile-logout" onClick={() => void logOut()}>
-        Log Out
-      </Button>
-
-      <section className="profile-danger-zone" aria-labelledby="delete-account-heading">
-        <h2 id="delete-account-heading">Delete account</h2>
-        <p>Permanently remove your Linguini account and everything associated with it.</p>
-        <Button variant="quiet" block className="profile-delete-trigger" onClick={() => setDeleteOpen(true)}>
-          Delete my account
-        </Button>
+      <section className="profile-section" aria-labelledby="manage-account-heading">
+        <h2 id="manage-account-heading">Manage my account</h2>
+        <Card plain className="profile-settings-card">
+          <button type="button" className="profile-setting profile-support-link" onClick={() => void logOut()}>
+            <span><strong>Log out</strong></span>
+            <ChevronRightIcon size={20} />
+          </button>
+          <button type="button" className="profile-setting profile-support-link profile-setting--danger" onClick={() => setDeleteOpen(true)}>
+            <span>
+              <strong>Delete my account</strong>
+              <small>Permanently remove your Linguini account and everything associated with it.</small>
+            </span>
+            <ChevronRightIcon size={20} />
+          </button>
+        </Card>
       </section>
 
       {deleteOpen ? (

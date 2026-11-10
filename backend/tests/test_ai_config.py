@@ -23,7 +23,11 @@ from app.ai.settings import AiFeature, AiProvider, load_ai_settings
 
 DEFAULT = Path(__file__).resolve().parents[1] / "ai.toml"
 KEY = "sk-or-test-secret"
+OPENAI_KEY = "sk-openai-test-secret"
+GEMINI_KEY = "gem-test-secret"
 TRANSLATION = "translation-gpt-4o-mini"
+SCENE = "scene-gpt-4-1-mini"
+_OPENROUTER_VENDORS = {"openai": "openai", "gemini": "google"}
 
 
 def example() -> dict:
@@ -53,25 +57,53 @@ def write(tmp_path: Path, data: dict) -> str:
     return str(path)
 
 
+def as_openrouter(data: dict, *deployment_ids: str) -> dict:
+    """Serve deployments through OpenRouter instead of the provider's own API.
+
+    The default file calls OpenAI and Gemini directly; OpenRouter tests use
+    this to keep covering that adapter with otherwise default settings.
+    """
+    for deployment_id in deployment_ids or list(data["deployments"]):
+        deployment = data["deployments"][deployment_id]
+        vendor = _OPENROUTER_VENDORS[deployment["adapter"]]
+        deployment.update(
+            adapter="openrouter",
+            api="responses",
+            model=f"{vendor}/{deployment['model']}",
+            credentials=["openrouter"],
+            upstream_fallback={"allow_fallbacks": True},
+        )
+    return data
+
+
+def openrouter_file(tmp_path: Path) -> str:
+    """The default file with every deployment served through OpenRouter."""
+    return write(tmp_path, as_openrouter(example()))
+
+
 def test_default_file_loads_when_ai_config_file_is_unset():
-    env = {"AI_OPENROUTER_API_KEY": KEY}
+    env = {"AI_OPENAI_API_KEY": OPENAI_KEY, "AI_GEMINI_API_KEY": GEMINI_KEY}
     settings = load_ai_settings(env)
 
     assert settings == load_ai_settings({**env, "AI_CONFIG_FILE": str(DEFAULT)})
     for feature in AiFeature:
         config = settings.feature(feature)
-        assert config.provider is AiProvider.OPENROUTER
+        gemini = feature is AiFeature.ISPY_CLUE
+        assert config.provider is (AiProvider.GEMINI if gemini else AiProvider.OPENAI)
         assert settings.is_configured(config)
-        assert settings.secret_for(config) == KEY
+        assert settings.secret_for(config) == (GEMINI_KEY if gemini else OPENAI_KEY)
     route = settings.ai_config.routes[AiFeature.SCENE_TRANSLATION]
     assert route.policy is SelectionPolicy.PRIORITY
     assert (route.deadline_seconds, route.max_model_calls) == (120, 2)
     assert settings.scene_translation.deployment_id == TRANSLATION
-    deployment = settings.ai_config.deployments["scene-claude-haiku"]
+    deployment = settings.ai_config.deployments[SCENE]
     assert deployment.api is ApiType.RESPONSES
     assert Capability.VISION in deployment.capabilities
     assert deployment.defaults.max_output_tokens == 5000
-    assert settings.ai_config.credentials["openrouter"].env == ("AI_OPENROUTER_API_KEY",)
+    credentials = settings.ai_config.credentials
+    assert credentials["openai-1"].env == ("AI_OPENAI_API_KEY_1", "AI_OPENAI_API_KEY")
+    assert credentials["gemini-1"].env == ("AI_GEMINI_API_KEY_1", "AI_GEMINI_API_KEY")
+    assert credentials["openrouter"].env == ("AI_OPENROUTER_API_KEY",)
 
 
 def test_custom_file_replaces_the_default(tmp_path):
@@ -80,11 +112,11 @@ def test_custom_file_replaces_the_default(tmp_path):
     settings = load_ai_settings({"AI_CONFIG_FILE": write(tmp_path, data)})
 
     assert settings.scene_translation.model_name == "custom/model"
-    assert load_ai_settings({}).scene_translation.model_name == "openai/gpt-4o-mini"
+    assert load_ai_settings({}).scene_translation.model_name == "gpt-5.4-mini"
 
 
 def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatch):
-    data = example()
+    data = as_openrouter(example())
     data["credentials"]["team"] = {
         "adapter": "openrouter",
         "env": ["TEAM_OPENROUTER_KEY"],
@@ -130,6 +162,20 @@ def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatc
     assert seen["options"] == {"allow_fallbacks": True, "fallback_models": ()}
 
 
+def test_deployment_reasoning_effort_reaches_the_model_config():
+    from pydantic import ValidationError
+
+    from app.ai.config.models import GenerationDefaults
+
+    defaults = GenerationDefaults(timeout_seconds=30, reasoning_effort="low")
+    assert registry._model_config("m", defaults, 1500).reasoning_effort == "low"
+    assert registry._model_config(
+        "m", GenerationDefaults(timeout_seconds=30), 1500
+    ).reasoning_effort is None
+    with pytest.raises(ValidationError):
+        GenerationDefaults(timeout_seconds=30, reasoning_effort="extreme")
+
+
 def test_first_non_empty_variable_supplies_the_secret():
     data = example()
     data["credentials"]["openrouter"]["env"] = ["AI_OPENROUTER_API_KEY", "TEAM_KEY"]
@@ -150,8 +196,10 @@ def test_real_mode_names_missing_variables_without_values():
             }
         )
     message = str(raised.value)
-    assert "(set AI_OPENROUTER_API_KEY)" in message
-    assert "sceneAnalysis" in message
+    assert "ispyClue" in message
+    for name in ("AI_GEMINI_API_KEY_1", "AI_GEMINI_API_KEY_2", "AI_GEMINI_API_KEY_3"):
+        assert name in message
+    assert "sceneAnalysis" not in message
     assert "sk-openai-secret" not in message
 
 
@@ -159,7 +207,11 @@ def test_disabled_route_turns_the_feature_off(tmp_path):
     data = example()
     data["routes"]["ispyClue"] = {"enabled": False}
     settings = load_ai_settings(
-        {"AI_MODE": "real", "AI_CONFIG_FILE": write(tmp_path, data), "AI_OPENROUTER_API_KEY": KEY}
+        {
+            "AI_MODE": "real",
+            "AI_CONFIG_FILE": write(tmp_path, data),
+            "AI_OPENAI_API_KEY": OPENAI_KEY,
+        }
     )
 
     assert settings.ispy_clue.provider is AiProvider.NONE
@@ -198,12 +250,12 @@ _DEPLOYMENT = f"deployments/{TRANSLATION}"
         (_set("routes/ispyGuess", _DELETE), "routes.ispyGuess: missing route"),
         (_set("routes/chat", {"enabled": False}), "routes.chat"),
         (_set(f"{_DEPLOYMENT}/credentials", ["nope"]), "unknown credential 'nope'"),
-        (_set(f"{_DEPLOYMENT}/credentials", ["openai"]), "is for adapter 'openai'"),
+        (_set(f"{_DEPLOYMENT}/credentials", ["gemini-1"]), "is for adapter 'gemini'"),
         (_set(f"{_DEPLOYMENT}/adapter", "none"), "unsupported adapter 'none'"),
         (_set(f"{_DEPLOYMENT}/capabilities", ["audio"]), f"deployments.{TRANSLATION}"),
         (_set(f"{_DEPLOYMENT}/model", ""), f"deployments.{TRANSLATION}.model"),
         (
-            _set("deployments/scene-claude-haiku/capabilities", ["text", "jsonSchema"]),
+            _set(f"deployments/{SCENE}/capabilities", ["text", "jsonSchema"]),
             "lacks vision",
         ),
         (_set("credentials/openrouter/env", ["lower-case"]), "credentials.openrouter.env"),
@@ -221,7 +273,7 @@ def test_invalid_configuration_is_rejected(mutate, expected):
 def test_adapter_must_support_the_api():
     data = example()
     deployment = data["deployments"][TRANSLATION]
-    deployment.update(adapter="gemini", credentials=["gemini"])
+    deployment.update(adapter="gemini", credentials=["gemini-1"])
     with pytest.raises(AiConfigurationError, match="does not support api 'responses'"):
         parse_ai_config(data)
 

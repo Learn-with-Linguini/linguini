@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import threading
 import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
@@ -194,6 +195,7 @@ def _unique_by_id(items):
 TERMINAL = {"completed", "abandoned", "failed"}
 MAX_ACTIVE_SESSIONS = 3
 MAX_ANALYSIS_ATTEMPTS = 3
+MAX_GENERATION_ATTEMPTS = 3
 ALLOWED_TRANSITIONS = {
     "created": {"analyzingScene", "abandoned", "failed"},
     "analyzingScene": {"awaitingObjectReview", "abandoned", "failed"},
@@ -203,10 +205,27 @@ ALLOWED_TRANSITIONS = {
     "inProgress": {"completed", "abandoned", "failed"},
     "completed": set(),
     "abandoned": set(),
-    "failed": {"analyzingScene"},
+    "failed": {"analyzingScene", "generatingTasks"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
 ANALYSIS_TIMEOUT = timedelta(minutes=2)
+# A running generation job refreshes ``heartbeatAt`` this often, so the staleness
+# check above only expires a job that has died, however many missions it builds.
+GENERATION_HEARTBEAT_SECONDS = 30
+# A job still running after this long stops refreshing and is expired as stuck.
+GENERATION_MAX_SECONDS = 15 * 60
+
+
+def _generation_retry_delay():
+    """Pause before a failed model step's one automatic retry."""
+    try:
+        return max(0.0, float(os.getenv("TASK_GENERATION_RETRY_DELAY_SECONDS", "2")))
+    except ValueError:
+        return 2.0
+
+
+class _StaleGeneration(Exception):
+    """The session moved on (abandoned, failed or re-claimed) while a job ran."""
 
 
 def _lesson_answer_is_correct(task, question_id, answer):
@@ -428,6 +447,20 @@ def analysis_retryable(session):
     )
 
 
+def generation_attempts(session):
+    return (session.analysis_draft or {}).get("generationAttempts", 1)
+
+
+def generation_retryable(session):
+    """A failed lesson build can rerun on the saved, already-reviewed scene."""
+    return (
+        session.status == "failed"
+        and session.failure_code == "taskGenerationFailed"
+        and session.mode == SessionMode.LESSON
+        and generation_attempts(session) < MAX_GENERATION_ATTEMPTS
+    )
+
+
 def parse_session(row):
     return Session.model_validate({k: row[k] for k in Session.model_fields})
 
@@ -440,10 +473,18 @@ PROCESSING_FAILURE_CODES = {
 
 
 def _stale_processing(status=None):
-    """The one staleness predicate shared by the read check, `_active_row` and `_reap`."""
+    """The one staleness predicate shared by the read check, `_active_row` and `_reap`.
+
+    Processing is stale when neither its start nor its latest generation heartbeat is
+    recent. GREATEST ignores the heartbeat while a job has not written one yet.
+    """
+    draft = sessions.c.analysis_draft
     return and_(
         sessions.c.status == status if status else sessions.c.status.in_(PROCESSING_STATUSES),
-        sessions.c.analysis_draft["processingStartedAt"].astext.cast(DateTime(timezone=True))
+        func.greatest(
+            draft["processingStartedAt"].astext.cast(DateTime(timezone=True)),
+            draft["heartbeatAt"].astext.cast(DateTime(timezone=True)),
+        )
         < utc_now() - ANALYSIS_TIMEOUT,
     )
 
@@ -672,8 +713,10 @@ class PostgresWorkflowRepository:
         values = dict(extra, status=target)
         if target in {"analyzingScene", "generatingTasks"}:
             # The session model has no updated_at; keep the processing clock in its draft.
+            draft = dict(extra.get("analysis_draft", session.analysis_draft) or {})
+            draft.pop("heartbeatAt", None)
             values["analysis_draft"] = {
-                **(extra.get("analysis_draft", session.analysis_draft) or {}),
+                **draft,
                 "processingStartedAt": utc_now().isoformat(),
                 **({"analysisStage": "loadingImage"} if target == "analyzingScene" else {}),
             }
@@ -1426,6 +1469,7 @@ class PostgresWorkflowRepository:
             translations=translations,
             translation_preview=(draft or {}).get("translationPreview"),
             analysis_retryable=analysis_retryable(session),
+            generation_retryable=generation_retryable(session),
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
@@ -2154,7 +2198,10 @@ class PostgresWorkflowRepository:
             if claim is None:
                 return
             revision = claim.revision
-            (generate or self._generate_tasks)(claim)
+            with self._generation_heartbeat(claim):
+                (generate or self._generate_tasks)(claim)
+        except _StaleGeneration:
+            logger.info("Stopped task generation for session %s: it moved on.", session_id)
         except Exception:
             logger.exception("Task generation failed for session %s.", session_id)
             try:
@@ -2172,6 +2219,112 @@ class PostgresWorkflowRepository:
                     "Could not record the task generation failure for session %s.",
                     session_id,
                 )
+
+    def retry_generation(self, session_id, profile_id):
+        """Rebuild a failed lesson from the saved photo and the learner's reviewed objects."""
+        with self.transaction() as c:
+            session = self._session(c, session_id, profile_id)
+            if session.status == "generatingTasks":
+                # A concurrent retry already claimed the session.
+                return self._detail(c, session)
+            if not generation_retryable(session):
+                raise PracticeConflictError("This practice cannot rebuild its lesson.")
+            self._check_active_limit(c, profile_id)
+            if c.execute(
+                select(sessions.c.id).where(
+                    sessions.c.user_id == self.user_id,
+                    sessions.c.language_profile_id == profile_id,
+                    sessions.c.scene_media_asset_id == session.scene_media_asset_id,
+                    sessions.c.mode == SessionMode.LESSON,
+                    sessions.c.status.not_in(TERMINAL),
+                )
+            ).first():
+                raise PracticeConflictError("This photo already has an open practice.")
+            draft = dict(session.analysis_draft or {})
+            draft["generationAttempts"] = generation_attempts(session) + 1
+            claimed = self._transition(
+                c, session, "generatingTasks", failure_code=None, analysis_draft=draft
+            )
+            detail = self._detail(c, claimed)
+        self.background.submit(self._run_task_generation, session_id, profile_id)
+        return detail
+
+    @contextmanager
+    def _generation_heartbeat(self, claim):
+        """Refresh ``heartbeatAt`` while ``claim``'s job runs, off the user lock.
+
+        A slow but live job keeps its session fresh; a crashed process or a lost
+        background job stops beating and is expired by the staleness check.
+        """
+        stop = threading.Event()
+
+        def beat():
+            deadline = time.monotonic() + GENERATION_MAX_SECONDS
+            while not stop.wait(GENERATION_HEARTBEAT_SECONDS) and time.monotonic() < deadline:
+                try:
+                    with self.engine.begin() as c:
+                        c.execute(
+                            update(sessions)
+                            .where(
+                                sessions.c.id == claim.session_id,
+                                sessions.c.user_id == self.user_id,
+                                sessions.c.status == "generatingTasks",
+                                sessions.c.generation_revision == claim.revision,
+                            )
+                            .values(
+                                analysis_draft=sessions.c.analysis_draft.op("||")(
+                                    {"heartbeatAt": utc_now().isoformat()}
+                                )
+                            )
+                        )
+                except Exception:
+                    logger.warning(
+                        "Could not refresh the generation heartbeat for session %s.",
+                        claim.session_id,
+                        exc_info=True,
+                    )
+
+        thread = threading.Thread(
+            target=beat, name=f"generation-heartbeat-{claim.session_id}", daemon=True
+        )
+        thread.start()
+        try:
+            yield
+        finally:
+            stop.set()
+            thread.join(timeout=5)
+
+    def _ensure_current(self, claim):
+        """Raise ``_StaleGeneration`` once ``claim`` no longer owns its session."""
+        with self.read_connection() as c:
+            row = c.execute(
+                select(sessions.c.status, sessions.c.generation_revision).where(
+                    sessions.c.id == claim.session_id, sessions.c.user_id == self.user_id
+                )
+            ).one_or_none()
+        if row is None or row.status in TERMINAL or row.generation_revision != claim.revision:
+            raise _StaleGeneration(str(claim.session_id))
+
+    def _with_retry(self, stage, claim, call):
+        """Run one model step, retrying it once after a short pause if it fails.
+
+        Provider outages, rate limits and unusable output are usually transient, so a
+        fresh call (with a fresh deadline and call budget) often succeeds.
+        """
+        try:
+            return call()
+        except _StaleGeneration:
+            raise
+        except Exception:
+            logger.warning(
+                "Task generation %s failed for session %s; retrying once.",
+                stage,
+                claim.session_id,
+                exc_info=True,
+            )
+        time.sleep(_generation_retry_delay())
+        self._ensure_current(claim)
+        return call()
 
     def _review(self, session_id, profile_id, request):
         with self.transaction() as c:
@@ -2791,8 +2944,12 @@ class PostgresWorkflowRepository:
         translated_scene = None
         if self.translator:
             with _timed("translation", session_id):
-                translated_scene = self.translator.translate(
-                    payload, **claim.generation_options, language_context=context,
+                translated_scene = self._with_retry(
+                    "translation",
+                    claim,
+                    lambda: self.translator.translate(
+                        payload, **claim.generation_options, language_context=context,
+                    ),
                 )
 
         # Checkpoint: commit translations and task 1 before the slower lesson
@@ -3072,10 +3229,16 @@ class PostgresWorkflowRepository:
         Mission lessons come only from packs: a planned mission the session's pack does not
         own fails generation into the normal recoverable error state. A role-play mission
         whose saved facts are no longer valid is skipped and recorded in ``skipped``.
+
+        Each mission's model call is retried once. A mission that still fails is skipped
+        (``generationFailed``) so the learner keeps the missions that did build; only when
+        none built and at least one failed does the whole generation fail (retryably), with
+        the last mission's own error.
         """
         language = claim.profile["target_language_code"]
         context = getattr(claim, "language_context", None)
         lessons = []
+        failure = None
         for planned in claim.missions:
             mission = lesson_mission(planned)
             if context is None or not context.owns(mission.mission_id):
@@ -3092,9 +3255,8 @@ class PostgresWorkflowRepository:
                 raise LearningTaskGenerationError(
                     f"{mission.mission_id} pack generation needs a configured provider."
                 )
-            # Missions reach this point through the existing eligibility/review flow.
-            # A pack failure propagates to the normal recoverable generation error state.
-            built = self.learning_task_generator.generate_pack_lesson(
+            generate = partial(
+                self.learning_task_generator.generate_pack_lesson,
                 mission, language, objects, relations, words, translated_scene,
                 session_id=claim.session_id, review_markers=claim.review_markers or {},
                 cache_scope=claim.cache_scope,
@@ -3108,7 +3270,23 @@ class PostgresWorkflowRepository:
                     "progress": claim.mission_progress or {},
                 },
             )
+            try:
+                with _timed(f"{mission.mission_id} lesson", claim.session_id):
+                    built = self._with_retry(f"{mission.mission_id} lesson", claim, generate)
+            except _StaleGeneration:
+                raise
+            except Exception as error:
+                logger.exception(
+                    "%s lesson failed twice for session %s; skipping that mission.",
+                    mission.mission_id,
+                    claim.session_id,
+                )
+                skipped.append(dict(missionId=mission.mission_id, reason="generationFailed"))
+                failure = error
+                continue
             lessons.extend(built if isinstance(built, list) else [built])
+        if not lessons and failure is not None:
+            raise failure
         return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):

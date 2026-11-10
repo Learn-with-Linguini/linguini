@@ -375,7 +375,7 @@ test("Play opens persistent friend chats without Sauce resources", async () => {
   assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 5);
   assert.doesNotMatch(text(), /Coming soon/);
   await click("Play with friends");
-  await waitFor(() => assert.ok(button("Play with a friend")));
+  await waitFor(() => assert.ok(button("Create invite link")));
   assert.doesNotMatch(text(), /Sauce/);
   assert.ok(readPaths.includes("/api/v1/friend-chats"));
   assert.ok(!readPaths.includes("/api/v1/me/game-resources"));

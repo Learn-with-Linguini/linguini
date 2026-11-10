@@ -67,7 +67,7 @@ export function Hero() {
               <span className={styles.lang}>German</span> or <span className={styles.lang}>beginner Korean</span>.</p>
             <div className={styles.ctas}>
               <a href={appLinks.signUp} className="btn">
-                Join the public beta
+                Get Started
               </a>
               <a className={`btn btn--teal ${styles.uploadCta}`} href="/demo">Try a photo lesson</a>
             </div>

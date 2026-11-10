@@ -327,7 +327,27 @@ def test_schema_encodes_agreement_forms_as_strict_pairs() -> None:
     assert agreement_schema["type"] == "array"
     assert agreement_schema["items"]["additionalProperties"] is False
     assert agreement_schema["items"]["required"] == ["key", "value"]
+    assert agreement_schema["items"]["properties"]["key"]["enum"] == [
+        "masculine", "feminine", "neuter",
+    ]
+    assert "gender" in agreement_schema["description"]
     assert '"additionalProperties": {' not in json.dumps(build_scene_translation_schema())
+
+
+def test_number_keyed_agreement_forms_are_dropped_not_fatal() -> None:
+    output = json.loads(VALID_OUTPUT)
+    output["attributes"][0]["agreementForms"] = [
+        {"key": "Masculine", "value": "rojo"},
+        {"key": "feminine", "value": "roja"},
+        {"key": "singular", "value": "rojo"},
+        {"key": "plural", "value": "rojos"},
+    ]
+    client = FakeTextClient([json.dumps(output)])
+
+    result = service(client).translate(PAYLOAD)
+
+    assert result.attributes[0].agreement_forms == {"masculine": "rojo", "feminine": "roja"}
+    assert len(client.requests) == 1
 
 
 def test_literal_null_metadata_is_normalized_for_non_objects() -> None:

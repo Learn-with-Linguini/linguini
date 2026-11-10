@@ -1,35 +1,53 @@
 mission_id = "M02"
 practice_level = "A0"
 content_version = 1
-title = "Find a named object"
+title = "Say where it is"
 
 [photo_requirements]
 media_sources = ["preloaded", "camera", "userUpload"]
 min_confirmed_objects = 2
+min_relations = 1
+relations = ["on", "under", "next_to", "in_front_of", "behind"]
 
 [objective]
-objective_id = "find-named-object"
-can_do = "I can find an object in my photo when I hear or read its name."
+objective_id = "locate-object"
+can_do = "I can understand and build a simple sentence about where an object is."
 
 [[objective.targets]]
 target_id = "recognise-name"
-summary = "Tell two familiar object names apart."
+summary = "Recognise the familiar object names used inside the location sentence."
 evidence_types = ["recognition"]
 
 [[objective.targets]]
-target_id = "find-object"
-summary = "Find the object a heard or written name refers to."
+target_id = "recognise-adjective"
+summary = "Recognise a familiar visible detail when it appears in a description."
 evidence_types = ["recognition"]
 
+[[objective.targets]]
+target_id = "recognise-preposition"
+summary = "Recognise a familiar position word used between two object names."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "find-described-object"
+summary = "Choose and build the location sentence that matches the photo."
+evidence_types = ["recognition", "construction"]
+
 [[language_patterns]]
-pattern_id = "find-object"
-target_id = "find-object"
-structure = "[Find] [the] [noun]."
-examples = { es = ["Busca la taza."], fr = ["Trouve la tasse."], de = ["Finde die Tasse."], ko = ["컵을 찾으세요."] }
+pattern_id = "adjective-description"
+target_id = "recognise-adjective"
+structure = "[article] [adjective] [noun] / [article] [noun] [adjective]"
+examples = { es = ["la taza roja"], fr = ["la tasse rouge"], de = ["die rote Tasse"], ko = ["빨간 컵"] }
+
+[[language_patterns]]
+pattern_id = "location-description"
+target_id = "recognise-preposition"
+structure = "[object] [position] [reference object]"
+examples = { es = ["La taza está sobre la mesa."], fr = ["La tasse est sur la table."], de = ["Die Tasse steht auf dem Tisch."], ko = ["컵이 책상 위에 있어요."] }
 
 [teaching]
 task_sequence = ["vocabularyIntroduction", "grammarLesson"]
-teach_before_assessment = ["recognise-name", "find-object"]
+teach_before_assessment = ["recognise-preposition", "find-described-object"]
 max_new_words = 3
 
 [[teaching.supports]]
@@ -48,15 +66,15 @@ availability = "always"
 counts_as_assistance = false
 
 [[evaluation_criteria]]
-criterion_id = "finds-named-object"
-target_id = "find-object"
-description = "Finds the named object in the photo."
-evidence_types = ["recognition"]
+criterion_id = "finds-described-object"
+target_id = "find-described-object"
+description = "Chooses or builds the sentence that matches a confirmed object relation."
+evidence_types = ["recognition", "construction"]
 
 [[evaluation_criteria]]
-criterion_id = "distinguishes-names"
-target_id = "recognise-name"
-description = "Tells two familiar names apart."
+criterion_id = "preposition-matches-relation"
+target_id = "recognise-preposition"
+description = "Matches the taught position phrase to the confirmed object relation."
 evidence_types = ["recognition"]
 
 [expected_performance]
@@ -64,5 +82,6 @@ min_assessed_questions = 4
 min_correct_ratio = 0.67
 min_independent_correct = 2
 required_target_groups = [
-  ["find-object"],
+  ["recognise-preposition"],
+  ["find-described-object"],
 ]

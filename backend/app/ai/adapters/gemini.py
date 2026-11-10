@@ -44,6 +44,13 @@ _REFUSAL_FINISH_REASONS = frozenset(
 )
 
 _RETRY_INFO_TYPE = "type.googleapis.com/google.rpc.RetryInfo"
+_THINKING_LEVELS = {
+    "none": types.ThinkingLevel.MINIMAL,
+    "minimal": types.ThinkingLevel.MINIMAL,
+    "low": types.ThinkingLevel.LOW,
+    "medium": types.ThinkingLevel.MEDIUM,
+    "high": types.ThinkingLevel.HIGH,
+}
 
 
 def _reason_name(reason: Any) -> str | None:
@@ -180,6 +187,12 @@ class GeminiClient:
         sampling = {"temperature": self._config.temperature}
         if model_version and tuple(map(int, model_version.groups())) >= (3, 5):
             sampling = {}
+        thinking = {}
+        if self._config.reasoning_effort is not None:
+            # Gemini 3 cannot switch thinking off; "none" asks for the least it allows.
+            thinking = {"thinking_config": types.ThinkingConfig(
+                thinking_level=_THINKING_LEVELS[self._config.reasoning_effort]
+            )}
         deadline = CallDeadline(
             min(self._config.timeout_seconds, timeout_seconds)
             if timeout_seconds is not None
@@ -191,6 +204,7 @@ class GeminiClient:
             config = types.GenerateContentConfig(
                 system_instruction=request.system_prompt,
                 **sampling,
+                **thinking,
                 response_mime_type="application/json",
                 response_json_schema=_gemini_json_schema(request.json_schema),
                 max_output_tokens=self._config.max_output_tokens,

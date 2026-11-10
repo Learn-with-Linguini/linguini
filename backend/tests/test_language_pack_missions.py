@@ -281,19 +281,12 @@ def _two_cabinets(*labels):
     return pack, *session_inputs(pack, objects, [], words, translated, {})
 
 
-def test_m01_a0_contrasts_objects_with_different_names():
+def test_m01_a0_needs_two_objects_with_translated_details():
     from app.language_packs.lessons.m01 import plan_lesson
 
     pack, facts, vocabulary = _two_cabinets()
-    labels = {obj.fact_id: obj.label for obj in facts.scene_facts.objects}
-    plan = plan_lesson(pack, "A0", facts, vocabulary, "seed")
-    focus = [labels[plan[f"matchName-{i}"][0]["bindings"]["object"]] for i in (1, 2)]
-    assert sorted(focus) == ["cabinet", "window"]
-    for index in (1, 2):
-        spec = plan[f"confirmName-{index}"][0]
-        named, shown = (labels[spec["bindings"][role]] for role in ("object", "shown"))
-        # A false "Is this a cabinet?" never points at the other cabinet.
-        assert (named == shown) is spec["truth"]
+    with pytest.raises(ValueError, match="translated details"):
+        plan_lesson(pack, "A0", facts, vocabulary, "seed")
 
 
 def test_m01_a0_needs_two_names_not_two_objects():

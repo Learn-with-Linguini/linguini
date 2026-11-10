@@ -219,7 +219,11 @@ def dispatch(level, runtime, provider, *, cache=None, sid=100):
         cache_scope=CacheScope.user("mock-user"),
         language_context=context,
     )
-    repo = SimpleNamespace(learning_task_generator=service(provider, cache))
+    # One model call per mission, as before automatic retries.
+    repo = SimpleNamespace(
+        learning_task_generator=service(provider, cache),
+        _with_retry=lambda _stage, _claim, call: call(),
+    )
     return PostgresWorkflowRepository._mission_lessons(
         repo, claim, objects, relations, words, translated, []
     )
@@ -315,7 +319,7 @@ def test_a1_same_colour_scene_uses_model_mcq_contrasts_mocked(runtime):
     assert question.interaction_type == "multipleChoice"
     assert len(question.options) >= 2
     labels = {option.label.casefold() for option in question.options}
-    assert "roja" in labels
+    assert "rojo" in labels
     assert len(labels) == len(question.options)
     expected = task.answer_key.correct_option_ids[question.question_id]
     for option in question.options:
@@ -500,7 +504,7 @@ def test_duplicate_object_names_are_not_contrasted_and_keep_instance_bindings(ru
     assert [q.scene_object_id for q in task.public_content.questions] == [
         objects[0].id,
         objects[2].id,
-        objects[0].id,
+        objects[2].id,
         objects[2].id,
     ]
     assert task.answer_key.question_evaluations[0].vocabulary_item_ids == [words[0].id]
@@ -582,7 +586,7 @@ def test_required_aligned_romanization_uses_generated_spanish_sentences(runtime,
     runtime[3].objects[0].translation = "tacita"
     (task,) = dispatch("A0", runtime, MockRomanizedSpanishProvider())
     assert "tacita" in task.answer_key.correct_option_ids["buildIdentify-1"]
-    assert "tacita." in task.public_content.questions[2].romanizations
+    assert "tacita" in task.public_content.questions[2].romanizations
     with pytest.raises(LearningTaskGenerationError, match="romanization"):
         dispatch("A0", runtime, MockSpanishProvider())
 

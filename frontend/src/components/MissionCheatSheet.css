@@ -29,6 +29,22 @@
   background: #35aaa7;
 }
 
+.cheatsheet-trigger:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .cheatsheet-trigger {
+    width: 44px;
+    padding: 0;
+  }
+
+  .cheatsheet-trigger span {
+    display: none;
+  }
+}
+
 .cheatsheet-backdrop {
   position: fixed;
   z-index: 130;
@@ -41,22 +57,47 @@
 }
 
 .cheatsheet-sheet {
+  display: flex;
+  flex-direction: column;
   width: min(100%, 600px);
   max-height: 90vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--space-3) var(--space-5) var(--space-8);
+  overflow: hidden;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: var(--butter);
   box-shadow: 0 -12px 36px rgba(38, 50, 56, 0.2);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cheatsheet-sheet--dragging {
+  transition: none;
+}
+
+.cheatsheet-sheet__drag-zone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-height: 36px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.cheatsheet-sheet--dragging .cheatsheet-sheet__drag-zone {
+  cursor: grabbing;
 }
 
 .cheatsheet-sheet__handle {
   width: 44px;
   height: 5px;
-  margin: 0 auto var(--space-4);
   border-radius: var(--radius-pill);
   background: var(--line);
+}
+
+.cheatsheet-sheet__content {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-5) calc(var(--space-8) + env(safe-area-inset-bottom));
 }
 
 .cheatsheet-sheet__title {
@@ -324,6 +365,26 @@
   .cheatsheet-tip small { grid-column: 1; }
 }
 
+@media (max-width: 679px) {
+  .cheatsheet-sheet {
+    height: 75dvh;
+    max-height: 75dvh;
+  }
+
+  .cheatsheet-sheet__content {
+    padding-inline: var(--space-4);
+  }
+
+  .cheatsheet-concept {
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .cheatsheet-sheet__title {
+    margin-bottom: var(--space-4);
+  }
+}
+
 @media (min-width: 680px) {
   .cheatsheet-backdrop { align-items: center; padding: var(--space-6); }
   .cheatsheet-sheet { border-radius: var(--radius-lg); }
@@ -336,4 +397,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cheatsheet-backdrop { animation: none; }
+  .cheatsheet-sheet { transition: none; }
 }

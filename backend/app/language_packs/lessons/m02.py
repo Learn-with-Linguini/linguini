@@ -13,8 +13,8 @@ from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_a0 import (
     INSTRUCTIONS,
     A0LessonResult,
+    build_question,
     choice_question,
-    marker_question,
 )
 from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
 from app.ai.features.learning_tasks.mission_m02 import (
@@ -41,7 +41,6 @@ PURPOSES = {
 A2_SECTIONS = (
     "Task 1 · Understand the clues", "Task 2 · Find the object", "Task 3 · Name the target",
 )
-ROLEPLAY_PREMISE = "Role-play: a friend is looking for an object in the photo."
 MAX_MARKERS = 4
 MAX_PLACES = 4
 # A confirmed relation also rules out its inverse on the same pair.
@@ -215,17 +214,37 @@ def plan_lesson(pack, level, facts, vocabulary, seed=""):
 
 
 def _plan_a0(specs, facts, vocabulary, seed):
-    objects = usable_objects(facts, vocabulary)
-    if len(objects) < 2:
-        raise ValueError("M02 A0 needs two confirmed translated objects")
-    for index, (target, other) in enumerate(_a0_focus(objects, seed), 1):
-        specs.add(f"findNamed-{index}", "answer", "find-object", {"object": target.fact_id})
-        specs.add(f"chooseName-{index}", "name", "identify-object",
-                  {"object": target.fact_id}, suffix="target")
-        specs.add(f"chooseName-{index}", "name", "identify-object",
-                  {"object": other.fact_id}, suffix="other")
-        # The listening question replays the target's generated name.
-        specs.skip(f"listenSelect-{index}")
+    relations = [
+        relation for relation in facts.scene_facts.relations
+        if _relation_alternatives(relation, facts, vocabulary)
+    ]
+    if not relations:
+        raise ValueError("M02 A0 needs a translated relation and a contrasting position")
+    random.Random(f"{seed}:M02-A0-relations").shuffle(relations)
+    selected = relations[:2] if len(relations) >= 2 else relations * 2
+    for index, relation in enumerate(selected, 1):
+        statement = {
+            "subject": relation.subject_fact_id,
+            "reference": relation.reference_fact_id,
+            "relation": relation.fact_id,
+        }
+        place = {
+            "target": relation.subject_fact_id,
+            "reference": relation.reference_fact_id,
+            "relation": relation.fact_id,
+        }
+        alternative = _relation_alternatives(relation, facts, vocabulary)[0][1]
+        specs.add(f"findNamed-{index}", "answer", "scene-location", statement,
+                  suffix="correct")
+        specs.add(f"findNamed-{index}", "option", "scene-location", statement, truth=False,
+                  counterfactual={"relation": alternative.term_id}, suffix="other")
+        specs.add(f"chooseName-{index}", "answer", "location-phrase", place,
+                  suffix="correct")
+        specs.add(f"chooseName-{index}", "option", "location-phrase", place, truth=False,
+                  counterfactual={"relation": alternative.term_id}, suffix="other")
+        specs.add(f"listenSelect-{index}", "answer", "scene-location", statement)
+        specs.add(f"listenSelect-{index}", "question", "where-question",
+                  {"subject": relation.subject_fact_id})
 
 
 def _plan_a1(specs, facts, vocabulary, seed):
@@ -297,16 +316,32 @@ def build_lesson(level, pack, facts, vocabulary, plan, accepted, *, builder_sele
 def _build_a0(ctx):
     translations, focus = {}, []
     for index in (1, 2):
-        find = ctx.sentence_by_id(f"findNamed-{index}", "answer")
-        name = ctx.sentence_by_id(f"chooseName-{index}", "target")
-        other = ctx.sentence_by_id(f"chooseName-{index}", "other")
-        row = ctx.by_fact[ctx.spec(f"findNamed-{index}").bindings["object"]]
-        row.update(find=find.text, name=name.text)
-        translations.update({find.text: find.translation, name.text: name.translation,
-                             other.text: other.translation})
-        focus.append((row, other))
+        correct = ctx.sentence_by_id(f"findNamed-{index}", "correct")
+        wrong = ctx.sentence_by_id(f"findNamed-{index}", "other")
+        place = ctx.sentence_by_id(f"chooseName-{index}", "correct")
+        other_place = ctx.sentence_by_id(f"chooseName-{index}", "other")
+        where = ctx.sentence_by_id(f"listenSelect-{index}", "question")
+        spec = ctx.spec(f"findNamed-{index}")
+        row = ctx.by_fact[spec.bindings["subject"]]
+        row.update(find=correct.text, name=place.text, isIt=correct.text,
+                   identify=correct.text)
+        translations.update({
+            correct.text: correct.translation, wrong.text: wrong.translation,
+            place.text: place.translation, other_place.text: other_place.translation,
+            where.text: where.translation,
+        })
+        frame = correct.text.replace(place.text, "___", 1)
+        frame_translation = correct.translation.replace(place.translation, "___", 1)
+        if frame == correct.text:
+            raise ValueError("M02 A0 location phrase must appear in its complete sentence")
+        if correct.romanization and place.romanization:
+            latin_frame = latin_of(correct).replace(latin_of(place), "___", 1)
+            if latin_frame != latin_of(correct):
+                ctx.extra_spellings[frame] = latin_frame
+        translations[frame] = frame_translation
+        focus.append((row, correct, wrong, place, other_place, where, frame))
     payload = ctx.payload(
-        focus=[row["key"] for row, _ in focus],
+        focus=[row["key"] for row, *_ in focus],
         approvedObjects=ctx.rows,
         approvedTranslations=translations,
         approvedSentenceChunks=list(translations),
@@ -316,16 +351,22 @@ def _build_a0(ctx):
         yesNo=[ctx.label("yes-answer"), ctx.label("no-answer")],
     )
     questions = []
-    for index, (row, other) in enumerate(focus, 1):
-        section = f"Task {index} · {row['label']}"
+    for index, (row, correct, wrong, place, other_place, where, frame) in enumerate(focus, 1):
+        section = f"Task {index} · Locate the {row['label']}"
+        built = build_question(
+            payload, "listenSelect", section, row, where.text,
+            correct.text, row["noun"], index=index,
+        )
+        built["token_bank"] = ctx.chunks(correct, ctx.chunks(wrong)["answer_chunks"][:1],
+                                         salt=f"M02-A0-{index}")["token_bank"]
         questions += [
-            marker_question(payload, "findNamed", section, row, row["find"], index=index),
-            choice_question(payload, "chooseName", section, row, INSTRUCTIONS["chooseName"],
-                             [row["name"], other.text], row["name"], index=index),
-            marker_question(payload, "listenSelect", section, row, row["name"],
-                             index=index, listen_first=True),
+            choice_question(payload, "findNamed", section, row, INSTRUCTIONS["findNamed"],
+                            [correct.text, wrong.text], correct.text, index=index),
+            choice_question(payload, "chooseName", section, row, frame,
+                            [place.text, other_place.text], place.text, index=index),
+            built,
         ]
-    result = A0LessonResult(title="Find the named objects", questions=questions)
+    result = A0LessonResult(title="Say where it is", questions=questions)
     task = a0_lesson_task(ctx.session_id, ctx.mission, payload, result, ctx.vocabulary_ids)
     return result, task, payload
 
@@ -457,7 +498,7 @@ def _build_a2(ctx):
         choice("m02-q1", "readAttributeClue", meaning_prompt,
                [("meaning-correct", meanings[0]),
                 *((f"meaning-{n}", text) for n, text in enumerate(meanings[1:], 1))],
-               "meaning-correct", s1, roleplay_premise=ROLEPLAY_PREMISE, option_language="en",
+               "meaning-correct", s1, option_language="en",
                translation="Choose the English meaning of the clue."),
         building("m02-q2", "buildLocationClue", ctx.label("build-location-clue"),
                  location_clue, location, s1),
@@ -467,7 +508,7 @@ def _build_a2(ctx):
         choice("m02-q4", "clarifyDistractor",
                ctx.label("friend-points", marker=str(distractor["marker"])),
                clarifications, "clarify-correct", s2,
-               roleplay_premise=ROLEPLAY_PREMISE, group_object_ids=[distractor["key"]]),
+               group_object_ids=[distractor["key"]]),
         building("m02-q5", "buildTargetSentence", ctx.label("name-and-locate"),
                  target_sentence, described, s3),
     ]

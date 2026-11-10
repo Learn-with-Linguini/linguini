@@ -13,7 +13,8 @@ import { BasilIcon } from "../components/icons";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 import { trackAction } from "../lib/analytics.ts";
 import { useMissionProgress } from "../state/gamification";
-import { batchAccuracy } from "../lib/gamification";
+import { batchAccuracy, lessonFinishScore } from "../lib/gamification";
+import { celebrateFinish } from "../lib/answerCelebration";
 import { BadgeEarnedModal, SummaryBadges } from "../components/SummaryBadges";
 
 export function SessionSummary() {
@@ -37,6 +38,7 @@ export function SessionSummary() {
   const batches = missionProgress.data ?? [];
   const earnedBadges = batches.filter(batch => batch.badgeEarned);
   const [badgePopupOpen, setBadgePopupOpen] = useState(false);
+  const celebrated = useRef(false);
   // The survey waits until any badge celebration has been seen.
   const badgesSettled = !completed || (!missionProgress.isPending && !badgePopupOpen);
   // Prompt after account's first lesson (1) and every 5 lessons afterwards (6, 11, 16...)
@@ -53,6 +55,15 @@ export function SessionSummary() {
       completedLessonsCount: data.completedLessonsCount,
     });
   }, [completed, data, scene.sessionId]);
+
+  useEffect(() => {
+    // Wait for the graded mission results so a perfect lesson gets its fuller shower.
+    if (!completed || !data || missionProgress.isPending || celebrated.current) return;
+    celebrated.current = true;
+    const score = lessonFinishScore(missionProgress.data ?? [], data.progress.skippedTaskCount);
+    celebrateFinish(score);
+    trackAction("finish_celebration_shown", { screen: "lesson", score });
+  }, [completed, data, missionProgress.isPending, missionProgress.data]);
 
   useEffect(() => {
     if (!completed || !missionProgress.data) return;

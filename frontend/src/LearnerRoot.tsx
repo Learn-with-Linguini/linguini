@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./state/Auth";
 import App from "./App";
+import { PastaShowerHost } from "./components/PastaShower";
 import "./styles/global.css";
 
 const queryClient = new QueryClient({
@@ -20,6 +21,7 @@ export default function LearnerRoot() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <App />
+        <PastaShowerHost />
       </AuthProvider>
     </QueryClientProvider>
   );

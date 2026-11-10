@@ -19,8 +19,6 @@ from app.schemas.roleplay import parse_roleplay_facts
 from app.services.lesson_tasks.a0_situations import (
     choice_question,
     lower_first,
-    marker_question,
-    object_reference,
     prep_add,
     situation_lesson_task,
     target_texts,
@@ -364,12 +362,19 @@ def _build_a0(ctx):
     # An assigned (pretend) choice is stated as the scenario on every question.
     scenario = a0_scenario(mine, focus, other)
     feeling = "like" if mine.likes else "don't like"
-    question_feeling = "do you like" if mine.likes else "don't you like"
-    pick = (f"You said you {feeling} the {object_reference(focus)}. Tap it in your photo."
-            if scenario is None else
-            f"In this scenario, which object {question_feeling}? Tap it in your photo.")
+    pick = (f"Which sentence says you {feeling} the {focus['source']}?"
+            if scenario is None else "Which sentence matches the scenario?")
+    scenario_choice = choice_question(
+        "M05-Q1", pick, pick, section, focus["key"],
+        [statement.text, other_statement.text], statement.text,
+        "recognise-preference", payload, salt="q1",
+    )
+    scenario_choice.option_object_keys = {
+        option.option_id: focus["key"] if option.label == statement.text else other["key"]
+        for option in scenario_choice.options
+    }
     questions = [
-        marker_question(payload, rows, focus, section, pick, "recognise-preference"),
+        scenario_choice,
         choice_question(
             "M05-Q2", "Listen to the sentence. Like or don't like?",
             "Listen to the sentence. Like or don't like?", section, focus["key"],
@@ -414,9 +419,9 @@ def _build_a0(ctx):
         ],
     ))
     last_instruction = (
-        f"For this practice, choose the {object_reference(other)}. Complete the sentence."
+        f"For this practice, choose the {other['source']}. Complete the sentence."
         if not mine.likes else
-        f"Complete the sentence about the {object_reference(focus)} you like."
+        f"Complete the sentence about the {focus['source']} you like."
     )
     last = choice_question(
         "M05-Q6", last_instruction, last_instruction,
@@ -448,9 +453,8 @@ def a0_scenario(mine, focus, other):
     if not mine.fictional:
         return None
     if mine.likes:
-        return f"Let's pretend you like the {object_reference(focus)}."
-    return (f"Let's pretend you don't like the {object_reference(focus)}, "
-            f"so you pick the {object_reference(other)}.")
+        return f"You like the {focus['source']}. You don't like the {other['source']}."
+    return f"You don't like the {focus['source']}. You choose the {other['source']}."
 
 
 def _learner_choice(ctx, mine, focus, reaction):

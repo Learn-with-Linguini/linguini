@@ -14,6 +14,8 @@ from pydantic import Field, field_validator
 
 from app.schemas.base import ApiModel, NonEmptyText
 
+_AGREEMENT_GENDERS = frozenset({"masculine", "feminine", "neuter"})
+
 
 class TranslationTerm(ApiModel):
     key: NonEmptyText = Field(max_length=200)
@@ -69,6 +71,21 @@ class TranslatedTerm(ApiModel):
         if isinstance(value, str) and value.strip().casefold() == "null":
             return None
         return value
+
+    @field_validator("agreement_forms", mode="before")
+    @classmethod
+    def drop_unsupported_agreement_keys(cls, value):
+        """Keep only gender-keyed forms. Agreement forms are optional enrichment, so a
+        provider keying them by number (``singular``/``plural``) loses those forms
+        instead of failing the whole translation."""
+        if not isinstance(value, dict):
+            return value
+        forms = {}
+        for key, form in value.items():
+            gender = key.strip().casefold() if isinstance(key, str) else key
+            if gender in _AGREEMENT_GENDERS and gender not in forms:
+                forms[gender] = form
+        return forms
 
 
 class SceneTranslationResult(ApiModel):
