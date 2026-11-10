@@ -61,7 +61,10 @@ def _review_row(obj):
     row = {
         "key": str(obj.id),
         "label": obj.label,
-        "attributes": _clean_attributes(obj.attributes or {}),
+        "attributes": {
+            **_clean_attributes(obj.attributes or {}),
+            **_kept_attributes(obj.attributes or {}),
+        },
     }
     if obj.bounding_box:
         box = {key: float(value) for key, value in obj.bounding_box.model_dump().items()}
@@ -71,6 +74,22 @@ def _review_row(obj):
     else:
         return None
     return row
+
+
+# Facts the review screen edits; anything else detected (a count, an age) is kept as is.
+_EDITABLE_ATTRIBUTES = {"color", "colour", "size", "shape", "material", "pattern", "state"}
+
+
+def _kept_attributes(values):
+    kept = {}
+    for kind, value in (values or {}).items():
+        if kind in _EDITABLE_ATTRIBUTES:
+            continue
+        if kind == "quantity" and isinstance(value, (int, str)) and str(value).strip():
+            kept[kind] = value
+        elif kind in _ATTRIBUTES and isinstance(value, str) and value.strip():
+            kept[kind] = " ".join(value.split())[:60]
+    return kept
 
 
 def _clean_attributes(values):
@@ -375,7 +394,8 @@ class FriendChatContent:
                 "attributes": {
                     kind: value
                     for kind, value in (obj.get("attributes") or {}).items()
-                    if isinstance(value, str) and value.strip()
+                    if (isinstance(value, str) and value.strip())
+                    or (kind == "quantity" and isinstance(value, int))
                 },
                 "x": obj["x"],
                 "y": obj["y"],
@@ -475,7 +495,10 @@ class FriendChatContent:
             if key in moved:
                 row = _moved(row, moved[key].x, moved[key].y)
             if key in attributes:
-                row["attributes"] = _clean_attributes(attributes[key])
+                row["attributes"] = {
+                    **_kept_attributes(row.get("attributes")),
+                    **_clean_attributes(attributes[key]),
+                }
             objects.append(row)
         for item in review.added_objects:
             label = " ".join(item.label.split())
@@ -666,85 +689,7 @@ class FriendChatContent:
         return target
 
     def _facts(self, content, target, profile):
-        language = _language(profile).display.language_code
-        completed = set(profile.get("completed_missions") or [])
-        beginner = str(profile.get("proficiency_level", "A0")) == "A0"
-        facts = []
-
-        def add(key, kind, meaning, mission, **details):
-            sheet = _sheet(language, mission)
-            # A bounded construction can be introduced with its existing canonical sheet.
-            if beginner and mission not in completed and sheet is None:
-                return
-            facts.append(
-                {
-                    "id": key,
-                    "concept": kind,
-                    "meaning": meaning,
-                    "cheatSheet": _sheet_ref(sheet) if sheet else None,
-                    **details,
-                }
-            )
-
-        for kind, value in target.get("attributes", {}).items():
-            if kind in _ATTRIBUTES and isinstance(value, str) and value.strip():
-                add(
-                    f"attribute:{target['key']}:{kind}",
-                    "adjective",
-                    f"It is {value}.",
-                    "M02",
-                    attributeKind=kind,
-                    value=value,
-                )
-        region = target.get("region")
-        if region:
-            positions = []
-            if region["x"] + region["width"] < 0.5:
-                positions.append(("left", "on the left"))
-            elif region["x"] > 0.5:
-                positions.append(("right", "on the right"))
-            if region["y"] + region["height"] < 0.5:
-                positions.append(("top", "near the top"))
-            elif region["y"] > 0.5:
-                positions.append(("bottom", "near the bottom"))
-            for position, meaning in positions:
-                add(
-                    f"position:{target['key']}:{position}",
-                    "position",
-                    f"It is {meaning}.",
-                    "M02",
-                    position=position,
-                )
-        objects = {row["key"]: row for row in content["objects"]}
-        for relation in content.get("relations", []):
-            if relation["subjectObjectKey"] != target["key"]:
-                continue
-            reference = objects.get(relation["referenceObjectKey"])
-            meaning = _RELATIONS.get(relation["relation"])
-            if not reference or not meaning or _names_target(reference["word"], target):
-                continue
-            add(
-                f"relation:{relation['key']}",
-                "position",
-                f"It is {meaning} the {reference['label']}.",
-                "M02",
-                relation=relation["relation"],
-                reference=reference["term"],
-            )
-        count = target.get("attributes", {}).get("quantity")
-        try:
-            count = int(count)
-        except (TypeError, ValueError):
-            count = 0
-        if 1 < count <= 20:
-            add(
-                f"quantity:{target['key']}",
-                "quantity",
-                f"There are {count} of them.",
-                "M03",
-                quantity=count,
-            )
-        return facts[:12]
+        return _target_facts(content, target, profile)
 
     def _options(self, content, target, profile):
         context = _language(profile)
@@ -1004,3 +949,96 @@ class FriendChatContent:
             for sheet in sheets
         ]
         return result
+
+
+def _target_facts(content, target, profile):
+    language = _language(profile).display.language_code
+    completed = set(profile.get("completed_missions") or [])
+    beginner = str(profile.get("proficiency_level", "A0")) == "A0"
+    facts = []
+
+    def add(key, kind, meaning, mission, **details):
+        sheet = _sheet(language, mission)
+        # A bounded construction can be introduced with its existing canonical sheet.
+        if beginner and mission not in completed and sheet is None:
+            return
+        facts.append(
+            {
+                "id": key,
+                "concept": kind,
+                "meaning": meaning,
+                "cheatSheet": _sheet_ref(sheet) if sheet else None,
+                **details,
+            }
+        )
+
+    for kind, value in target.get("attributes", {}).items():
+        if kind in _ATTRIBUTES and isinstance(value, str) and value.strip():
+            add(
+                f"attribute:{target['key']}:{kind}",
+                "adjective",
+                f"It is {value}.",
+                "M02",
+                attributeKind=kind,
+                value=value,
+            )
+    region = target.get("region")
+    if region:
+        positions = []
+        if region["x"] + region["width"] < 0.5:
+            positions.append(("left", "on the left"))
+        elif region["x"] > 0.5:
+            positions.append(("right", "on the right"))
+        if region["y"] + region["height"] < 0.5:
+            positions.append(("top", "near the top"))
+        elif region["y"] > 0.5:
+            positions.append(("bottom", "near the bottom"))
+        for position, meaning in positions:
+            add(
+                f"position:{target['key']}:{position}",
+                "position",
+                f"It is {meaning}.",
+                "M02",
+                position=position,
+            )
+    objects = {row["key"]: row for row in content["objects"]}
+    for relation in content.get("relations", []):
+        if relation["subjectObjectKey"] != target["key"]:
+            continue
+        reference = objects.get(relation["referenceObjectKey"])
+        meaning = _RELATIONS.get(relation["relation"])
+        if not reference or not meaning or _names_target(reference["word"], target):
+            continue
+        add(
+            f"relation:{relation['key']}",
+            "position",
+            f"It is {meaning} the {reference['label']}.",
+            "M02",
+            relation=relation["relation"],
+            reference=reference["term"],
+        )
+    count = target.get("attributes", {}).get("quantity")
+    try:
+        count = int(count)
+    except (TypeError, ValueError):
+        count = 0
+    if 1 < count <= 20:
+        add(
+            f"quantity:{target['key']}",
+            "quantity",
+            f"There are {count} of them.",
+            "M03",
+            quantity=count,
+        )
+    return facts[:12]
+
+
+def beginner_clue_ready(content, target, profile):
+    """Whether a beginner (A0) sender can build a clue for this object.
+
+    Mirrors the check in ``select_target``. Objects without a box get one when chosen,
+    so they are not ruled out here.
+    """
+    if str(profile.get("proficiency_level", "A0")) != "A0" or not target.get("region"):
+        return True
+    return bool(_target_facts(content, target, profile))

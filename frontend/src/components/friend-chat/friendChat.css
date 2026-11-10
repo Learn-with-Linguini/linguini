@@ -42,6 +42,7 @@
 .friend-photo__object { border: 0; background: transparent; cursor: pointer; }
 .friend-photo__object > span, span.friend-photo__object::after { content: ""; width: 16px; height: 16px; border: 3px solid white; border-radius: 50%; background: var(--teal-dark); box-shadow: 0 0 0 2px var(--teal-dark); }
 .friend-photo__selection { width: 34px; height: 34px; border: 4px solid white; box-shadow: 0 0 0 3px var(--tomato); background: color-mix(in srgb, var(--tomato) 30%, transparent); pointer-events: none; }
+.friend-photo__object--no-clue { opacity: .45; }
 .friend-photo__choice { background: transparent; }
 .friend-photo__choice > span { display: grid; place-items: center; width: 22px; height: 22px; border: 3px solid white; border-radius: 50%; background: color-mix(in srgb, var(--teal-dark) 55%, transparent); box-shadow: 0 0 0 2px var(--teal-dark), 0 1px 6px rgba(0, 0, 0, .35); }
 .friend-photo__choice:hover:not(:disabled) > span { background: var(--teal-dark); }

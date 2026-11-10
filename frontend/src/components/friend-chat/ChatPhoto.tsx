@@ -57,9 +57,11 @@ export function ChatPhoto({ chatId, roundId, objects = [], selected, onObject, o
       <img src={current.url} alt={label} draggable={false} onError={() => setImage({ key, url: null, failed: true })}
         style={crop ? { width: `${100 / cropWidth}%`, height: `${100 / cropHeight}%`, maxWidth: "none",
           left: `${50 - crop.x * 100 / cropWidth}%`, top: `${50 - crop.y * 100 / cropHeight}%` } : undefined} />
-      {!crop ? objects.map(object => onObject && !onPoint ? <button type="button" key={object.key} className="friend-photo__object"
+      {!crop ? objects.map(object => onObject && !onPoint ? <button type="button" key={object.key}
+        className={`friend-photo__object${object.clueReady === false ? " friend-photo__object--no-clue" : ""}`}
         style={{ left: `${object.x * 100}%`, top: `${object.y * 100}%` }} disabled={disabled}
-        aria-label={`Choose ${object.translation || object.label}`} onClick={() => onObject(object)}><span aria-hidden="true" /></button> :
+        aria-label={`Choose ${object.translation || object.label}${object.clueReady === false ? ", not enough detail for a beginner clue" : ""}`}
+        onClick={() => onObject(object)}><span aria-hidden="true" /></button> :
         <span key={object.key} className="friend-photo__object" aria-hidden="true" style={{ left: `${object.x * 100}%`, top: `${object.y * 100}%` }} />) : null}
       {!crop && onChoice ? choices.map((choice, index) => {
         const tried = triedKeys?.has(choice.key) ?? false;

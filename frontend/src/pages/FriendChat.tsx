@@ -29,6 +29,8 @@ function FriendChatSession({ chatId }: { chatId: string }) {
   const { user, activeProfile } = useAppState();
   const owner = user?.id ?? "";
   const { query, command, retry, busy, offline, error, hasPending, blocked } = useFriendChat(owner, activeProfile?.id ?? "", chatId);
+  // Action errors render at the top of the chat; bring them into view where the action was.
+  useEffect(() => { if (error) errorRef.current?.scrollIntoView?.({ block: "center" }); }, [error]);
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
   const [picking, setPicking] = useState(false);
@@ -36,6 +38,7 @@ function FriendChatSession({ chatId }: { chatId: string }) {
   const [reason, setReason] = useState("");
   const [reported, setReported] = useState(false);
   const previousMessages = useRef<Set<string> | null>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
   useBackAction(() => navigate("/ispy/friends"), "Back to photo chats");
   useEffect(() => {
     if (!query.data) return;
@@ -85,7 +88,7 @@ function FriendChatSession({ chatId }: { chatId: string }) {
     {reported ? <p role="status">Your report has been saved.</p> : null}
     {offline ? <p role="status">You’re offline. Your saved conversation is shown. Reconnect to send a clue or guess.</p> : query.error ? <div className="stack-2"><p role="alert">Connection interrupted. Your saved conversation is shown.</p>
       <Button variant="secondary" onClick={() => void query.refetch()}>Reconnect</Button></div> : null}
-    {error ? <p role="alert">{error}</p> : null}
+    {error ? <p role="alert" ref={errorRef}>{error}</p> : null}
     {hasPending && !busy ? <Card className="stack-2"><p>We couldn’t confirm your last action. Retry it to check whether it was saved.</p>
       <Button variant="secondary" disabled={offline} onClick={() => { trackAction("ispy_friend_action_retried"); void retry(); }}>Retry last action</Button></Card> : null}
     {busy ? <InlineLoader compact label="Saving your action…" /> : null}

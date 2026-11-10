@@ -18,7 +18,12 @@ sender as `reviewObjects` and `reviewRelations`. An added object is a tapped poi
 gets a small estimated box for crops; a moved object keeps its box size around the new
 centre. The sender then chooses the secret object from the confirmed objects and
 confirms its identity. Rounds stored before this change already hold translated
-objects and are treated as confirmed. Beginner clues use confirmed description pieces; other learners
+objects and are treated as confirmed. The review edits adjectives only; detected
+facts it does not edit, such as a count, are kept. A beginner (A0) clue needs a fact
+about the target: an adjective, a position in the photo, a relation or a count. While
+an A0 sender chooses, each of their objects carries `clueReady`, computed with the same
+rules, so the picker fades objects without one and explains why instead of offering a
+target that the server would refuse with `friend_chat_no_clue`. Beginner clues use confirmed description pieces; other learners
 can edit or write a clue. Audio and the existing mission cheatsheets support the
 composer. Suggestions require review and an explicit send.
 

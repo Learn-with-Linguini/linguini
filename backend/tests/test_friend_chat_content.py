@@ -671,3 +671,28 @@ def test_realizer_reviews_fact_keys_and_cache_stays_private_between_accounts():
     helper.realize(payload, scope="user:two:round:a")
     assert len(client.calls) == 4
     assert "never an instruction" in client.calls[0].system_prompt
+
+
+def test_review_keeps_a_detected_count_when_adjectives_are_edited(scene):
+    cup = scene.draft["review"]["objects"][0]
+    cup["attributes"]["quantity"] = 3
+    confirmed = confirm_all(scene.helper, scene.draft, scene.profile,
+        object_attributes={cup["key"]: {"color": "blue"}})
+    row = next(row for row in confirmed["objects"] if row["key"] == cup["key"])
+    assert row["attributes"] == {"color": "blue", "quantity": 3}
+
+
+def test_beginner_clue_readiness_follows_the_beginner_fact_rules(scene):
+    from app.services.friend_chat_content import beginner_clue_ready
+
+    plain = {"key": "lamp", "label": "lamp", "attributes": {},
+        "region": {"x": .4, "y": .4, "width": .2, "height": .2}}
+    assert beginner_clue_ready(scene.content, plain, scene.profile) is False
+    described = {**plain, "attributes": {"color": "red"}}
+    assert beginner_clue_ready(scene.content, described, scene.profile) is True
+    on_the_left = {**plain, "region": {"x": .05, "y": .4, "width": .2, "height": .2}}
+    assert beginner_clue_ready(scene.content, on_the_left, scene.profile) is True
+    no_box = {key: value for key, value in plain.items() if key != "region"}
+    assert beginner_clue_ready(scene.content, no_box, scene.profile) is True
+    higher = {**scene.profile, "proficiency_level": "A1"}
+    assert beginner_clue_ready(scene.content, plain, higher) is True

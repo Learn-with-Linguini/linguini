@@ -1217,6 +1217,8 @@ class PostgresFriendChatRepository:
         profile = chat["creator_profile"] if creator else chat["partner_profile"]
         items = self._round_rows(c, chat_id)
         history, active_round = [], None
+        beginner = str((profile or {}).get("proficiency_level", "")) == "A0"
+        enriched = None
         for item in items:
             sender = item["sender_user_id"] == self.user_id
             reveal = item["status"] == "completed"
@@ -1241,10 +1243,22 @@ class PostgresFriendChatRepository:
                     )
                 )
 
-            def public_object(obj):
-                return ChatObject(
-                    **{key: value for key, value in obj.items() if key in ChatObject.model_fields}
-                )
+            choosing = (
+                sender
+                and beginner
+                and item["status"] in {"selectingTarget", "composingClue"}
+                and not content.get("review")
+            )
+            if choosing and enriched is None:
+                enriched = self._enrich_profile(c, dict(profile))
+
+            def public_object(obj, *, readiness=False, content=content, profile=enriched):
+                data = {key: value for key, value in obj.items() if key in ChatObject.model_fields}
+                if readiness:
+                    from app.services.friend_chat_content import beginner_clue_ready
+
+                    data["clue_ready"] = beginner_clue_ready(content, obj, profile)
+                return ChatObject(**data)
 
             stalled = bool(item["claim_id"] and item["claim_expires_at"] <= utc_now())
             shared = chat["status"] in {"waiting", "active"} and item["status"] != "cancelled"
@@ -1267,7 +1281,9 @@ class PostgresFriendChatRepository:
                 else None,
                 created_at=item["created_at"],
                 completed_at=item["completed_at"],
-                objects=[public_object(obj) for obj in content.get("objects", [])]
+                objects=[
+                    public_object(obj, readiness=choosing) for obj in content.get("objects", [])
+                ]
                 if visible and shared
                 else [],
                 target=public_object(item["target"])
