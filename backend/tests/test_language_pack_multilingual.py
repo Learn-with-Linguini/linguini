@@ -1163,6 +1163,17 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         _assert_m06_order(tasks)
 
     by_id = {q.question_id: q for q in questions}
+    if mission_id in {"M02", "M03"} and level == "A2":
+        assert all(question.roleplay_premise is None for question in questions)
+    if mission_id == "M04" and level == "A2":
+        premises = {
+            question.roleplay_premise for question in questions if question.roleplay_premise
+        }
+        assert len(premises) == 1
+        (premise,) = premises
+        assert premise.startswith("One object is yours")
+        assert "marker" not in premise.casefold()
+        assert not premise.casefold().startswith("role-play")
     if mission_id == "M01" and level == "A1":
         chosen = by_id["choose-attribute"]
         correct = next(
