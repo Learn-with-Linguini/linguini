@@ -1069,6 +1069,25 @@ def test_real_content_can_confirm_send_follow_up_and_complete_through_the_api(db
             assert restored.json()["rounds"][-1]["target"]["key"] == target["key"]
             assert "factId" not in restored.text
 
+        # The guesser takes the next turn on the same photo and picks another object.
+        turn = client.get(path, headers=receiver).json()
+        assert turn["nextSenderId"] == str(db.people[1].id)
+        reused = client.post(path + "/rounds", headers=receiver, json={
+            "commandId": str(uuid4()), "expectedRevision": turn["revision"],
+            "sourceRoundId": turn["reusablePhotoRoundId"],
+        })
+        assert reused.status_code == 201, reused.text
+        snapshot = reused.json()
+        active = snapshot["activeRound"]
+        assert active["status"] == "selectingTarget" and active["photoStatus"] == "ready"
+        other = next(row for row in active["objects"] if row["key"] != target["key"])
+        picked = client.post(path + f"/rounds/{active['id']}/target", headers=receiver, json={
+            "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+            "objectKey": other["key"], "confirm": True,
+        })
+        assert picked.status_code == 200, picked.text
+        assert picked.json()["activeRound"]["status"] == "composingClue"
+
 
 def assets_left(db, ids):
     with db.engine.connect() as c:
