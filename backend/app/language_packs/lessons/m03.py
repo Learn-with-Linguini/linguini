@@ -541,15 +541,12 @@ def _build_a2(ctx):
                  second_statement, number_extra, s1, second_row["key"], second_ids),
         choice("m03-q3", "compareGroups", ctx.label("choose-comparison"),
                [(f"comparison-{suffix}", sentence.text) for suffix, sentence in compare.items()],
-               "comparison-correct", s2, first_row["key"], group_object_ids=both,
-               roleplay_premise=(f"Group {first_row['marker']} has {first.quantity}; "
-                                 f"group {second_row['marker']} has {second.quantity}.")),
+               "comparison-correct", s2, first_row["key"], group_object_ids=both),
         choice("m03-q4", "correctRoleplayCount", friend_prompt,
                [("count-correct", correction.text),
                 ("count-repeat", ctx.label("friend-is-right")),
                 ("count-wrong", wrong.text)],
-               "count-correct", s3, first_row["key"], group_object_ids=first_ids,
-               roleplay_premise=f"Role-play: a friend says «{friend.text}»."),
+               "count-correct", s3, first_row["key"], group_object_ids=first_ids),
         building("m03-q5", "buildComparison", ctx.label("describe-compare"), combined,
                  [compare["reverse"].text], s3, first_row["key"], both, phrase=True),
     ]

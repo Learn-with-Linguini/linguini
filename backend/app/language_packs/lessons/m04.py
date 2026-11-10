@@ -567,8 +567,10 @@ def _build_a2(ctx):
                              for suffix in ("no", "yes", "wrong"))
     other = ctx.sentence_by_id("buildOwnershipDescription", "other")
     wrong_owner = ctx.sentence_by_id("buildOwnershipDescription", "wrong")
-    roleplay = (f"Role-play: marker {assigned['marker']} is yours. "
-               f"Marker {alternative['marker']} belongs to {cast.english_name}.")
+    roleplay = (
+        f"One object is yours, and the other belongs to {cast.english_name}. "
+        "Use the clue to tell them apart."
+    )
     third = (_determiner(ctx, f"third-{cast.gender}", assigned) or cast.name)
     word = _word(own.text, ctx.terms[mine.fact_id].forms)
     if word is None:

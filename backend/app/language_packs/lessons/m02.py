@@ -41,7 +41,6 @@ PURPOSES = {
 A2_SECTIONS = (
     "Task 1 · Understand the clues", "Task 2 · Find the object", "Task 3 · Name the target",
 )
-ROLEPLAY_PREMISE = "Role-play: a friend is looking for an object in the photo."
 MAX_MARKERS = 4
 MAX_PLACES = 4
 # A confirmed relation also rules out its inverse on the same pair.
@@ -486,7 +485,7 @@ def _build_a2(ctx):
         choice("m02-q1", "readAttributeClue", meaning_prompt,
                [("meaning-correct", meanings[0]),
                 *((f"meaning-{n}", text) for n, text in enumerate(meanings[1:], 1))],
-               "meaning-correct", s1, roleplay_premise=ROLEPLAY_PREMISE, option_language="en",
+               "meaning-correct", s1, option_language="en",
                translation="Choose the English meaning of the clue."),
         building("m02-q2", "buildLocationClue", ctx.label("build-location-clue"),
                  location_clue, location, s1),
@@ -496,7 +495,7 @@ def _build_a2(ctx):
         choice("m02-q4", "clarifyDistractor",
                ctx.label("friend-points", marker=str(distractor["marker"])),
                clarifications, "clarify-correct", s2,
-               roleplay_premise=ROLEPLAY_PREMISE, group_object_ids=[distractor["key"]]),
+               group_object_ids=[distractor["key"]]),
         building("m02-q5", "buildTargetSentence", ctx.label("name-and-locate"),
                  target_sentence, described, s3),
     ]
