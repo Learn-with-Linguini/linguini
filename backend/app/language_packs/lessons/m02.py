@@ -32,7 +32,7 @@ from .common import LessonContext, SpecBuilder, check_questions, latin_of, usabl
 MISSION_ID = "M02"
 PURPOSES = {
     "A0": ["findNamed", "chooseName", "listenSelect"] * 2,
-    "A1": ["findObject", "chooseLocation", "askWhere", "answerWhere"],
+    "A1": ["chooseLocation", "askWhere", "answerWhere"],
     "A2": [
         "readAttributeClue", "buildLocationClue", "chooseUniqueTarget",
         "clarifyDistractor", "buildTargetSentence",

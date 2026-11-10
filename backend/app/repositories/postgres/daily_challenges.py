@@ -80,6 +80,7 @@ STEPS_CAMPAIGN_DAY = date(2026, 11, 11)
 STEPS_CAMPAIGN_SCENE = ("steps", "STePS", "at STePS")
 SCENE_TITLES = {key: title for key, title, *_ in SCENES}
 SCENE_TITLES[STEPS_CAMPAIGN_SCENE[0]] = STEPS_CAMPAIGN_SCENE[1]
+SCENE_PHRASES = {key: phrase for key, _, phrase in (*SCENES, STEPS_CAMPAIGN_SCENE)}
 # What an analysed photo may mention to count as that day's scene. The first
 # keyword of every scene is its title so the match degrades gracefully.
 SCENE_KEYWORDS = {
@@ -275,7 +276,7 @@ def challenge_scene_failure(
     keywords = SCENE_KEYWORDS.get(scene_key) or [scene_key.replace("-", " ")]
     if any(re.search(rf"\b{re.escape(_normalise(keyword))}\b", blob) for keyword in keywords):
         return None
-    phrase = next(phrase for key, _, phrase in SCENES if key == scene_key)
+    phrase = SCENE_PHRASES[scene_key]
     return f"Take a photo {phrase} for today's challenge."
 
 

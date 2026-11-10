@@ -133,7 +133,7 @@ target_ids = ["find-described-object"]
 [[missions]]
 mission_id = "M02"
 practice_level = "A1"
-content_version = 2
+content_version = 3
 required_constructions = [
   { construction_id = "scene-location", min_version = 1 },
   { construction_id = "location-phrase", min_version = 1 },

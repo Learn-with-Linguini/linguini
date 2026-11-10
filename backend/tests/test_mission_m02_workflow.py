@@ -39,7 +39,7 @@ def existing_a1_missions(monkeypatch):
     monkeypatch.setitem(
         mission_eligibility.IMPLEMENTED_MISSIONS,
         "A1",
-        (("M01", "A1", 1), ("M02", "A1", 2), ("M03", "A1", 1)),
+        (("M01", "A1", 1), ("M02", "A1", 3), ("M03", "A1", 1)),
     )
 
 
@@ -141,7 +141,7 @@ def test_one_relation_plans_one_m02_task_without_a_marker_question(curated):
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
     draft = _scalar(engine, select(sessions.c.analysis_draft).where(sessions.c.id == sid))
     assert draft["missionPlan"] == [
-        {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 2}
+        {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 3}
     ]
     resumed = repository.get(sid, profile.id)
     assert [t.public_content for t in _parts(resumed)] == [content]

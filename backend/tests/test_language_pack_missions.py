@@ -37,13 +37,13 @@ def test_catalog_templates_resolve_through_the_registry():
     assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04", "M05", "M06"}
     assert pack_mission_keys() == [
         ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
-        ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
+        ("M02", "A0", 1), ("M02", "A1", 3), ("M02", "A2", 1),
         ("M03", "A0", 1), ("M03", "A1", 1), ("M03", "A2", 1),
         ("M04", "A0", 1), ("M04", "A1", 1), ("M04", "A2", 1),
         ("M05", "A0", 1), ("M05", "A1", 1), ("M06", "A2", 1),
     ]
     # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
-    assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
+    assert mission_template_key("M02", "A1") == ("M02", "A1", 3)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
         pack_mission("M99")
 
@@ -51,7 +51,7 @@ def test_catalog_templates_resolve_through_the_registry():
 def test_context_records_ready_and_declared_missions(packs_on):
     context = resolve_language_context("es")
     assert context.ready_missions == (
-        "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
+        "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:3", "M02:A2:1",
         "M03:A0:1", "M03:A1:1", "M03:A2:1", "M04:A0:1", "M04:A1:1", "M04:A2:1",
         "M05:A0:1", "M05:A1:1", "M06:A2:1",
     )

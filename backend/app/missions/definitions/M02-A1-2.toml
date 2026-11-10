@@ -12,7 +12,7 @@ relations = ["on", "under", "next_to", "in_front_of", "behind"]
 
 [objective]
 objective_id = "find-and-locate"
-can_do = "I can choose where an object is, ask where it is and answer."
+can_do = "I can find an object in my photo from a sentence about where it is, ask where it is and answer."
 
 [[objective.targets]]
 target_id = "recognise-position"
@@ -33,6 +33,11 @@ evidence_types = ["construction"]
 target_id = "name-object"
 summary = "Name a photo object with its article and noun."
 evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "understand-location"
+summary = "Find the photo object a confirmed location statement describes."
+evidence_types = ["recognition"]
 
 [[language_patterns]]
 pattern_id = "location-statement"
@@ -106,8 +111,14 @@ target_id = "name-object"
 description = "Uses the object's noun with the article that matches its gender and number."
 evidence_types = ["construction"]
 
+[[evaluation_criteria]]
+criterion_id = "answer-matches-photo"
+target_id = "understand-location"
+description = "Picks the numbered photo marker of the object the confirmed statement describes."
+evidence_types = ["recognition"]
+
 [expected_performance]
-min_assessed_questions = 3
+min_assessed_questions = 4
 min_correct_ratio = 0.75
 min_independent_correct = 1
 required_target_groups = [
