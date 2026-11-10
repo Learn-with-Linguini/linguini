@@ -27,13 +27,13 @@ M03_A2 = ("M03", "A2", 1)
 M04_A2 = ("M04", "A2", 1)
 M06_A2 = ("M06", "A2", 1)
 # Implemented variants per stored proficiency level, in catalogue order; a lesson
-# assesses at most three. Only the active profile's ``proficiency_level`` selects them.
+# selects the level-specific cap. Only the active profile's ``proficiency_level`` selects them.
 IMPLEMENTED_MISSIONS = {
     "A0": (M01_A0, M02_A0, M03_A0, M05_A0),
     "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
     "A2": (M01_A2, M02_A2, M03_A2, M04_A2, M06_A2),
 }
-MAX_LESSON_MISSIONS = {"A0": 3, "A1": 3, "A2": 4}
+MAX_LESSON_MISSIONS = {"A0": 4, "A1": 3, "A2": 4}
 
 # Confirmed attribute values clearly different in a photo, the only ones a lesson offers
 # as distractors. Values are the scene's English attribute values, not lesson words.
