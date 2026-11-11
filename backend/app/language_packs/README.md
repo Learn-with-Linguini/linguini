@@ -275,7 +275,7 @@ and position choices, with false positions from model-proposed alternatives),
 `target-clue` (A2 detail/location clues and clarifications that never name the
 object) and `target-location` (A2 named, described and located target), plus
 M02 examples for `identify-object` and `scene-location`. M02 evaluation cases
-(`evaluations/M02-<level>.toml`; A1 is content version 2) cover finding and naming
+(`evaluations/M02-<level>.toml`; A1 is content version 3) cover finding and naming
 objects, locations, position phrases, where-questions, clues that hide the target,
 the `No, ...` clarification and the named, described and located target. False
 position options are not cases: a case scene declares no alternative relation.

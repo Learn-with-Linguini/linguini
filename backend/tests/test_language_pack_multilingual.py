@@ -47,7 +47,7 @@ def sample_vocabulary(locale):
 # Mocked languages whose pack requires romanization of translations.
 ROMANIZED = {"ko"}
 COUNTS = {
-    "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
+    "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 3, "A2": 5},
     "M03": {"A0": 6, "A1": 3, "A2": 5}, "M04": {"A0": 6, "A1": 3, "A2": 5},
     "M05": {"A0": 6, "A1": 3}, "M06": {"A2": 6},
 }
@@ -55,7 +55,7 @@ COUNTS = {
 TASKS = {"M06": 2}
 # Every pack mission at every level it has a template for.
 MISSION_LEVELS = [(mission, level) for mission, levels in COUNTS.items() for level in levels]
-MISSION_VERSIONS = {("M02", "A1"): 2}
+MISSION_VERSIONS = {("M02", "A1"): 3}
 # A1 describes the second object, so its colour has a distinct Korean modifier form.
 SCENE = (("cup", "red"), ("book", "white"), ("table", "green"))
 # Learner counts: three cups (A0's one small group) and five books (A2's second group).

@@ -1,6 +1,6 @@
 mission_id = "M02"
 practice_level = "A1"
-content_version = 2
+content_version = 3
 
 [[cases]]
 case_id = "m02-a1-key-on-table"

@@ -32,7 +32,7 @@ from .common import LessonContext, SpecBuilder, check_questions, latin_of, usabl
 MISSION_ID = "M02"
 PURPOSES = {
     "A0": ["findNamed", "chooseName", "listenSelect"] * 2,
-    "A1": ["findObject", "chooseLocation", "askWhere", "answerWhere"],
+    "A1": ["chooseLocation", "askWhere", "answerWhere"],
     "A2": [
         "readAttributeClue", "buildLocationClue", "chooseUniqueTarget",
         "clarifyDistractor", "buildTargetSentence",
@@ -41,7 +41,6 @@ PURPOSES = {
 A2_SECTIONS = (
     "Task 1 · Understand the clues", "Task 2 · Find the object", "Task 3 · Name the target",
 )
-MAX_MARKERS = 4
 MAX_PLACES = 4
 # A confirmed relation also rules out its inverse on the same pair.
 _INVERSE = {
@@ -254,12 +253,14 @@ def _plan_a1(specs, facts, vocabulary, seed):
     # A position phrase omits its object; ``target`` keeps the relation's subject bound.
     place = {"target": relation.subject_fact_id, **located}
     alternatives = _relation_alternatives(relation, facts, vocabulary)
-    specs.add("findObject", "answer", "scene-location", statement, suffix="statement")
     specs.add("chooseLocation", "answer", "location-phrase", place, suffix="correct")
     for index, (_kind, term) in enumerate(alternatives, 1):
         specs.add("chooseLocation", "option", "location-phrase", place, truth=False,
                   counterfactual={"relation": term.term_id}, suffix=f"alternative-{index}")
     specs.add("askWhere", "question", "where-question", {"subject": relation.subject_fact_id})
+    # The scene-location statement has no question of its own; it feeds the
+    # ask/answer copy and answer tiles, so it rides on the askWhere slot.
+    specs.add("askWhere", "statement", "scene-location", statement, suffix="statement")
     if alternatives:
         # The contradicting statement supplies the correction and one extra tile.
         specs.add("answerWhere", "contradiction", "scene-location", statement, truth=False,
@@ -372,9 +373,9 @@ def _build_a0(ctx):
 
 
 def _build_a1(ctx):
-    statement = ctx.sentence_by_id("findObject", "statement")
+    statement = ctx.sentence_by_id("askWhere", "statement")
     question = ctx.sentence_by_id("askWhere", "question")
-    spec = ctx.spec("findObject")
+    spec = ctx.spec("askWhere", "statement")
     subject = ctx.by_fact[spec.bindings["subject"]]
     reference = ctx.by_fact[spec.bindings["reference"]]
     relation = ctx.relations[spec.bindings["relation"]]
@@ -398,13 +399,6 @@ def _build_a1(ctx):
         extras, contradiction_text = [], statement.text
     order = ctx.shuffle(range(len(places)), f"M02:{relation.fact_id}")
     markers = sorted(ctx.rows, key=lambda row: row["marker"])
-    marker_of = {row["key"]: row["marker"] for row in ctx.rows}
-    same = fold(subject["source"])
-    shown = [subject["key"], reference["key"], *(
-        row["key"] for row in markers
-        if row["key"] not in {subject["key"], reference["key"]} and fold(row["source"]) != same
-    )][:MAX_MARKERS]
-    shown.sort(key=marker_of.get)
     payload = ctx.payload(
         positions=[dict(position=k, meaning=m) for k, m in meanings.items()],
         markers=[dict(key=row["key"], marker=row["marker"], source=row["source"])
@@ -418,17 +412,9 @@ def _build_a1(ctx):
         selected=[relation.fact_id],
     )
     common = dict(object_key=subject["key"], relation_key=relation.fact_id)
-    find_options = [dict(option_id=f"marker-{marker_of[key]}", label=str(marker_of[key]))
-                    for key in shown]
     place_options = [dict(option_id=f"place-{n}", label=places[i]["label"])
                      for n, i in enumerate(order, 1)]
     questions = [
-        dict(question_id="find-object", purpose="findObject", section=FIND_SECTION,
-             prompt=statement.text, interaction_type="multipleChoice", options=find_options,
-             correct_option_id=f"marker-{marker_of[subject['key']]}",
-             correct_text=None, token_bank=[], translation=None,
-             marker_keys={o["option_id"]: key for o, key in zip(find_options, shown, strict=True)},
-             **common),
         dict(question_id="choose-location", purpose="chooseLocation", section=FIND_SECTION,
              prompt=question.text, interaction_type="multipleChoice", options=place_options,
              correct_option_id=next(

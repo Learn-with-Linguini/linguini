@@ -133,17 +133,12 @@ target_ids = ["find-described-object"]
 [[missions]]
 mission_id = "M02"
 practice_level = "A1"
-content_version = 2
+content_version = 3
 required_constructions = [
   { construction_id = "scene-location", min_version = 1 },
   { construction_id = "location-phrase", min_version = 1 },
   { construction_id = "where-question", min_version = 1 },
 ]
-[[missions.slots]]
-purpose = "findObject"
-construction_id = "scene-location"
-target_ids = ["understand-location"]
-
 [[missions.slots]]
 purpose = "chooseLocation"
 construction_id = "location-phrase"
@@ -152,6 +147,7 @@ target_ids = ["recognise-position"]
 [[missions.slots]]
 purpose = "askWhere"
 construction_id = "where-question"
+additional_constructions = ["scene-location"]
 target_ids = ["build-question", "name-object"]
 prompt_labels = ["ask-where"]
 

@@ -1,6 +1,6 @@
 """Daily photo challenge entry, word counts, and the end-of-day rank bonus."""
 
-from datetime import timedelta
+from datetime import UTC, date, datetime, timedelta
 from fractions import Fraction
 from uuid import UUID, uuid4
 
@@ -45,6 +45,16 @@ def test_rarer_words_rank_higher_and_ties_share_a_rank():
     assert ranks[b][0] == ranks[c][0] == 2
     assert ranks[d] == (4, 0)
     assert [rank_bonus(rank) for rank in (1, 2, 3, 4, 10, 11)] == [50, 30, 20, 10, 10, 5]
+
+
+def test_steps_campaign_uses_the_full_singapore_day():
+    before_midnight_utc = datetime(2026, 11, 10, 15, 59, tzinfo=UTC)
+    campaign_start_utc = datetime(2026, 11, 10, 16, 0, tzinfo=UTC)
+    campaign_end_utc = datetime(2026, 11, 11, 16, 0, tzinfo=UTC)
+    assert daily_challenges.challenge_day(before_midnight_utc) == date(2026, 11, 10)
+    assert daily_challenges.challenge_day(campaign_start_utc) == date(2026, 11, 11)
+    assert daily_challenges.scene_for(date(2026, 11, 11)) == ("steps", "STePS", "at STePS")
+    assert daily_challenges.day_ends_at(date(2026, 11, 11)).astimezone(UTC) == campaign_end_utc
 
 
 def test_challenge_sessions_need_todays_day_and_an_own_photo(database):
@@ -221,7 +231,7 @@ def test_challenge_photo_must_match_the_days_scene(database):
     today = challenge_day()
     scene_key = daily_challenges.scene_for(today)[0]
     keyword = daily_challenges.SCENE_KEYWORDS[scene_key][0]
-    phrase = next(phrase for key, _, phrase in daily_challenges.SCENES if key == scene_key)
+    phrase = daily_challenges.scene_for(today)[2]
     try:
         session = _learner_session(engine, owner, owner_profile, ["mug"], entry=True)
         with engine.begin() as c:
