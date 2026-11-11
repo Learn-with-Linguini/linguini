@@ -124,13 +124,19 @@ def test_m03_counts_the_first_valid_group_when_several_are_counted():
 
 
 
-def test_photo_eligibility_takes_any_two_differently_named_objects():
+def test_photo_eligibility_takes_two_described_differently_named_objects():
     mission = get_mission("M01", "A0", 1)
-    # Packs teach whatever the learner confirmed, not a fixed noun list.
-    assert photo_eligibility(mission, _objects(["cup", "sofa"]), []).eligible
+    objects = _objects(["cup", "sofa"])
+    objects[0].attributes = {"colour": "red"}
+    objects[1].attributes = {"colour": "blue"}
+    assert photo_eligibility(mission, objects, []).eligible
     check = photo_eligibility(mission, _objects(["cup", "cup"]), [])
-    assert check.reasons == ("Confirm at least 2 different objects.",)
-    assert check.missing == ("objects",)
+    assert check.reasons == (
+        "Confirm at least 2 different objects.",
+        "Confirm a colour, size, shape, material, pattern or state of at least "
+        "2 different objects.",
+    )
+    assert check.missing == ("objects", "attributes")
 
 
 

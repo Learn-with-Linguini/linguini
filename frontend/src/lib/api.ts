@@ -554,7 +554,7 @@ export interface PracticeDetail {
     stage: "loadingImage" | "findingObjects" | "checkingResults" | "savingResults" | "ready";
     startedAt: string | null;
   } | null;
-  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
+  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | "challengeSceneMismatch" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;

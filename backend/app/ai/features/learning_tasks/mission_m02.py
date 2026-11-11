@@ -1,8 +1,7 @@
-"""M02 A1 mission lesson: find an object, say where it is, ask and answer where it is.
+"""M02 A1 mission lesson: choose a location, then ask and answer where it is.
 
 Every question reuses one learner-confirmed relation (subject, position, reference).
-Task 1 finds the subject by its photo marker from the confirmed statement, then
-chooses the confirmed position. Task 2 builds the where-question and its answer.
+Task 1 chooses the confirmed position. Task 2 builds the where-question and its answer.
 The lesson is built deterministically from confirmed objects and relations with
 reviewed target-language forms, and accepted only through ``validate_m02_lesson``.
 Lessons saved with mission content version 1 keep their persisted questions and
@@ -20,7 +19,7 @@ from app.schemas.base import ApiModel, NonEmptyText
 
 type M02Purpose = Literal["findObject", "chooseLocation", "askWhere", "answerWhere"]
 
-FIND_SECTION = "Task 1 · Find it in your photo"
+FIND_SECTION = "Task 1 · Choose the location"
 ASK_SECTION = "Task 2 · Ask and answer where"
 _INTERACTIONS = {
     "findObject": "multipleChoice",
@@ -57,7 +56,7 @@ class M02Question(ApiModel):
 
 class M02LessonResult(ApiModel):
     title: NonEmptyText = Field(max_length=80)
-    questions: Annotated[list[M02Question], Field(min_length=4, max_length=4)]
+    questions: Annotated[list[M02Question], Field(min_length=3, max_length=3)]
 
 
 

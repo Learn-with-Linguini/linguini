@@ -200,6 +200,30 @@
   line-height: 1.5;
 }
 
+.task-basil-earned {
+  text-align: center;
+}
+
+.task-basil-earned__leaf {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto var(--space-3);
+  border-radius: 50%;
+  background: var(--cream);
+  font-size: 44px;
+  animation: help-modal-enter 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.task-basil-earned__total {
+  display: block;
+  margin: var(--space-2) 0;
+  color: var(--teal-dark);
+  font-size: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes help-modal-fade {
   from {
     background: rgba(38, 50, 56, 0);
@@ -2264,10 +2288,6 @@ p[role="alert"]::before { content: "!"; }
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .practice-select .dashed-capture {
-    min-height: 220px;
-  }
-
   .vocabulary-scenes,
   .vocabulary-list {
     display: grid;
@@ -3581,12 +3601,27 @@ p[role="alert"]::before { content: "!"; }
 .dashed-capture {
   border: 2px dashed var(--line);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  /* Optically even: the camera icon carries ~11px of blank canvas above its drawing,
+     and the buttons' 4px ledge shadow hangs into the bottom padding. */
+  padding: var(--space-3) var(--space-6) calc(var(--space-6) + 4px);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
   background: #fffdf7;
+}
+
+/* Narrow screens: split the capture box's width evenly between Click and
+   Upload so both labels stay on one line instead of wrapping mid-word. */
+@media (max-width: 520px) {
+  .dashed-capture > .stack-2 {
+    align-self: stretch;
+  }
+
+  .dashed-capture .row > .btn {
+    flex: 1;
+    white-space: nowrap;
+  }
 }
 
 /* Home: greeting, a weekly check-in card, one featured plan, then quiet learning tiles. */

@@ -15,7 +15,7 @@ ONE_DETAIL_REASON = (
     "Confirm a colour, size, shape, material, pattern or state of at least one object."
 )
 M01 = get_mission("M01", "A1", 1)
-M02 = get_mission("M02", "A1", 2)
+M02 = get_mission("M02", "A1", 3)
 CUP = UUID("33333333-0000-0000-0000-000000000000")
 BOOK = UUID("11111111-0000-0000-0000-000000000000")
 TABLE = UUID("22222222-0000-0000-0000-000000000000")
@@ -86,10 +86,13 @@ def _labels(question):
 
 def test_saved_version_one_lessons_still_resolve_their_definition():
     old = get_mission("M02", "A1", 1)
+    previous = get_mission("M02", "A1", 2)
     assert old is not None and old.expected_performance.min_assessed_questions == 3
-    assert M02.expected_performance.min_assessed_questions == 4
+    assert previous is not None and previous.expected_performance.min_assessed_questions == 4
+    assert M02.expected_performance.min_assessed_questions == 3
     assert definition_file_name(old) == "M02-A1.toml"
-    assert definition_file_name(M02) == "M02-A1-2.toml"
+    assert definition_file_name(previous) == "M02-A1-2.toml"
+    assert definition_file_name(M02) == "M02-A1-3.toml"
 
 
 

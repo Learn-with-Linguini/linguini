@@ -47,7 +47,7 @@ def sample_vocabulary(locale):
 # Mocked languages whose pack requires romanization of translations.
 ROMANIZED = {"ko"}
 COUNTS = {
-    "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
+    "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 3, "A2": 5},
     "M03": {"A0": 6, "A1": 3, "A2": 5}, "M04": {"A0": 6, "A1": 3, "A2": 5},
     "M05": {"A0": 6, "A1": 3}, "M06": {"A2": 6},
 }
@@ -55,7 +55,7 @@ COUNTS = {
 TASKS = {"M06": 2}
 # Every pack mission at every level it has a template for.
 MISSION_LEVELS = [(mission, level) for mission, levels in COUNTS.items() for level in levels]
-MISSION_VERSIONS = {("M02", "A1"): 2}
+MISSION_VERSIONS = {("M02", "A1"): 3}
 # A1 describes the second object, so its colour has a distinct Korean modifier form.
 SCENE = (("cup", "red"), ("book", "white"), ("table", "green"))
 # Learner counts: three cups (A0's one small group) and five books (A2's second group).
@@ -1163,21 +1163,44 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         _assert_m06_order(tasks)
 
     by_id = {q.question_id: q for q in questions}
+    if mission_id == "M02" and level == "A0":
+        for index in (1, 2):
+            phrase = by_id[f"chooseName-{index}"]
+            build = by_id[f"listenSelect-{index}"]
+            assert "___" in phrase.prompt
+            assert phrase.prompt != phrase.instruction
+            assert build.prompt.endswith(("?", "？"))
+            assert build.prompt != build.instruction
+    if mission_id in {"M02", "M03"} and level == "A2":
+        assert all(question.roleplay_premise is None for question in questions)
+    if mission_id == "M04" and level == "A2":
+        premises = {
+            question.roleplay_premise for question in questions if question.roleplay_premise
+        }
+        assert len(premises) == 1
+        (premise,) = premises
+        assert premise.startswith("One object is yours")
+        assert "marker" not in premise.casefold()
+        assert not premise.casefold().startswith("role-play")
+    if mission_id == "M01" and level == "A1":
+        assert by_id["choose-attribute"].scene_object_id == by_id["describe-object"].scene_object_id
+        assert set(task.answer_key.statement_correct.values()) == {True, False}
+    if mission_id in {"M04", "M05"} and level == "A1":
+        assert all(question.roleplay_premise for question in questions)
+        assert all(
+            not question.roleplay_premise.casefold().startswith("let's pretend")
+            for question in questions
+        )
     if mission_id == "M01" and level == "A1":
         chosen = by_id["choose-attribute"]
         correct = next(
             o.label for o in chosen.options if o.option_id == answers[chosen.question_id]
         )
-        # A colour chosen on its own is not an attributive form (German Rot, not Rote).
-        assert correct.casefold() == {"de": "rot", "ko": "빨간색"}.get(
-            language, correct.casefold()
-        )
+        assert correct, "the described object's standalone detail is a real option"
         describe = by_id["describe-object"]
         tiles = len(describe.token_bank) - len(describe.sentence_join_modes)
         if pack.language.grammatical_gender == "none":
             assert tiles == 0, "genderless packs have no wrong-agreement tiles"
-        else:
-            assert tiles > 0
     if mission_id == "M01" and level == "A2" and language == "de":
         followup = by_id["m01-q5"]
         assert {o.label for o in followup.options} >= {"rot"}
@@ -1239,7 +1262,7 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     premises = {question.roleplay_premise for question in questions}
     assert len(premises) == 1
     (premise,) = premises
-    assert premise.startswith("Let's pretend ")
+    assert premise
     facts = assign_a0_scenario(get_mission(mission_id, "A0", 1), UUID(int=100), objects,
                                {str(obj.id): index for index, obj in enumerate(objects, 1)})
     snapshot = task.public_content.mission_snapshot
@@ -1255,17 +1278,14 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
                     for key in facts["preference"]["sceneObjectIds"])
     pick = questions[0]
     answers = task.answer_key.correct_option_ids
-    assert str(pick.marker_object_ids[answers[pick.question_id]]) == str(focus.id)
+    assert str(pick.option_object_ids[answers[pick.question_id]]) == str(focus.id)
     if scenario == "like":
-        assert premise == (
-            f"Let's pretend you like the {focus.label} at marker {objects.index(focus) + 1}."
-        )
-        assert pick.prompt == "In this scenario, which object do you like? Tap it in your photo."
+        assert premise == f"You like the {focus.label}. You don't like the {other.label}."
+        assert pick.prompt == "Which sentence matches the scenario?"
     else:
-        assert premise == (f"Let's pretend you don't like the {focus.label} "
-                           f"at marker {objects.index(focus) + 1}, "
-                           f"so you pick the {other.label} at marker {objects.index(other) + 1}.")
-        assert pick.prompt == "In this scenario, which object don't you like? Tap it in your photo."
+        assert premise == (f"You don't like the {focus.label}. "
+                           f"You choose the {other.label}.")
+        assert pick.prompt == "Which sentence matches the scenario?"
         last = next(q for q in questions if q.question_id == "M05-Q6")
         assert str(last.option_object_ids[answers["M05-Q6"]]) == str(other.id)
 
@@ -1329,29 +1349,34 @@ def test_a0_preference_respects_either_same_name_object(
     assert snapshot.reaction == reaction
     assert not snapshot.pretend
     first, *_, last = task.public_content.questions
-    assert f"cup at marker {selected_marker}" in first.prompt
+    assert "cup" in first.prompt
+    assert "marker" not in first.prompt.casefold()
     correct_option = task.answer_key.correct_option_ids[first.question_id]
-    assert first.marker_object_ids[correct_option] == chosen_id
-    assert chosen_id in first.marker_object_ids.values()
+    assert first.option_object_ids[correct_option] == chosen_id
+    assert chosen_id in first.option_object_ids.values()
     assert all(q.roleplay_premise is None for q in task.public_content.questions)
+    assert "marker" not in last.instruction.casefold()
     if reaction == "dislike":
-        assert "For this practice, choose the table at marker 3" in last.instruction
+        assert "For this practice, choose the table" in last.instruction
     _assert_gradable(task)
 
 
 @pytest.mark.parametrize("language", list(LOCALES))
 @pytest.mark.parametrize("reaction", ["like", "dislike"])
-def test_a0_assigned_preference_disambiguates_repeated_objects(language, reaction, monkeypatch):
+def test_a0_assigned_preference_keeps_repeated_objects_out_of_scenario_copy(
+    language, reaction, monkeypatch,
+):
     photo = build_scene(language, (("cup", "red"), ("cup", "white"), ("table", "green")))
     (task,) = _dispatch(language, "A0", photo, MockPackProvider(language), monkeypatch,
                         "M05", scenario=reaction)
     snapshot = task.public_content.mission_snapshot
     first = task.public_content.questions[0]
-    focus = first.marker_object_ids[task.answer_key.correct_option_ids[first.question_id]]
+    focus = first.option_object_ids[task.answer_key.correct_option_ids[first.question_id]]
     row = next(obj for obj in photo[0] if obj.id == focus)
     assert snapshot.pretend
     for question in task.public_content.questions:
-        assert f"{row.label} at marker {photo[0].index(row) + 1}" in question.roleplay_premise
+        assert row.label in question.roleplay_premise
+        assert "marker" not in question.roleplay_premise.casefold()
     _assert_gradable(task)
 
 

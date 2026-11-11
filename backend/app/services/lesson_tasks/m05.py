@@ -27,9 +27,9 @@ def premise(fact, label):
         subject = subject_name(fact)
     preference = "like" if fact.preference == "like" else "don't like"
     if subject == "you":
-        return f"Let's pretend you {preference} the {label}."
+        return f"You {preference} the {label}."
     verb = "likes" if fact.preference == "like" else "doesn't like"
-    return f"Let's pretend {subject} {verb} the {label}."
+    return f"{subject} {verb} the {label}."
 
 
 def m05_lesson_task(session_id, mission, payload, result, vocabulary_ids):

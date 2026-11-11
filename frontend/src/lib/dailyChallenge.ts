@@ -19,6 +19,7 @@ export const DAILY_CHALLENGE_PRIZES = [
   { place: "1st", basil: 50 }, { place: "2nd", basil: 30 }, { place: "3rd", basil: 20 }, { place: "Top 10", basil: 10 },
 ] as const;
 export const DAILY_CHALLENGE_FINISHER_BASIL = 5;
+export const STEPS_CAMPAIGN_KEY = "steps";
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** The final stretch of the day, when the countdown turns urgent. */
 export const FINAL_HOURS_MS = 3 * 60 * 60 * 1000;
@@ -40,6 +41,7 @@ export function countdownText(remaining: number, compact = false): string {
 
 /** The day's scene changes, so the one-line instruction is built from its title. */
 export function scenePhotoPrompt(title: string): string {
+  if (title === "STePS") return "Snap a photo at STePS and complete the lesson.";
   const place = title.toLowerCase();
   return `Photograph ${/^[aeiou]/.test(place) ? "an" : "a"} ${place} and complete the lesson.`;
 }

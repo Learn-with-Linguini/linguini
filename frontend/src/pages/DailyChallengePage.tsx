@@ -8,7 +8,7 @@ import { InlineLoader } from "../components/LoadingScreen";
 import { Button } from "../components/ui";
 import { createPractice } from "../lib/api";
 import { trackAction } from "../lib/analytics.ts";
-import { DAILY_CHALLENGE_FINISHER_BASIL, dailyChallengeKey, getDailyChallenge, lastResultText } from "../lib/dailyChallenge";
+import { DAILY_CHALLENGE_FINISHER_BASIL, dailyChallengeKey, getDailyChallenge, lastResultText, STEPS_CAMPAIGN_KEY } from "../lib/dailyChallenge";
 import { gameResourceKeys } from "../lib/gameResources";
 import { friendlyError } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -55,17 +55,18 @@ export function DailyChallengePage() {
   if (!data) return <div className="stack"><p role="alert">We couldn’t load today’s challenge.</p>
     <Button variant="quiet" onClick={() => { trackAction("daily_challenge_retry_clicked"); void query.refetch(); }}>Retry challenge</Button></div>;
   const result = lastResultText(data.lastResult);
+  const isStepsCampaign = data.sceneKey === STEPS_CAMPAIGN_KEY;
   return <main className="daily-challenge-page">
     <section className="daily-challenge">
       <ChallengeTimer dayEndsAt={data.dayEndsAt} onEnded={() => void query.refetch()} />
       <div className="daily-challenge__body">
         <div className="daily-challenge__join">
           <ChallengeHeadline challenge={data} as="h1" />
+          {isStepsCampaign ? <p className="daily-challenge__campaign-prize"><TrophyIcon size={22} /><span><strong>Rare finds win Grab vouchers</strong><small>Complete the lesson and get on the board.</small></span></p> : null}
           {data.status === "completed" ? <>
             <p className="daily-challenge__done"><CheckIcon size={20} /><span>You’re on the board with {data.yourWordCount} {data.yourWordCount === 1 ? "word" : "words"}. Bonuses land when the day ends. Come back tomorrow for a new scene.</span></p>
           </> : data.status === "inProgress" && data.sessionId ? <Button block onClick={() => void resume(data.sessionId!)}>Continue your challenge</Button> : <>
-            <ImageUpload compact disabled={starting || !activeProfile} cameraEnabled={learner.cameraOn} onBusyChange={setUploading}
-              dropzoneLabel={`Add a photo taken ${data.scenePhrase}`}
+            <ImageUpload disabled={starting || !activeProfile} cameraEnabled={learner.cameraOn} onBusyChange={setUploading}
               onUploaded={image => { trackAction("daily_challenge_photo_uploaded", { sceneKey: data.sceneKey, assetId: image.id }); void start(image.id); }} />
             {starting && !uploading ? <InlineLoader label="Starting your challenge" /> : null}
             <p className="daily-challenge__note"><BasilIcon size={18} />Finish the lesson to earn at least {DAILY_CHALLENGE_FINISHER_BASIL} Basil. Rare finds earn more.</p>
@@ -77,7 +78,7 @@ export function DailyChallengePage() {
         <div id={CHALLENGE_DETAILS_ID} className="daily-challenge__details">
           <section className="daily-challenge__rewards" aria-labelledby="challenge-rewards-title">
             <h2 id="challenge-rewards-title">Today’s rewards</h2>
-            <ChallengePrizes />
+            <ChallengePrizes campaign={isStepsCampaign} />
           </section>
           <ChallengeBoard challenge={data} />
         </div>

@@ -354,4 +354,5 @@ def get_friend_chat_service(
             realizer=build_friend_chat_realizer(runtime)),
         background=getattr(request.app.state, "background_runner", None),
         image_reader=lambda asset, width: get_image_derivatives().get(asset.storage_key, width),
+        photo_remover=lambda keys: get_image_derivatives().remove(keys),
     )

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 
 from app.ai.contracts import VisionImage
 from app.ai.features.object_grounding.service import ObjectGrounder
@@ -10,6 +11,16 @@ from app.schemas.media import AnchorPoint, BoundingBox
 from app.services.scene_analysis import SceneAnalysisResult
 
 logger = logging.getLogger("uvicorn.error")
+
+
+def _bounded_box(box_x: float, box_y: float, width: float, height: float) -> BoundingBox:
+    """Clamp detector rounding drift to the normalized image boundary."""
+    one = Decimal(1)
+    x = min(max(Decimal(str(box_x)), Decimal(0)), one)
+    y = min(max(Decimal(str(box_y)), Decimal(0)), one)
+    right = min(max(x + Decimal(str(width)), x), one)
+    bottom = min(max(y + Decimal(str(height)), y), one)
+    return BoundingBox(x=x, y=y, width=right - x, height=bottom - y)
 
 
 def apply_object_grounding(
@@ -36,15 +47,14 @@ def apply_object_grounding(
             "Grounding DINO marker %s: detector confidence=%.3f center=(%.3f, %.3f)",
             index, box.score, box.x + box.width / 2, box.y + box.height / 2,
         )
-        bounding_box = BoundingBox(
-            x=box.x, y=box.y, width=box.width, height=box.height
-        )
+        bounding_box = _bounded_box(box.x, box.y, box.width, box.height)
         objects.append(
             object.model_copy(
                 update={
                     "bounding_box": bounding_box,
                     "anchor_point": AnchorPoint(
-                        x=box.x + box.width / 2, y=box.y + box.height / 2
+                        x=bounding_box.x + bounding_box.width / 2,
+                        y=bounding_box.y + bounding_box.height / 2,
                     ),
                 }
             )

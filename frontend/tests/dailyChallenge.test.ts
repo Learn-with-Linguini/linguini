@@ -21,6 +21,7 @@ test("the last challenge payout is described only when there is one", () => {
 });
 
 test("the photo prompt names the day's scene", () => {
+  assert.equal(scenePhotoPrompt("STePS"), "Snap a photo at STePS and complete the lesson.");
   assert.equal(scenePhotoPrompt("Café"), "Photograph a café and complete the lesson.");
   assert.equal(scenePhotoPrompt("Bus stop"), "Photograph a bus stop and complete the lesson.");
   assert.equal(scenePhotoPrompt("Office"), "Photograph an office and complete the lesson.");

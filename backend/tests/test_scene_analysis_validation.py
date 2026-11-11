@@ -1,4 +1,5 @@
 import copy
+import json
 import math
 
 import pytest
@@ -265,6 +266,25 @@ def test_repeated_object_counts_are_normalized_to_visible_instances() -> None:
     parsed = parse_scene_analysis(payload)
 
     assert [item.suggested_group_count for item in parsed.objects] == [2, 2]
+
+
+@pytest.mark.parametrize("reported", [0, 30, 500])
+def test_out_of_range_group_count_does_not_reject_the_scene(reported: int) -> None:
+    payload = valid_payload()
+    payload["objects"][0]["suggestedGroupCount"] = reported
+
+    parsed = parse_scene_analysis(payload)
+
+    assert [item.suggested_group_count for item in parsed.objects] == [1, 1]
+
+
+def test_large_group_count_from_json_is_clamped_before_normalization() -> None:
+    payload = valid_payload()
+    payload["objects"][0]["suggestedGroupCount"] = 30
+
+    parsed = parse_scene_analysis(json.dumps(payload))
+
+    assert parsed.objects[0].suggested_group_count == 1
 
 
 def test_group_key_reused_for_different_labels_is_repaired() -> None:

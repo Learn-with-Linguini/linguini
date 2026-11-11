@@ -5,13 +5,13 @@ import { getPractice } from "../lib/api";
 import { trackAction } from "../lib/analytics.ts";
 import {
   DAILY_CHALLENGE_PRIZES, countdownText, dailyChallengeKey, getDailyChallenge,
-  scenePhotoPrompt, splitScenePhrase, timeLeft, wordShare,
+  scenePhotoPrompt, splitScenePhrase, STEPS_CAMPAIGN_KEY, timeLeft, wordShare,
 } from "../lib/dailyChallenge";
 import type { DailyChallenge as Challenge } from "../lib/dailyChallenge";
 import { friendlyError } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
 import { useAppState } from "../state/useAppState";
-import { BasilIcon, CheckIcon, ClockIcon } from "./icons";
+import { BasilIcon, CheckIcon, ClockIcon, TrophyIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { Button } from "./ui";
 import "./dailyChallenge.css";
@@ -62,13 +62,17 @@ export function useChallengeResume(sceneKey: string) {
 }
 
 /** The full ranking behind the top prize. */
-export function ChallengePrizes() {
+export function ChallengePrizes({ campaign = false }: { campaign?: boolean }) {
   return <div className="daily-challenge__prizes">
+    {campaign ? <div className="daily-challenge__voucher">
+      <TrophyIcon size={24} />
+      <div><strong>Grab vouchers</strong><span>Rare finds win</span></div>
+    </div> : null}
     <div className="daily-challenge__reward">
       <BasilIcon size={26} />
       <div className="daily-challenge__reward-copy">
         <strong>{DAILY_CHALLENGE_PRIZES[0].basil} Basil</strong>
-        <span>Win today’s top prize</span>
+        <span>{campaign ? "Plus today’s in-app rewards" : "Win today’s top prize"}</span>
       </div>
     </div>
     <ol>{DAILY_CHALLENGE_PRIZES.map(prize => <li key={prize.place}><span>{prize.place}</span><strong><BasilIcon size={18} />{prize.basil}<span className="visually-hidden"> Basil</span></strong></li>)}</ol>
@@ -101,6 +105,7 @@ export function DailyChallenge() {
   const query = useQuery({ queryKey: dailyChallengeKey(user?.id ?? ""), queryFn: ({ signal }) => getDailyChallenge(signal),
     enabled: Boolean(user?.id), refetchInterval: 30_000 });
   const data = query.data;
+  const isStepsCampaign = data?.sceneKey === STEPS_CAMPAIGN_KEY;
   const { resume, resumeError } = useChallengeResume(data?.sceneKey ?? "");
   if (query.isPending) return <div className="daily-challenge__pad"><InlineLoader label="Loading today’s challenge" /></div>;
   if (!data) return <div className="daily-challenge__pad"><p role="alert">We couldn’t load today’s challenge.</p>
@@ -110,7 +115,7 @@ export function DailyChallenge() {
     <div className="daily-challenge__summary">
       <div className="daily-challenge__summary-heading">
         <ChallengeHeadline challenge={data} id="daily-challenge-title" lede={false} />
-        <span className="pill pill--xp daily-challenge__prize"><BasilIcon size={16} />{DAILY_CHALLENGE_PRIZES[0].basil} Basil</span>
+        <span className="pill pill--xp daily-challenge__prize">{isStepsCampaign ? <><TrophyIcon size={16} />Grab vouchers</> : <><BasilIcon size={16} />{DAILY_CHALLENGE_PRIZES[0].basil} Basil</>}</span>
       </div>
       <div className="daily-challenge__actions">
         {data.status === "inProgress" && data.sessionId

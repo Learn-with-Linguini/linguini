@@ -301,6 +301,7 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
         {"target_language_code": "es", "proficiency_level": "A1"},
     ]
     connection.execute.return_value.mappings.return_value.one_or_none.return_value = None
+    connection.execute.return_value.first.return_value = None
 
     @contextmanager
     def transaction():

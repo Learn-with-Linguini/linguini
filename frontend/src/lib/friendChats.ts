@@ -5,6 +5,8 @@ export interface ChatCheatsheet { missionId: string; practiceLevel: string; cont
 export interface ChatObject {
   key: string; label: string; word: string; translation: string;
   x: number; y: number; width?: number; height?: number;
+  /** For a beginner sender choosing a target: false when no beginner clue can be built. */
+  clueReady?: boolean;
 }
 export interface ChatClueOption {
   id: string; text: string; translation: string;
@@ -18,16 +20,32 @@ export interface ChatMessage {
 }
 export interface ChatRound {
   id: string; senderId: string;
-  status: "selectingTarget" | "composingClue" | "awaitingGuess" | "awaitingFollowUp" | "completed" | "cancelled";
+  status: "reviewingObjects" | "selectingTarget" | "composingClue" | "awaitingGuess" | "awaitingFollowUp" | "completed" | "cancelled";
   photoStatus: "analyzing" | "ready" | "failed"; imageUrl: string | null; createdAt: string;
   completedAt?: string | null; objects: ChatObject[]; target?: ChatObject | null;
   clueOptions: ChatClueOption[]; messages: ChatMessage[]; error?: string | null; retryable: boolean;
+  /** Marked objects the guesser picks from; the target is among them but not identified. */
+  guessChoices?: ChatGuessChoice[];
+  /** The sender's analyzed objects awaiting review (reviewingObjects only). */
+  reviewObjects?: ChatReviewObject[];
+  reviewRelations?: ChatReviewRelation[];
+}
+export interface ChatReviewObject { key: string; label: string; x: number; y: number; attributes?: Record<string, string> }
+export interface ChatReviewRelation { key: string; subjectObjectKey: string; relation: string; referenceObjectKey: string }
+export interface ChatGuessChoice {
+  key: string; x: number; y: number; width?: number | null; height?: number | null;
+  /** Shown only after the guesser taps this choice; every choice has one. */
+  word: string; translation?: string | null;
 }
 export interface ChatSnapshot {
   id: string; status: "waiting" | "active" | "left" | "blocked"; revision: number; meId: string;
   targetLanguageCode: string; viewerLevel: string; partner: ChatPerson | null; creator: ChatPerson;
   inviteStatus: "open" | "accepted" | "expired" | "revoked"; createdAt: string; updatedAt: string;
   activeRound: ChatRound | null; rounds: ChatRound[];
+  /** Who starts the next round; null when either player may. */
+  nextSenderId?: string | null;
+  /** A finished round whose photo this viewer may play again. */
+  reusablePhotoRoundId?: string | null;
 }
 export interface ChatInvitePreview {
   status: "open" | "full" | "expired" | "revoked";
@@ -71,6 +89,9 @@ export const sendChatCommand = <T = ChatSnapshot>(id: string, command: ChatComma
   write<T>(`${chatPath(id)}/${command.intent}`, "POST", command.body);
 export const getChatHelp = (id: string, roundId: string) =>
   write<ChatHelp>(`${chatPath(id)}/${chatRoundIntent(roundId, "help")}`, "POST", {});
+/** Delete an ended chat or unanswered invite from my list, with my photos used only there. */
+export const deleteFriendChat = (id: string) => request<void>(chatPath(id), undefined, { method: "DELETE" });
+export const canDeleteFriendChat = (chat: Pick<ChatSnapshot, "status">) => chat.status !== "active";
 export const getChatPhoto = (id: string, roundId: string, signal?: AbortSignal) =>
   requestBlob(`${chatPath(id)}/${chatRoundIntent(roundId, "image")}?width=640`, signal);
 

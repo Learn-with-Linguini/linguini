@@ -10,8 +10,8 @@ import { trackAction } from "../lib/analytics";
 import { CameraCapture } from "./CameraCapture";
 
 type ImageUploadProps = {
-  compact?: boolean;
-  dropzoneLabel?: string;
+  /** Optional heading inside the capture box, e.g. "Add a photo to the room". */
+  label?: string;
   onUploaded: (image: UploadedImage) => void;
   cameraEnabled?: boolean;
   disabled?: boolean;
@@ -26,7 +26,7 @@ export function ImageUpload(props: ImageUploadProps) {
   return <ImageUploadForAccount key={session?.user.id ?? "demo"} {...props} />;
 }
 
-function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = false, onBusyChange, compact = false, dropzoneLabel }: ImageUploadProps) {
+function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = false, onBusyChange, label }: ImageUploadProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const deviceCameraInput = useRef<HTMLInputElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -63,45 +63,41 @@ function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = fa
       if (mounted.current) { setBusy(false); setPhase(""); onBusyChange?.(false); }
     }
   };
-  return <div className="stack-2">
-    <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp"
-      onChange={(e) => { void select(e.target.files?.[0], "userUpload"); e.target.value = ""; }} />
-    <input ref={deviceCameraInput} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="environment"
-      data-testid="device-camera"
-      onChange={(e) => {
-        const file = e.target.files?.[0];
-        if (file) trackAction("photo_camera_captured", { camera: "device" });
-        void select(file, "camera");
-        e.target.value = "";
-      }} />
-    {cameraOpen && cameraEnabled && !disabled && !busy ? <CameraCapture
-      onClose={() => setCameraOpen(false)}
-      onCapture={file => { setCameraOpen(false); void select(file, "camera"); }} /> : null}
-    {dropzoneLabel ? (
-      <button type="button" className="dashed-capture journal-upload-dropzone" disabled={disabled || busy}
-        onClick={() => fileInput.current?.click()}>
-        <span style={{ color: "var(--teal-dark)" }}><UploadIcon size={40} /></span>
-        <strong>{dropzoneLabel}</strong>
-        <span className="small muted">Choose from your device</span>
-      </button>
-    ) : <>
+  const openCamera = () => {
+    setError(null);
+    if (usesDeviceCamera()) {
+      trackAction("photo_camera_opened", { camera: "device" });
+      deviceCameraInput.current?.click();
+    } else setCameraOpen(true);
+  };
+  // Every photo picker shares one layout: a dashed capture box with Click (camera) and Upload.
+  return <div className="dashed-capture">
+    <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
+    {label ? <strong>{label}</strong> : null}
+    <div className="stack-2">
+      <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp"
+        onChange={(e) => { void select(e.target.files?.[0], "userUpload"); e.target.value = ""; }} />
+      <input ref={deviceCameraInput} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="environment"
+        data-testid="device-camera"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) trackAction("photo_camera_captured", { camera: "device" });
+          void select(file, "camera");
+          e.target.value = "";
+        }} />
+      {cameraOpen && cameraEnabled && !disabled && !busy ? <CameraCapture
+        onClose={() => setCameraOpen(false)}
+        onCapture={file => { setCameraOpen(false); void select(file, "camera"); }} /> : null}
       <div className="row">
-        <Button disabled={disabled || busy || !cameraEnabled} onClick={() => {
-          setError(null);
-          if (usesDeviceCamera()) {
-            trackAction("photo_camera_opened", { camera: "device" });
-            deviceCameraInput.current?.click();
-          } else setCameraOpen(true);
-        }}><CameraIcon size={18} /> {compact ? "Click" : "Open camera"}</Button>
+        <Button disabled={disabled || busy || !cameraEnabled} onClick={openCamera}><CameraIcon size={18} /> Click</Button>
         <Button variant="secondary" disabled={disabled || busy} onClick={() => fileInput.current?.click()}><UploadIcon size={18} /> Upload</Button>
       </div>
-      {!compact ? <p className="small muted">JPEG, PNG or WebP, up to 10 MB</p> : null}
-    </>}
-    {busy ? <InlineLoader label={phase || "Preparing upload"} /> : null}
-    {error ? <p role="alert">{error}</p> : null}
-    {retry ? <Button variant="secondary" disabled={disabled || busy} onClick={() => {
-      trackAction("photo_upload_retried", { source: retry.source });
-      void select(retry.file, retry.source, retry);
-    }}>Retry upload</Button> : null}
+      {busy ? <InlineLoader label={phase || "Preparing upload"} /> : null}
+      {error ? <p role="alert">{error}</p> : null}
+      {retry ? <Button variant="secondary" disabled={disabled || busy} onClick={() => {
+        trackAction("photo_upload_retried", { source: retry.source });
+        void select(retry.file, retry.source, retry);
+      }}>Retry upload</Button> : null}
+    </div>
   </div>;
 }

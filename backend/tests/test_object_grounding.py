@@ -194,3 +194,30 @@ def test_grounding_replaces_the_detector_matched_box_and_anchor() -> None:
         "height": "0.2",
     }
     assert grounder.calls[0][1] == ["chair", "table"]
+
+
+def test_grounding_clamps_detector_rounding_drift_at_image_edges() -> None:
+    grounder = FakeGrounder(
+        {
+            "chair": GroundedBox(
+                x=0.678388482171136,
+                y=0.7723738063465465,
+                width=0.3216115474700928,
+                height=0.2276261936534535,
+                score=0.9,
+            )
+        }
+    )
+
+    result = apply_object_grounding(
+        _result(), VisionImage(data=b"image", mime_type="image/png"), grounder
+    )
+
+    box = result.objects[0].bounding_box
+    assert box is not None
+    assert box.x + box.width == 1
+    assert box.y + box.height == 1
+    assert result.objects[0].anchor_point == AnchorPoint(
+        x=box.x + box.width / 2,
+        y=box.y + box.height / 2,
+    )

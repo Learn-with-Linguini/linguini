@@ -111,6 +111,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `task_skip_prompted` | `{ taskId, kind }` | Learner taps the "Skip this task" pill beside a grammar, mission or other non-word task title, opening the skip confirmation |
 | `task_skip_confirmed` | `{ taskId, kind }` | Learner confirms skipping that task |
 | `task_skip_cancelled` | `{ taskId, kind }` | Learner closes that skip confirmation and keeps learning |
+| `task_basil_summary_shown` | `{ taskId, amount }` | A completed lesson displays its cumulative task Basil reward popup |
+| `task_basil_summary_continued` | `{ taskId, amount }` | Learner continues from the cumulative task Basil reward popup |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and
@@ -229,22 +231,23 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_invite_created` | — | The creator generates a replacement invitation |
 | `ispy_friend_invite_copied` | — | Copying an invitation succeeds |
 | `ispy_friend_invite_shared` | — | Sharing an invitation succeeds |
+| `ispy_friend_invite_pasted` | — | The learner submits a pasted invite link or code from the lobby |
 | `ispy_friend_invite_opened` | — | The invitation preview opens |
 | `ispy_friend_invite_revoked` | — | The creator revokes an invitation |
 | `ispy_friend_chat_joined` | — | A compatible learner explicitly joins |
 | `ispy_friend_photo_uploaded` | — | An owned photo is accepted for a round |
 | `ispy_friend_photo_retried` | — | The sender retries failed photo analysis |
-| `ispy_friend_detected_object_selected` | — | The sender selects a suggested object |
+| `ispy_friend_detected_object_selected` | — | The sender selects one of their confirmed objects |
 | `ispy_friend_detected_object_confirmed` | — | The sender confirms a detected target |
-| `ispy_friend_custom_object_started` | — | The sender starts selecting another object |
-| `ispy_friend_custom_object_confirmed` | — | The sender confirms the checked custom target |
+| `ispy_friend_objects_reviewed` | `{ kept, added, removed, moved }` | The sender confirms the reviewed objects in their photo |
+| `ispy_friend_chat_deleted` | `{ status }` | A member deletes an ended chat or an unanswered invite from their list |
 | `ispy_friend_clue_builder_opened` | `{ level }` | The sender opens the clue builder |
 | `ispy_friend_cheatsheet_opened` | — | A shared canonical cheatsheet opens |
 | `ispy_friend_clue_suggested` | — | A suggested clue is returned for review |
 | `ispy_friend_clue_sent` | — | The sender explicitly sends a reviewed clue |
 | `ispy_friend_private_help_opened` | — | The receiver requests private assistance |
 | `ispy_friend_private_word_opened` | `{ shown }` | The receiver shows or hides a private word meaning |
-| `ispy_friend_guess_selected` | — | The receiver chooses a photo location |
+| `ispy_friend_guess_selected` | — | The receiver picks a marked object (or, on older rounds, a photo location) |
 | `ispy_friend_guess_submitted` | — | A confirmed location guess is saved |
 | `ispy_friend_guess_correct` | — | A new saved correct result appears |
 | `ispy_friend_guess_incorrect` | — | A new saved incorrect result appears |
@@ -252,6 +255,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `ispy_friend_answer_revealed` | — | The sender deliberately reveals the answer |
 | `ispy_friend_round_completed` | — | A new correct result or revealed answer appears |
 | `ispy_friend_next_round_started` | — | Another round starts in a chat with history |
+| `ispy_friend_photo_reused` | — | The next player continues on the previous round's photo |
 | `ispy_friend_round_cancelled` | — | The sender cancels an unfinished round |
 | `ispy_friend_audio_played` | `{ kind }` | Object, option, preview, clue, word or answer audio is requested |
 | `ispy_friend_speech_started` | — | The sender starts speech input |

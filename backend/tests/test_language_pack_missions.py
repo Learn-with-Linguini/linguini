@@ -37,13 +37,13 @@ def test_catalog_templates_resolve_through_the_registry():
     assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04", "M05", "M06"}
     assert pack_mission_keys() == [
         ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
-        ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
+        ("M02", "A0", 1), ("M02", "A1", 3), ("M02", "A2", 1),
         ("M03", "A0", 1), ("M03", "A1", 1), ("M03", "A2", 1),
         ("M04", "A0", 1), ("M04", "A1", 1), ("M04", "A2", 1),
         ("M05", "A0", 1), ("M05", "A1", 1), ("M06", "A2", 1),
     ]
     # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
-    assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
+    assert mission_template_key("M02", "A1") == ("M02", "A1", 3)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
         pack_mission("M99")
 
@@ -51,7 +51,7 @@ def test_catalog_templates_resolve_through_the_registry():
 def test_context_records_ready_and_declared_missions(packs_on):
     context = resolve_language_context("es")
     assert context.ready_missions == (
-        "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
+        "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:3", "M02:A2:1",
         "M03:A0:1", "M03:A1:1", "M03:A2:1", "M04:A0:1", "M04:A1:1", "M04:A2:1",
         "M05:A0:1", "M05:A1:1", "M06:A2:1",
     )
@@ -281,19 +281,12 @@ def _two_cabinets(*labels):
     return pack, *session_inputs(pack, objects, [], words, translated, {})
 
 
-def test_m01_a0_contrasts_objects_with_different_names():
+def test_m01_a0_needs_two_objects_with_translated_details():
     from app.language_packs.lessons.m01 import plan_lesson
 
     pack, facts, vocabulary = _two_cabinets()
-    labels = {obj.fact_id: obj.label for obj in facts.scene_facts.objects}
-    plan = plan_lesson(pack, "A0", facts, vocabulary, "seed")
-    focus = [labels[plan[f"matchName-{i}"][0]["bindings"]["object"]] for i in (1, 2)]
-    assert sorted(focus) == ["cabinet", "window"]
-    for index in (1, 2):
-        spec = plan[f"confirmName-{index}"][0]
-        named, shown = (labels[spec["bindings"][role]] for role in ("object", "shown"))
-        # A false "Is this a cabinet?" never points at the other cabinet.
-        assert (named == shown) is spec["truth"]
+    with pytest.raises(ValueError, match="translated details"):
+        plan_lesson(pack, "A0", facts, vocabulary, "seed")
 
 
 def test_m01_a0_needs_two_names_not_two_objects():

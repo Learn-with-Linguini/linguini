@@ -73,7 +73,7 @@ def test_a_planned_mission_without_its_pack_fails_instead_of_using_another_build
 
 
 def test_plans_saved_at_an_old_content_version_build_at_the_pack_version():
-    assert lesson_mission(get_mission("M02", "A1", 1)).content_version == 2
+    assert lesson_mission(get_mission("M02", "A1", 1)).content_version == 3
     current = get_mission("M01", "A1", 1)
     assert lesson_mission(current) is current
 

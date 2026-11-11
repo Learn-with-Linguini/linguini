@@ -1,9 +1,12 @@
 .accountPill { min-height: 28px; padding: 4px 10px; border-color: rgba(31, 122, 120, .24); background: color-mix(in srgb, var(--sage) 55%, var(--paper)); color: var(--teal-dark); font-size: .8rem; font-weight: 700; line-height: 1.15; }
-.languageField { display: grid; gap: var(--space-2); }
-.languageControl { position: relative; display: flex; align-items: center; }
-.languageControl select { width: 100%; min-height: 58px; padding: var(--space-3) 3rem var(--space-3) var(--space-4); appearance: none; border: var(--stroke) solid var(--teal-dark); border-radius: var(--radius-md); background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(31, 122, 120, .18); font: inherit; font-weight: 800; cursor: pointer; }
-.languageControl::after { position: absolute; right: var(--space-4); content: "⌄"; color: var(--teal-dark); font-size: 1.4rem; font-weight: 900; pointer-events: none; transform: translateY(-2px); }
-.languageControl:focus-within select { outline: 3px solid rgba(46, 156, 153, .22); outline-offset: 2px; }
+.languageField { display: grid; gap: var(--space-2); border: 0; margin: 0; padding: 0; }
+.languageRadios { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.languageRadio { display: flex; min-height: 52px; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); color: var(--ink); font-weight: 800; cursor: pointer; }
+.languageRadio[data-checked="true"] { border-color: var(--teal); background: var(--sage); }
+.languageRadio input { position: absolute; opacity: 0; pointer-events: none; }
+.languageRadio:focus-within { outline: 3px solid rgba(46, 156, 153, .22); outline-offset: 2px; }
+.radioDot { display: grid; width: 22px; height: 22px; flex: 0 0 auto; place-items: center; border: 2px solid var(--teal-dark); border-radius: 50%; background: var(--paper); }
+.languageRadio[data-checked="true"] .radioDot::after { width: 10px; height: 10px; border-radius: 50%; background: var(--teal-dark); content: ""; }
 .sceneCard { align-self: start; gap: 0; padding: 6px; }
 .sceneLabel { display: flex; min-height: 32px; align-items: center; padding: 5px 4px 2px; font-size: .9rem; font-weight: 800; line-height: 1.1; }
 .titleRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }

@@ -73,7 +73,7 @@ provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish r
 [[examples]]
 example_id = "m02-cup-on-table"
 levels = ["A1"]
-purposes = ["findObject", "answerWhere"]
+purposes = ["answerWhere"]
 meaning = "The cup is on the table."
 scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
 bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
@@ -88,7 +88,7 @@ provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; no
 [[mistakes]]
 example_id = "m02-location-form"
 levels = ["A1"]
-purposes = ["findObject", "answerWhere"]
+purposes = ["answerWhere"]
 sentence = "La taza es sobre la mesa."
 correction = "La taza está sobre la mesa."
 note = "Location uses está, not es."

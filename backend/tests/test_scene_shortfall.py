@@ -20,7 +20,7 @@ from app.services.mission_eligibility import (
 from app.services.shortfall_steps import mission_steps
 
 A1 = [get_mission(mission_id, "A1", 1) for mission_id in ("M01", "M03")] + [
-    get_mission("M02", "A1", 2)
+    get_mission("M02", "A1", 3)
 ]
 CUP, BOOK = uuid4(), uuid4()
 
