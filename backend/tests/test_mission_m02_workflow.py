@@ -268,7 +268,7 @@ def _legacy_lesson(engine, task):
     """Rewrite ``task`` as a lesson saved with M02 content version 1 (three questions)."""
     key = _answer_key(engine, task.id)
     content = task.public_content.model_dump(by_alias=True, mode="json")
-    find, choose, ask, answer = content["questions"]
+    choose, ask, answer = content["questions"]
     for question in (choose, ask, answer):
         question.pop("section", None)
         question.pop("keepOptionOrder", None)

@@ -253,12 +253,14 @@ def _plan_a1(specs, facts, vocabulary, seed):
     # A position phrase omits its object; ``target`` keeps the relation's subject bound.
     place = {"target": relation.subject_fact_id, **located}
     alternatives = _relation_alternatives(relation, facts, vocabulary)
-    specs.add("findObject", "answer", "scene-location", statement, suffix="statement")
     specs.add("chooseLocation", "answer", "location-phrase", place, suffix="correct")
     for index, (_kind, term) in enumerate(alternatives, 1):
         specs.add("chooseLocation", "option", "location-phrase", place, truth=False,
                   counterfactual={"relation": term.term_id}, suffix=f"alternative-{index}")
     specs.add("askWhere", "question", "where-question", {"subject": relation.subject_fact_id})
+    # The scene-location statement has no question of its own; it feeds the
+    # ask/answer copy and answer tiles, so it rides on the askWhere slot.
+    specs.add("askWhere", "statement", "scene-location", statement, suffix="statement")
     if alternatives:
         # The contradicting statement supplies the correction and one extra tile.
         specs.add("answerWhere", "contradiction", "scene-location", statement, truth=False,
@@ -371,9 +373,9 @@ def _build_a0(ctx):
 
 
 def _build_a1(ctx):
-    statement = ctx.sentence_by_id("findObject", "statement")
+    statement = ctx.sentence_by_id("askWhere", "statement")
     question = ctx.sentence_by_id("askWhere", "question")
-    spec = ctx.spec("findObject")
+    spec = ctx.spec("askWhere", "statement")
     subject = ctx.by_fact[spec.bindings["subject"]]
     reference = ctx.by_fact[spec.bindings["reference"]]
     relation = ctx.relations[spec.bindings["relation"]]

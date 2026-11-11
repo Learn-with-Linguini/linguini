@@ -140,11 +140,6 @@ required_constructions = [
   { construction_id = "where-question", min_version = 1 },
 ]
 [[missions.slots]]
-purpose = "findObject"
-construction_id = "scene-location"
-target_ids = ["describe-location"]
-
-[[missions.slots]]
 purpose = "chooseLocation"
 construction_id = "location-phrase"
 target_ids = ["recognise-position"]
