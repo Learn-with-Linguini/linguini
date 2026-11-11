@@ -3611,6 +3611,19 @@ p[role="alert"]::before { content: "!"; }
   background: #fffdf7;
 }
 
+/* Narrow screens: split the capture box's width evenly between Click and
+   Upload so both labels stay on one line instead of wrapping mid-word. */
+@media (max-width: 520px) {
+  .dashed-capture > .stack-2 {
+    align-self: stretch;
+  }
+
+  .dashed-capture .row > .btn {
+    flex: 1;
+    white-space: nowrap;
+  }
+}
+
 /* Home: greeting, a weekly check-in card, one featured plan, then quiet learning tiles. */
 .home {
   gap: var(--space-6);
