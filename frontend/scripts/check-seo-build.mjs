@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile, readdir, stat } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { inspectPage, parseSitemap } from "./seoChecks.mjs";
 
 const directory = resolve(process.argv[2] ?? "dist");
@@ -15,7 +15,8 @@ async function requireAsset(href) {
   const url = new URL(href, origin);
   if (url.origin !== origin) return;
   const file = resolve(directory, `.${decodeURIComponent(url.pathname)}`);
-  assert.ok(file.startsWith(`${directory}/`), `Asset escapes output directory: ${href}`);
+  const rel = relative(directory, file);
+  assert.ok(rel && !rel.startsWith("..") && !isAbsolute(rel), `Asset escapes output directory: ${href}`);
   assert.ok((await stat(file)).isFile(), `Missing asset: ${href}`);
 }
 
@@ -47,7 +48,7 @@ for (const file of ["app.html", "share.html", "404.html"]) {
   if (file === "404.html") assert.match(document.querySelector("h1")?.textContent ?? "", /not found/i);
 }
 
-for (const file of await readdir(directory, { recursive: true })) {
+for (const file of (await readdir(directory, { recursive: true })).map(name => name.split(sep).join("/"))) {
   if (!file.endsWith(".html") || pages.has(file) || ["app.html", "share.html", "404.html"].includes(file)) continue;
   const { document } = inspectPage(await read(file), new URL(`/${file}`, origin), { indexable: false });
   assert.ok(/noindex/.test(document.querySelector('meta[name="robots"]')?.content ?? ""), `Indexable page omitted from sitemap: ${file}`);
