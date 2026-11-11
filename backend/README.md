@@ -344,6 +344,22 @@ create metadata only; they do not upload files. This configuration serves public
 preloaded images; use the private mode above for private buckets.
 See [Supabase public URLs](https://supabase.com/docs/reference/javascript/file-buckets-getpublicurl).
 
+#### Dumping French mission questions
+
+From `backend/`, run `.venv/bin/python -m app.scripts.dump_mission_questions`
+to regenerate [the French question catalogue](../docs/french_mission_questions.md).
+The default mock provider needs no API keys or database and produces a deterministic
+report for every combination in `IMPLEMENTED_MISSIONS`, using a fixed example scene
+and empty adaptive history. It is not an enumeration of every possible lesson variant;
+mock wording may differ from production LLM output. Mission titles come from
+`app/missions/definitions/`; pack slot templates come from `app/language_packs/missions.toml`.
+
+Use `--output path.md` to choose a Markdown destination and `--json path.json` for
+an additional structured dump (including private answer keys; keep it offline).
+`--provider real` opts into paid network requests using the normal `ai.toml` learning-task
+route and configured credentials; real output is not deterministic. Failed combinations
+are recorded in the report and cause a nonzero exit status without stopping other missions.
+
 #### Precomputing scene vocabulary
 
 `python -m app.scripts.precompute_preloaded_scenes` (run from `backend/`)

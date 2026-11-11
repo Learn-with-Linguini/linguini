@@ -18,6 +18,7 @@ application guides and the supporting project work.
 | Analytics events and pages | [Analytics](../ANALYTICS.md) |
 | Search visibility, indexing and deployment checks | [SEO](seo.md) |
 | Missions, Basil and reward accounting | [Gamification policy](gamification.md) |
+| French pack example questions and answer keys | [French mission questions](french_mission_questions.md) |
 | Persistent private I-Spy conversations | [Friend I-Spy](friend-ispy.md) |
 | Model choices and evaluation results | [Model comparison](../MODEL_COMPARISON.md) |
 | Evaluation datasets and runners | [Backend evaluations](../backend/evals/README.md) |
