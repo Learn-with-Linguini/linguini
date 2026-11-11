@@ -1,0 +1,97 @@
+construction_id = "owned-object"
+
+[[examples]]
+example_id = "cup-is-mine"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+meaning = "The cup is mine."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "owner:cup" }
+truth = true
+labels = []
+sentence = "コップは 私の 物です."
+translation = "The cup is mine."
+chunks = [{ "text" = "コップは", "join" = "none" }, { "text" = "私の", "join" = "space" }, { "text" = "物です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "cup-is-yours"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+meaning = "The cup is yours."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "possessor:second" }
+truth = true
+labels = []
+sentence = "コップは あなたの 物です."
+translation = "The cup is yours."
+chunks = [{ "text" = "コップは", "join" = "none" }, { "text" = "あなたの", "join" = "space" }, { "text" = "物です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "book-is-anas"
+levels = ["A2"]
+purposes = ["buildOwnershipDescription"]
+meaning = "The book is Ana's."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:book", "owner" = "owner:book" }
+truth = true
+labels = []
+sentence = "本は アナの 物です."
+translation = "The book is Ana's."
+chunks = [{ "text" = "本は", "join" = "none" }, { "text" = "アナの", "join" = "space" }, { "text" = "物です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "no-book-is-anas"
+levels = ["A2"]
+purposes = ["clarifyOwnership"]
+meaning = "No, the book is Ana's."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:book", "owner" = "owner:book" }
+truth = true
+labels = ["no"]
+sentence = "いいえ, 本は アナの 物です."
+translation = "No, the book is Ana's."
+chunks = [{ "text" = "いいえ", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "本は", "join" = "space" }, { "text" = "アナの", "join" = "space" }, { "text" = "物です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-is-mine-form"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+sentence = "コップは 私の 物です"
+correction = "コップは 私の 物です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-is-yours-form"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+sentence = "コップは あなたの 物です"
+correction = "コップは あなたの 物です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "book-is-anas-form"
+levels = ["A2"]
+purposes = ["buildOwnershipDescription"]
+sentence = "本は アナの 物です"
+correction = "本は アナの 物です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "no-book-is-anas-form"
+levels = ["A2"]
+purposes = ["clarifyOwnership"]
+sentence = "いいえ, 本は アナの 物です"
+correction = "いいえ, 本は アナの 物です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

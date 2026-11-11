@@ -1,0 +1,18 @@
+construction_id = "owned-object"
+version = 1
+summary = "Name an object and its owner."
+guidance = "Use N 是 我的. / N 是 你的. / N 是 安娜 的. A yes/no correction uses the required 对 or 不对 prefix. Possessive 的 is invariant; do not invent gender agreement. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "owned-object"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun", "owner" = "determiner" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]

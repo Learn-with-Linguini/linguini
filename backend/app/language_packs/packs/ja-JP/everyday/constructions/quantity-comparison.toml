@@ -1,0 +1,23 @@
+construction_id = "quantity-comparison"
+version = 1
+summary = "Compare the number of objects in two groups."
+guidance = "Use firstは secondより 多いです. or firstは secondより 少ないです. for the bound comparison. 多い and 少ない are the fixed more/fewer labels. Compare counts, not sizes, and preserve which group is first and which is the reference. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels. "
+features = ["polite-japanese", "learner-spacing", "quantity-comparison"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "first" = "noun", "second" = "noun" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "comparison-frame"
+message = "Compare quantities with より and 多い/少ない."
+must_contain = ["より", "(多い|少ない)です[.]$"]

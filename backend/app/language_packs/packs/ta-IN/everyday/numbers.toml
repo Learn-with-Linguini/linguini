@@ -1,0 +1,57 @@
+# Number words for counting missions (M03). ``with_noun`` gives the form used
+# next to a counted noun when it differs: agreement (Spanish un/una) or a
+# counter (Korean 두 개).
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[numbers]]
+value = 1
+text = "ஒண்ணு"
+romanization = "oṇṇu"
+[[numbers.with_noun]]
+text = "ஒரு"
+romanization = "oru"
+
+[[numbers]]
+value = 2
+text = "ரெண்டு"
+romanization = "reṇṭu"
+
+[[numbers]]
+value = 3
+text = "மூணு"
+romanization = "mūṇu"
+
+[[numbers]]
+value = 4
+text = "நாலு"
+romanization = "nālu"
+
+[[numbers]]
+value = 5
+text = "அஞ்சு"
+romanization = "añcu"
+
+[[numbers]]
+value = 6
+text = "ஆறு"
+romanization = "āṟu"
+
+[[numbers]]
+value = 7
+text = "ஏழு"
+romanization = "ēḻu"
+
+[[numbers]]
+value = 8
+text = "எட்டு"
+romanization = "eṭṭu"
+
+[[numbers]]
+value = 9
+text = "ஒன்பது"
+romanization = "oṉpatu"
+
+[[numbers]]
+value = 10
+text = "பத்து"
+romanization = "pattu"

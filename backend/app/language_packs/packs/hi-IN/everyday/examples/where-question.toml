@@ -1,0 +1,25 @@
+construction_id = "where-question"
+
+[[examples]]
+example_id = "where-cup"
+levels = ["A1"]
+purposes = ["askWhere"]
+meaning = "Where is the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "subject" = "object:cup" }
+truth = true
+labels = []
+sentence = "कप कहाँ है?"
+translation = "Where is the cup?"
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "कहाँ", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "where-cup-format"
+levels = ["A1"]
+purposes = ["askWhere"]
+sentence = "कप कहाँ है"
+correction = "कप कहाँ है?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

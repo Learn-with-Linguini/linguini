@@ -1,0 +1,49 @@
+construction_id = "location-phrase"
+
+[[examples]]
+example_id = "phrase-on-table"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "on the table"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "target" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "在 桌子 上面"
+translation = "on the table"
+chunks = [{ "text" = "在", "join" = "none" }, { "text" = "桌子", "join" = "space" }, { "text" = "上面", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "phrase-next-window"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "next to the window"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:window", "concept" = "window" }], "relations" = [{ "fact_id" = "relation:cup-next_to-window", "subject" = "object:cup", "reference" = "object:window", "relation" = "next_to" }] }
+bindings = { "target" = "object:cup", "reference" = "object:window", "relation" = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "在 窗户 旁边"
+translation = "next to the window"
+chunks = [{ "text" = "在", "join" = "none" }, { "text" = "窗户", "join" = "space" }, { "text" = "旁边", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "phrase-on-table-format"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "在 桌子 上面."
+correction = "在 桌子 上面"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "phrase-next-window-format"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "在 窗户 旁边."
+correction = "在 窗户 旁边"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

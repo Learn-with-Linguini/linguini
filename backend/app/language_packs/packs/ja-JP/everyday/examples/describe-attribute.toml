@@ -1,0 +1,241 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a red cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "赤い コップです."
+translation = "This is a red cup."
+chunks = [{ "text" = "赤い", "join" = "none" }, { "text" = "コップです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a green book."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "緑色の 本です."
+translation = "This is a green book."
+chunks = [{ "text" = "緑色の", "join" = "none" }, { "text" = "本です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a black shoe."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }], "attributes" = [{ "fact_id" = "attribute:shoe-black", "object" = "object:shoe", "kind" = "color", "value" = "black" }] }
+bindings = { "object" = "object:shoe", "attribute" = "attribute:shoe-black" }
+truth = true
+labels = []
+sentence = "黒い 靴です."
+translation = "This is a black shoe."
+chunks = [{ "text" = "黒い", "join" = "none" }, { "text" = "靴です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a blue lamp."
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }], "attributes" = [{ "fact_id" = "attribute:lamp-blue", "object" = "object:lamp", "kind" = "color", "value" = "blue" }] }
+bindings = { "object" = "object:lamp", "attribute" = "attribute:lamp-blue" }
+truth = true
+labels = []
+sentence = "青い ランプです."
+translation = "This is a blue lamp."
+chunks = [{ "text" = "青い", "join" = "none" }, { "text" = "ランプです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-white-plate"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a white plate."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "白い 皿です."
+translation = "This is a white plate."
+chunks = [{ "text" = "白い", "join" = "none" }, { "text" = "皿です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-yellow-apple"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a yellow apple."
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:apple-yellow", "object" = "object:apple", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:apple", "attribute" = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "黄色い りんごです."
+translation = "This is a yellow apple."
+chunks = [{ "text" = "黄色い", "join" = "none" }, { "text" = "りんごです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "choose-red-cup"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "red (the colour of the cup)"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "赤"
+translation = "red (the colour of the cup)"
+chunks = [{ "text" = "赤", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "choose-green-book"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "green (the colour of the book)"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "緑色"
+translation = "green (the colour of the book)"
+chunks = [{ "text" = "緑色", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "コップは 何色ですか?"
+translation = "What colour is the cup?"
+chunks = [{ "text" = "コップは", "join" = "none" }, { "text" = "何色ですか", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the book?"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "本は 何色ですか?"
+translation = "What colour is the book?"
+chunks = [{ "text" = "本は", "join" = "none" }, { "text" = "何色ですか", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-red-cup-form"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "赤い コップです"
+correction = "赤い コップです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-green-book-form"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "緑色の 本です"
+correction = "緑色の 本です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-black-shoe-form"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "黒い 靴です"
+correction = "黒い 靴です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-blue-lamp-form"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "青い ランプです"
+correction = "青い ランプです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-white-plate-form"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "白い 皿です"
+correction = "白い 皿です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-yellow-apple-form"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "黄色い りんごです"
+correction = "黄色い りんごです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "choose-red-cup-form"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+sentence = "赤です."
+correction = "赤"
+note = "A colour-name option is a bare colour name."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "choose-green-book-form"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+sentence = "緑色です."
+correction = "緑色"
+note = "A colour-name option is a bare colour name."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-cup-colour-form"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "コップは 何色ですか."
+correction = "コップは 何色ですか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-book-colour-form"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "本は 何色ですか."
+correction = "本は 何色ですか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

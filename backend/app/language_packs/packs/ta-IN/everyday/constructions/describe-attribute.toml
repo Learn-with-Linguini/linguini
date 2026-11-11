@@ -1,0 +1,45 @@
+construction_id = "describe-attribute"
+templates = { word_order_feedback = "Keep the modifier with its noun and attached suffixes intact; use the complete spoken form shown." }
+version = 2
+summary = "Describe a bound colour without importing article/gender agreement."
+guidance = "Use a colour modifier before the noun: இது ஒரு சிவப்பு கோப்பை. Colour-predicate alternatives in this spoken register use approved forms such as கோப்பை சிவப்பா இருக்கு. and புத்தகம் பச்சையா இருக்கு. Do not derive all forms by a universal suffix rule: நீல/நீலம்/நீலமா have different uses. Ask கோப்பை என்ன நிறம்? for a colour question; chooseAttribute options use colour names, for example நீலம். Keep the confirmed colour attached to the intended object and avoid mixing in formal written இருக்கிறது unless explicitly changing the register."
+features = ["prenominal-colour", "spoken-property-predicate", "no-adjective-gender-agreement"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["attribute-prompt-colour", "describe-object"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது|இருக்கின்றன"]
+
+[[checks]]
+check_id = "question-mark"
+message = "Questions end with ?."
+must_contain = ["\\?$"]
+uses = ["followup"]
+
+[[checks]]
+check_id = "singular-demonstrative"
+message = "Use இது (this) with ஒரு; இவை (these) is plural."
+must_not_contain = ["(^|\\s)இவை ஒரு\\s"]
+
+[[checks]]
+check_id = "describe-frame"
+message = "Describe with இது ஒரு … or end with the verb இருக்கு."
+must_contain = ["(^இது |இருக்கு[.?!]$)"]
+uses = ["answer"]
+
+[[checks]]
+check_id = "detail-question"
+message = "A detail follow-up asks about the detail itself, not where the object is (எங்கே belongs to the location question)."
+must_not_contain = ["எங்கே"]
+uses = ["followup"]

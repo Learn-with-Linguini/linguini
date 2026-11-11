@@ -1,0 +1,50 @@
+{
+  "facts": {
+    "scene_facts": {
+      "objects": [
+        {
+          "fact_id": "object:cup",
+          "scene_object_id": "11111111-1111-4111-8111-111111111111",
+          "label": "cup",
+          "marker": 1
+        },
+        {
+          "fact_id": "object:book",
+          "scene_object_id": "22222222-2222-4222-8222-222222222222",
+          "label": "book",
+          "marker": 2
+        },
+        {
+          "fact_id": "object:table",
+          "scene_object_id": "33333333-3333-4333-8333-333333333333",
+          "label": "table",
+          "marker": 3
+        }
+      ],
+      "attributes": [
+        {
+          "fact_id": "attribute:cup:colour:red",
+          "object_fact_id": "object:cup",
+          "kind": "colour",
+          "value": "red"
+        },
+        {
+          "fact_id": "attribute:book:colour:green",
+          "object_fact_id": "object:book",
+          "kind": "colour",
+          "value": "green"
+        }
+      ],
+      "relations": [
+        {
+          "fact_id": "relation:cup:table:on",
+          "subject_fact_id": "object:cup",
+          "reference_fact_id": "object:table",
+          "relation": "on"
+        }
+      ],
+      "counted_groups": []
+    },
+    "statements": []
+  }
+}

@@ -1,0 +1,23 @@
+construction_id = "find-object"
+version = 1
+summary = "Tell the learner to find a named object."
+guidance = "Use Nを 探してください. e.g. コップを 探してください. This is a polite instruction, not a location claim. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels. "
+features = ["polite-japanese", "learner-spacing", "find-object"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "find-request"
+message = "Politely ask the learner to find the item."
+must_contain = ["を\\s*探してください[.]$"]

@@ -1,0 +1,130 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The cup is on the table."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "कप मेज़ पर है."
+translation = "The cup is on the table."
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "मेज़", "join" = "space" }, { "text" = "पर", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The shoe is under the chair."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe", "reference" = "object:chair", "relation" = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "जूता कुर्सी के नीचे है."
+translation = "The shoe is under the chair."
+chunks = [{ "text" = "जूता", "join" = "none" }, { "text" = "कुर्सी", "join" = "space" }, { "text" = "के", "join" = "space" }, { "text" = "नीचे", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "lamp-next-to-book"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The lamp is next to the book."
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }, { "fact_id" = "object:book", "concept" = "book" }], "relations" = [{ "fact_id" = "relation:lamp-next_to-book", "subject" = "object:lamp", "reference" = "object:book", "relation" = "next_to" }] }
+bindings = { "subject" = "object:lamp", "reference" = "object:book", "relation" = "relation:lamp-next_to-book" }
+truth = true
+labels = []
+sentence = "लैंप किताब के पास है."
+translation = "The lamp is next to the book."
+chunks = [{ "text" = "लैंप", "join" = "none" }, { "text" = "किताब", "join" = "space" }, { "text" = "के", "join" = "space" }, { "text" = "पास", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "Where is the shoe?"
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe" }
+truth = true
+labels = []
+sentence = "जूता कहाँ है?"
+translation = "Where is the shoe?"
+chunks = [{ "text" = "जूता", "join" = "none" }, { "text" = "कहाँ", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "कप मेज़ पर है."
+translation = "The cup is on the table."
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "मेज़", "join" = "space" }, { "text" = "पर", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-on-table-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "कप मेज़ पर है"
+correction = "कप मेज़ पर है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "shoe-under-chair-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "जूता कुर्सी के नीचे है"
+correction = "जूता कुर्सी के नीचे है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "lamp-next-to-book-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "लैंप किताब के पास है"
+correction = "लैंप किताब के पास है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-shoe-location-format"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "जूता कहाँ है"
+correction = "जूता कहाँ है?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "m02-cup-on-table-format"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "कप मेज़ पर है"
+correction = "कप मेज़ पर है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-scene-location"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "फ़ोन दरवाज़ा के पास है."
+correction = "फ़ोन दरवाज़े के पास है."
+note = "Use the masculine oblique reference before the compound postposition."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

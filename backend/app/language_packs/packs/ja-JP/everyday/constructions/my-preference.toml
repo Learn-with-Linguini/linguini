@@ -1,0 +1,35 @@
+construction_id = "my-preference"
+version = 1
+summary = "Express the learner's like or dislike."
+guidance = "Use 私は Nが 好きです. or 私は Nが 好きではありません. 好き is a na-adjective, not a transitive verb: use が, not を before 好き. Dislike uses the neutral not-like form, not the stronger 嫌い. use=like forbids negation; use=dislike requires negation. Keep 私は in the reference frame so person and object remain distinct. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels. "
+features = ["polite-japanese", "learner-spacing", "my-preference"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "like-positive"
+message = "Like uses 好きです."
+must_contain = ["好きです[.]$"]
+uses = ["like"]
+
+[[checks]]
+check_id = "dislike-negative"
+message = "Not-like uses 好きではありません."
+must_contain = ["好きではありません[.]$"]
+uses = ["dislike"]
+
+[[checks]]
+check_id = "preference-particle"
+message = "The liked noun takes が, not を."
+must_not_contain = ["を\\s*好き"]

@@ -12,6 +12,7 @@ from app.config import (
     get_language_pack_dirs,
     get_language_pack_releases,
 )
+from app.language_packs import loader
 from app.language_packs.fingerprint import pack_fingerprint
 from app.language_packs.loader import (
     LanguagePackError,
@@ -241,6 +242,33 @@ def test_default_roots_are_the_bundled_packs_and_nested_roots_are_cached(monkeyp
 
     assert first is second
     assert first.get("es", "everyday").pack_id == "es-es-everyday"
+
+
+def test_bundled_packs_are_rescanned_at_most_once_per_window(monkeypatch, tmp_path):
+    scans = []
+    original = loader._toml_revision
+
+    def counting(root):
+        scans.append(root)
+        return original(root)
+
+    monkeypatch.setattr(loader, "_toml_revision", counting)
+    monkeypatch.setattr(loader, "_bundled_revision", None)
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "")
+    for _ in range(3):
+        load_packs()
+    assert len(scans) == 1
+
+    monkeypatch.setattr(loader, "BUNDLED_REVISION_SECONDS", 0)
+    load_packs()
+    assert len(scans) == 2
+
+    # A configured root is rescanned on every lookup, so its edits apply at once.
+    pack_dir = _copy_pack(tmp_path)
+    scans.clear()
+    load_packs([pack_dir])
+    load_packs([pack_dir])
+    assert len(scans) == 2
 
 
 def test_release_environment_parser(monkeypatch, tmp_path):

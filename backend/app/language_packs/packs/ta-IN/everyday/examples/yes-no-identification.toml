@@ -1,0 +1,139 @@
+construction_id = "yes-no-identification"
+
+[[examples]]
+example_id = "ask-cup"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup", shown = "object:cup" }
+truth = true
+labels = []
+sentence = "இது ஒரு கோப்பையா?"
+translation = "Is this a cup?"
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "கோப்பையா?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-plate"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a plate?"
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate", shown = "object:plate" }
+truth = true
+labels = []
+sentence = "இது ஒரு தட்டா?"
+translation = "Is this a plate?"
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "தட்டா?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-bottle"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a bottle?"
+scene = { objects = [{ fact_id = "object:bottle", concept = "bottle" }] }
+bindings = { object = "object:bottle", shown = "object:bottle" }
+truth = true
+labels = []
+sentence = "இது ஒரு பாட்டிலா?"
+translation = "Is this a bottle?"
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "பாட்டிலா?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-book-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:book", object = "object:book" }
+truth = true
+labels = ["yes"]
+sentence = "ஆமாம், இது ஒரு புத்தகம்."
+translation = "Yes, it is a book."
+chunks = [{ text = "ஆமாம்,", join = "none" }, { text = "இது", join = "space" }, { text = "ஒரு", join = "space" }, { text = "புத்தகம்.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-chair-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a chair."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { shown = "object:chair", object = "object:chair" }
+truth = true
+labels = ["yes"]
+sentence = "ஆமாம், இது ஒரு நாற்காலி."
+translation = "Yes, it is a chair."
+chunks = [{ text = "ஆமாம்,", join = "none" }, { text = "இது", join = "space" }, { text = "ஒரு", join = "space" }, { text = "நாற்காலி.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-clock-no"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "No, it is a clock."
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }, { fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { shown = "object:clock", object = "object:lamp" }
+truth = false
+labels = ["no"]
+sentence = "இல்லை, இது ஒரு கடிகாரம்."
+translation = "No, it is a clock."
+chunks = [{ text = "இல்லை,", join = "none" }, { text = "இது", join = "space" }, { text = "ஒரு", join = "space" }, { text = "கடிகாரம்.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "short-yes"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Yes."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:cup", object = "object:cup" }
+truth = true
+labels = []
+sentence = "ஆமாம்."
+translation = "Yes."
+chunks = [{ text = "ஆமாம்.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "short-no"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "No."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:cup", object = "object:book" }
+truth = false
+labels = []
+sentence = "இல்லை."
+translation = "No."
+chunks = [{ text = "இல்லை.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-03"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "இது ஒரு கோப்பை."
+correction = "இது ஒரு கோப்பையா?"
+note = "The identity question needs its appropriate interrogative noun form, not just the statement."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-04"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "இல்லை, இது ஒரு விளக்கு."
+correction = "இல்லை, இது ஒரு கடிகாரம்."
+note = "Context: the shown object is a clock and the question proposed a lamp. Restate the clock."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

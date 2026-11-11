@@ -1,0 +1,25 @@
+construction_id = "choice-statement"
+
+[[examples]]
+example_id = "i-choose-book"
+levels = ["A0"]
+purposes = ["sayChoice"]
+meaning = "I choose the book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book" }
+truth = true
+labels = []
+sentence = "本を 選びます."
+translation = "I choose the book."
+chunks = [{ "text" = "本を", "join" = "none" }, { "text" = "選びます", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-choose-book-form"
+levels = ["A0"]
+purposes = ["sayChoice"]
+sentence = "本を 選びます"
+correction = "本を 選びます."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

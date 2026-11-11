@@ -1,0 +1,38 @@
+construction_id = "identify-object"
+templates = { find = "கண்டுபிடிங்க: {name}." }
+version = 2
+summary = "Identify an inanimate object in everyday spoken Tamil."
+guidance = "Every name chunk (matchName, chooseName, listenSelect) is the bare noun alone, with no இது ஒரு frame and no final punctuation: கோப்பை. Only a complete identification sentence uses the frame: இது ஒரு கோப்பை. Present nominal identification normally needs no overt verb meaning is; do not append an existential இருக்கு to every Spanish-shaped identification frame. ஒரு can introduce one/a in these examples, but Tamil has no obligatory article system matching a/the and no European-style noun gender agreement. Keep script words intact. The romanization mirrors the written spoken form and is not a substitute for native-script assessment."
+features = ["nominal-predicate", "demonstrative-itu", "optional-oru"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["what-is-this"]
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "name-without-punctuation"
+message = "A vocabulary name is a bare chunk without final punctuation."
+must_not_contain = ["[.?!]$"]
+uses = ["name"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது|இருக்கின்றன"]
+
+[[checks]]
+check_id = "identify-frame"
+message = "Say what something is with இது ஒரு …"
+must_contain = ["^இது "]
+uses = ["answer"]
+
+[[checks]]
+check_id = "singular-demonstrative"
+message = "Use இது (this) with ஒரு; இவை (these) is plural."
+must_not_contain = ["(^|\\s)இவை ஒரு\\s"]

@@ -1,0 +1,145 @@
+construction_id = "yes-no-identification"
+
+[[examples]]
+example_id = "ask-cup"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:cup", "shown" = "object:cup" }
+truth = true
+labels = []
+sentence = "コップですか?"
+translation = "Is this a cup?"
+chunks = [{ "text" = "コップですか", "join" = "none" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-plate"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a plate?"
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }] }
+bindings = { "object" = "object:plate", "shown" = "object:plate" }
+truth = true
+labels = []
+sentence = "皿ですか?"
+translation = "Is this a plate?"
+chunks = [{ "text" = "皿ですか", "join" = "none" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-bottle"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a bottle?"
+scene = { "objects" = [{ "fact_id" = "object:bottle", "concept" = "bottle" }] }
+bindings = { "object" = "object:bottle", "shown" = "object:bottle" }
+truth = true
+labels = []
+sentence = "瓶ですか?"
+translation = "Is this a bottle?"
+chunks = [{ "text" = "瓶ですか", "join" = "none" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "answer-book-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a book."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }] }
+bindings = { "shown" = "object:book", "object" = "object:book" }
+truth = true
+labels = ["yes"]
+sentence = "はい, 本です."
+translation = "Yes, it is a book."
+chunks = [{ "text" = "はい", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "本です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "answer-chair-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a chair."
+scene = { "objects" = [{ "fact_id" = "object:chair", "concept" = "chair" }] }
+bindings = { "shown" = "object:chair", "object" = "object:chair" }
+truth = true
+labels = ["yes"]
+sentence = "はい, 椅子です."
+translation = "Yes, it is a chair."
+chunks = [{ "text" = "はい", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "椅子です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "answer-clock-no"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "No, it is a clock."
+scene = { "objects" = [{ "fact_id" = "object:clock", "concept" = "clock" }, { "fact_id" = "object:lamp", "concept" = "lamp" }] }
+bindings = { "shown" = "object:clock", "object" = "object:lamp" }
+truth = false
+labels = ["no"]
+sentence = "いいえ, 時計です."
+translation = "No, it is a clock."
+chunks = [{ "text" = "いいえ", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "時計です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-cup-form"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "コップですか."
+correction = "コップですか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-plate-form"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "皿ですか."
+correction = "皿ですか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-bottle-form"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "瓶ですか."
+correction = "瓶ですか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "answer-book-yes-form"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "はい, 本です"
+correction = "はい, 本です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "answer-chair-yes-form"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "はい, 椅子です"
+correction = "はい, 椅子です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "answer-clock-no-form"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "いいえ, 時計です"
+correction = "いいえ, 時計です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

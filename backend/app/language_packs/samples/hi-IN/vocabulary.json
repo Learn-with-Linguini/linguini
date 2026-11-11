@@ -1,0 +1,1023 @@
+{
+  "terms": [
+    {
+      "term_id": "object-cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "कप",
+      "forms": [
+        "कप",
+        "कपों"
+      ],
+      "forms_by_key": {
+        "bare": "कप",
+        "definite": "कप",
+        "plural": "कप",
+        "oblique": "कप",
+        "plural-oblique": "कपों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kap"
+    },
+    {
+      "term_id": "object-plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "प्लेट",
+      "forms": [
+        "प्लेट",
+        "प्लेटें",
+        "प्लेटों"
+      ],
+      "forms_by_key": {
+        "bare": "प्लेट",
+        "definite": "प्लेट",
+        "plural": "प्लेटें",
+        "oblique": "प्लेट",
+        "plural-oblique": "प्लेटों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pleṭ"
+    },
+    {
+      "term_id": "object-bottle",
+      "fact_id": "object:bottle",
+      "source_text": "bottle",
+      "target_text": "बोतल",
+      "forms": [
+        "बोतल",
+        "बोतलें",
+        "बोतलों"
+      ],
+      "forms_by_key": {
+        "bare": "बोतल",
+        "definite": "बोतल",
+        "plural": "बोतलें",
+        "oblique": "बोतल",
+        "plural-oblique": "बोतलों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "botal"
+    },
+    {
+      "term_id": "object-book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "किताब",
+      "forms": [
+        "किताब",
+        "किताबें",
+        "किताबों"
+      ],
+      "forms_by_key": {
+        "bare": "किताब",
+        "definite": "किताब",
+        "plural": "किताबें",
+        "oblique": "किताब",
+        "plural-oblique": "किताबों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kitāb"
+    },
+    {
+      "term_id": "object-chair",
+      "fact_id": "object:chair",
+      "source_text": "chair",
+      "target_text": "कुर्सी",
+      "forms": [
+        "कुर्सी",
+        "कुर्सियाँ",
+        "कुर्सियों"
+      ],
+      "forms_by_key": {
+        "bare": "कुर्सी",
+        "definite": "कुर्सी",
+        "plural": "कुर्सियाँ",
+        "oblique": "कुर्सी",
+        "plural-oblique": "कुर्सियों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kursī"
+    },
+    {
+      "term_id": "object-clock",
+      "fact_id": "object:clock",
+      "source_text": "clock",
+      "target_text": "घड़ी",
+      "forms": [
+        "घड़ी",
+        "घड़ियाँ",
+        "घड़ियों"
+      ],
+      "forms_by_key": {
+        "bare": "घड़ी",
+        "definite": "घड़ी",
+        "plural": "घड़ियाँ",
+        "oblique": "घड़ी",
+        "plural-oblique": "घड़ियों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "ghaṛī"
+    },
+    {
+      "term_id": "object-lamp",
+      "fact_id": "object:lamp",
+      "source_text": "lamp",
+      "target_text": "लैंप",
+      "forms": [
+        "लैंप",
+        "लैंपों"
+      ],
+      "forms_by_key": {
+        "bare": "लैंप",
+        "definite": "लैंप",
+        "plural": "लैंप",
+        "oblique": "लैंप",
+        "plural-oblique": "लैंपों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "laiṃp"
+    },
+    {
+      "term_id": "object-window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "खिड़की",
+      "forms": [
+        "खिड़की",
+        "खिड़कियाँ",
+        "खिड़कियों"
+      ],
+      "forms_by_key": {
+        "bare": "खिड़की",
+        "definite": "खिड़की",
+        "plural": "खिड़कियाँ",
+        "oblique": "खिड़की",
+        "plural-oblique": "खिड़कियों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "khiṛkī"
+    },
+    {
+      "term_id": "attribute-cup-red",
+      "fact_id": "attribute:cup-red",
+      "source_text": "red",
+      "target_text": "लाल",
+      "forms": [
+        "लाल"
+      ],
+      "forms_by_key": {
+        "masculine": "लाल",
+        "feminine": "लाल",
+        "masculine-plural": "लाल",
+        "oblique-masculine": "लाल",
+        "modifier": "लाल",
+        "predicative": "लाल"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lāl"
+    },
+    {
+      "term_id": "relation-cup-next-to-window",
+      "fact_id": "relation:cup-next_to-window",
+      "source_text": "next_to",
+      "target_text": "के पास",
+      "forms": [
+        "के पास"
+      ],
+      "forms_by_key": {
+        "default": "के पास"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke pās"
+    },
+    {
+      "term_id": "object-apple",
+      "fact_id": "object:apple",
+      "source_text": "apple",
+      "target_text": "सेब",
+      "forms": [
+        "सेब",
+        "सेबों"
+      ],
+      "forms_by_key": {
+        "bare": "सेब",
+        "definite": "सेब",
+        "plural": "सेब",
+        "oblique": "सेब",
+        "plural-oblique": "सेबों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "seb"
+    },
+    {
+      "term_id": "object-table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "मेज़",
+      "forms": [
+        "मेज़",
+        "मेज़ें",
+        "मेज़ों"
+      ],
+      "forms_by_key": {
+        "bare": "मेज़",
+        "definite": "मेज़",
+        "plural": "मेज़ें",
+        "oblique": "मेज़",
+        "plural-oblique": "मेज़ों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "mez"
+    },
+    {
+      "term_id": "relation-cup-on-table",
+      "fact_id": "relation:cup-on-table",
+      "source_text": "on",
+      "target_text": "पर",
+      "forms": [
+        "पर"
+      ],
+      "forms_by_key": {
+        "default": "पर"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "par"
+    },
+    {
+      "term_id": "attribute-book-green",
+      "fact_id": "attribute:book-green",
+      "source_text": "green",
+      "target_text": "हरी",
+      "forms": [
+        "हरा",
+        "हरी",
+        "हरे"
+      ],
+      "forms_by_key": {
+        "masculine": "हरा",
+        "feminine": "हरी",
+        "masculine-plural": "हरे",
+        "oblique-masculine": "हरे",
+        "modifier": "हरी",
+        "predicative": "हरी"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "harī"
+    },
+    {
+      "term_id": "object-shoe",
+      "fact_id": "object:shoe",
+      "source_text": "shoe",
+      "target_text": "जूता",
+      "forms": [
+        "जूता",
+        "जूते",
+        "जूतों"
+      ],
+      "forms_by_key": {
+        "bare": "जूता",
+        "definite": "जूता",
+        "plural": "जूते",
+        "oblique": "जूते",
+        "plural-oblique": "जूतों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "jūtā"
+    },
+    {
+      "term_id": "attribute-shoe-black",
+      "fact_id": "attribute:shoe-black",
+      "source_text": "black",
+      "target_text": "काला",
+      "forms": [
+        "काला",
+        "काली",
+        "काले"
+      ],
+      "forms_by_key": {
+        "masculine": "काला",
+        "feminine": "काली",
+        "masculine-plural": "काले",
+        "oblique-masculine": "काले",
+        "modifier": "काला",
+        "predicative": "काला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "kālā"
+    },
+    {
+      "term_id": "attribute-lamp-blue",
+      "fact_id": "attribute:lamp-blue",
+      "source_text": "blue",
+      "target_text": "नीला",
+      "forms": [
+        "नीला",
+        "नीली",
+        "नीले"
+      ],
+      "forms_by_key": {
+        "masculine": "नीला",
+        "feminine": "नीली",
+        "masculine-plural": "नीले",
+        "oblique-masculine": "नीले",
+        "modifier": "नीला",
+        "predicative": "नीला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "nīlā"
+    },
+    {
+      "term_id": "attribute-plate-white",
+      "fact_id": "attribute:plate-white",
+      "source_text": "white",
+      "target_text": "सफ़ेद",
+      "forms": [
+        "सफ़ेद"
+      ],
+      "forms_by_key": {
+        "masculine": "सफ़ेद",
+        "feminine": "सफ़ेद",
+        "masculine-plural": "सफ़ेद",
+        "oblique-masculine": "सफ़ेद",
+        "modifier": "सफ़ेद",
+        "predicative": "सफ़ेद"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "safed"
+    },
+    {
+      "term_id": "attribute-apple-yellow",
+      "fact_id": "attribute:apple-yellow",
+      "source_text": "yellow",
+      "target_text": "पीला",
+      "forms": [
+        "पीला",
+        "पीली",
+        "पीले"
+      ],
+      "forms_by_key": {
+        "masculine": "पीला",
+        "feminine": "पीली",
+        "masculine-plural": "पीले",
+        "oblique-masculine": "पीले",
+        "modifier": "पीला",
+        "predicative": "पीला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "pīlā"
+    },
+    {
+      "term_id": "object-ball",
+      "fact_id": "object:ball",
+      "source_text": "ball",
+      "target_text": "गेंद",
+      "forms": [
+        "गेंद",
+        "गेंदें",
+        "गेंदों"
+      ],
+      "forms_by_key": {
+        "bare": "गेंद",
+        "definite": "गेंद",
+        "plural": "गेंदें",
+        "oblique": "गेंद",
+        "plural-oblique": "गेंदों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "geṃd"
+    },
+    {
+      "term_id": "object-bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "बैग",
+      "forms": [
+        "बैग",
+        "बैगों"
+      ],
+      "forms_by_key": {
+        "bare": "बैग",
+        "definite": "बैग",
+        "plural": "बैग",
+        "oblique": "बैग",
+        "plural-oblique": "बैगों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "baig"
+    },
+    {
+      "term_id": "object-coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "कॉफ़ी",
+      "forms": [
+        "कॉफ़ी"
+      ],
+      "forms_by_key": {
+        "bare": "कॉफ़ी",
+        "definite": "कॉफ़ी",
+        "plural": "कॉफ़ी",
+        "oblique": "कॉफ़ी",
+        "plural-oblique": "कॉफ़ी"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kôfī"
+    },
+    {
+      "term_id": "object-pen",
+      "fact_id": "object:pen",
+      "source_text": "pen",
+      "target_text": "कलम",
+      "forms": [
+        "कलम",
+        "कलमें",
+        "कलमों"
+      ],
+      "forms_by_key": {
+        "bare": "कलम",
+        "definite": "कलम",
+        "plural": "कलमें",
+        "oblique": "कलम",
+        "plural-oblique": "कलमों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kalam"
+    },
+    {
+      "term_id": "object-key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "चाबी",
+      "forms": [
+        "चाबी",
+        "चाबियाँ",
+        "चाबियों"
+      ],
+      "forms_by_key": {
+        "bare": "चाबी",
+        "definite": "चाबी",
+        "plural": "चाबियाँ",
+        "oblique": "चाबी",
+        "plural-oblique": "चाबियों"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "cābī"
+    },
+    {
+      "term_id": "relation-shoe-under-chair",
+      "fact_id": "relation:shoe-under-chair",
+      "source_text": "under",
+      "target_text": "के नीचे",
+      "forms": [
+        "के नीचे"
+      ],
+      "forms_by_key": {
+        "default": "के नीचे"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke nīce"
+    },
+    {
+      "term_id": "relation-lamp-next-to-book",
+      "fact_id": "relation:lamp-next_to-book",
+      "source_text": "next_to",
+      "target_text": "के पास",
+      "forms": [
+        "के पास"
+      ],
+      "forms_by_key": {
+        "default": "के पास"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke pās"
+    },
+    {
+      "term_id": "object-door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "दरवाज़ा",
+      "forms": [
+        "दरवाज़ा",
+        "दरवाज़े",
+        "दरवाज़ों"
+      ],
+      "forms_by_key": {
+        "bare": "दरवाज़ा",
+        "definite": "दरवाज़ा",
+        "plural": "दरवाज़े",
+        "oblique": "दरवाज़े",
+        "plural-oblique": "दरवाज़ों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "darvāzā"
+    },
+    {
+      "term_id": "object-phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "फ़ोन",
+      "forms": [
+        "फ़ोन",
+        "फ़ोनों"
+      ],
+      "forms_by_key": {
+        "bare": "फ़ोन",
+        "definite": "फ़ोन",
+        "plural": "फ़ोन",
+        "oblique": "फ़ोन",
+        "plural-oblique": "फ़ोनों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "fon"
+    },
+    {
+      "term_id": "attribute-bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "हरा",
+      "forms": [
+        "हरा",
+        "हरी",
+        "हरे"
+      ],
+      "forms_by_key": {
+        "masculine": "हरा",
+        "feminine": "हरी",
+        "masculine-plural": "हरे",
+        "oblique-masculine": "हरे",
+        "modifier": "हरा",
+        "predicative": "हरा"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "harā"
+    },
+    {
+      "term_id": "object-spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "चम्मच",
+      "forms": [
+        "चम्मच",
+        "चम्मचों"
+      ],
+      "forms_by_key": {
+        "bare": "चम्मच",
+        "definite": "चम्मच",
+        "plural": "चम्मच",
+        "oblique": "चम्मच",
+        "plural-oblique": "चम्मचों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "cammac"
+    },
+    {
+      "term_id": "relation-spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "के नीचे",
+      "forms": [
+        "के नीचे"
+      ],
+      "forms_by_key": {
+        "default": "के नीचे"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke nīce"
+    },
+    {
+      "term_id": "attribute-plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "पीली",
+      "forms": [
+        "पीला",
+        "पीली",
+        "पीले"
+      ],
+      "forms_by_key": {
+        "masculine": "पीला",
+        "feminine": "पीली",
+        "masculine-plural": "पीले",
+        "oblique-masculine": "पीले",
+        "modifier": "पीली",
+        "predicative": "पीली"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "pīlī"
+    },
+    {
+      "term_id": "relation-plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "पर",
+      "forms": [
+        "पर"
+      ],
+      "forms_by_key": {
+        "default": "पर"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "par"
+    },
+    {
+      "term_id": "relation-bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "के नीचे",
+      "forms": [
+        "के नीचे"
+      ],
+      "forms_by_key": {
+        "default": "के नीचे"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke nīce"
+    },
+    {
+      "term_id": "attribute-phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "लाल",
+      "forms": [
+        "लाल"
+      ],
+      "forms_by_key": {
+        "masculine": "लाल",
+        "feminine": "लाल",
+        "masculine-plural": "लाल",
+        "oblique-masculine": "लाल",
+        "modifier": "लाल",
+        "predicative": "लाल"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lāl"
+    },
+    {
+      "term_id": "relation-phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next_to",
+      "target_text": "के पास",
+      "forms": [
+        "के पास"
+      ],
+      "forms_by_key": {
+        "default": "के पास"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke pās"
+    },
+    {
+      "term_id": "object-fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "काँटा",
+      "forms": [
+        "काँटा",
+        "काँटे",
+        "काँटों"
+      ],
+      "forms_by_key": {
+        "bare": "काँटा",
+        "definite": "काँटा",
+        "plural": "काँटे",
+        "oblique": "काँटे",
+        "plural-oblique": "काँटों"
+      },
+      "agreement": "masculine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kāṃṭā"
+    },
+    {
+      "term_id": "relation-window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next_to",
+      "target_text": "के पास",
+      "forms": [
+        "के पास"
+      ],
+      "forms_by_key": {
+        "default": "के पास"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ke pās"
+    },
+    {
+      "term_id": "attribute-fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "हरा",
+      "forms": [
+        "हरा",
+        "हरी",
+        "हरे"
+      ],
+      "forms_by_key": {
+        "masculine": "हरा",
+        "feminine": "हरी",
+        "masculine-plural": "हरे",
+        "oblique-masculine": "हरे",
+        "modifier": "हरा",
+        "predicative": "हरा"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "harā"
+    },
+    {
+      "term_id": "attribute-bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "नीला",
+      "forms": [
+        "नीला",
+        "नीली",
+        "नीले"
+      ],
+      "forms_by_key": {
+        "masculine": "नीला",
+        "feminine": "नीली",
+        "masculine-plural": "नीले",
+        "oblique-masculine": "नीले",
+        "modifier": "नीला",
+        "predicative": "नीला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "nīlā"
+    },
+    {
+      "term_id": "attribute-door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "पीला",
+      "forms": [
+        "पीला",
+        "पीली",
+        "पीले"
+      ],
+      "forms_by_key": {
+        "masculine": "पीला",
+        "feminine": "पीली",
+        "masculine-plural": "पीले",
+        "oblique-masculine": "पीले",
+        "modifier": "पीला",
+        "predicative": "पीला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "pīlā"
+    },
+    {
+      "term_id": "relation-key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "पर",
+      "forms": [
+        "पर"
+      ],
+      "forms_by_key": {
+        "default": "पर"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "par"
+    },
+    {
+      "term_id": "object-tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "चाय",
+      "forms": [
+        "चाय"
+      ],
+      "forms_by_key": {
+        "bare": "चाय",
+        "definite": "चाय",
+        "plural": "चाय",
+        "oblique": "चाय",
+        "plural-oblique": "चाय"
+      },
+      "agreement": "feminine",
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "cāy"
+    },
+    {
+      "term_id": "attribute-door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "लाल",
+      "forms": [
+        "लाल"
+      ],
+      "forms_by_key": {
+        "masculine": "लाल",
+        "feminine": "लाल",
+        "masculine-plural": "लाल",
+        "oblique-masculine": "लाल",
+        "modifier": "लाल",
+        "predicative": "लाल"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lāl"
+    },
+    {
+      "term_id": "attribute-spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "पीला",
+      "forms": [
+        "पीला",
+        "पीली",
+        "पीले"
+      ],
+      "forms_by_key": {
+        "masculine": "पीला",
+        "feminine": "पीली",
+        "masculine-plural": "पीले",
+        "oblique-masculine": "पीले",
+        "modifier": "पीला",
+        "predicative": "पीला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "pīlā"
+    },
+    {
+      "term_id": "attribute-door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "नीला",
+      "forms": [
+        "नीला",
+        "नीली",
+        "नीले"
+      ],
+      "forms_by_key": {
+        "masculine": "नीला",
+        "feminine": "नीली",
+        "masculine-plural": "नीले",
+        "oblique-masculine": "नीले",
+        "modifier": "नीला",
+        "predicative": "नीला"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "nīlā"
+    },
+    {
+      "term_id": "attribute-book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "लाल",
+      "forms": [
+        "लाल"
+      ],
+      "forms_by_key": {
+        "masculine": "लाल",
+        "feminine": "लाल",
+        "masculine-plural": "लाल",
+        "oblique-masculine": "लाल",
+        "modifier": "लाल",
+        "predicative": "लाल"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lāl"
+    },
+    {
+      "term_id": "attribute-cup-colour-red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "लाल",
+      "forms": [
+        "लाल"
+      ],
+      "forms_by_key": {
+        "masculine": "लाल",
+        "feminine": "लाल",
+        "masculine-plural": "लाल",
+        "oblique-masculine": "लाल",
+        "modifier": "लाल",
+        "predicative": "लाल"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lāl"
+    },
+    {
+      "term_id": "attribute-book-colour-green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "हरी",
+      "forms": [
+        "हरा",
+        "हरी",
+        "हरे"
+      ],
+      "forms_by_key": {
+        "masculine": "हरा",
+        "feminine": "हरी",
+        "masculine-plural": "हरे",
+        "oblique-masculine": "हरे",
+        "modifier": "हरी",
+        "predicative": "हरी"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "harī"
+    },
+    {
+      "term_id": "relation-cup-table-on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "पर",
+      "forms": [
+        "पर"
+      ],
+      "forms_by_key": {
+        "default": "पर"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "par"
+    }
+  ]
+}

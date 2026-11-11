@@ -1,0 +1,910 @@
+{
+  "terms": [
+    {
+      "term_id": "object-cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "杯子",
+      "forms": [
+        "杯子"
+      ],
+      "forms_by_key": {
+        "bare": "杯子",
+        "definite": "杯子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "bēizi",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "盘子",
+      "forms": [
+        "盘子"
+      ],
+      "forms_by_key": {
+        "bare": "盘子",
+        "definite": "盘子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pánzi",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-bottle",
+      "fact_id": "object:bottle",
+      "source_text": "bottle",
+      "target_text": "瓶子",
+      "forms": [
+        "瓶子"
+      ],
+      "forms_by_key": {
+        "bare": "瓶子",
+        "definite": "瓶子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "píngzi",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "书",
+      "forms": [
+        "书"
+      ],
+      "forms_by_key": {
+        "bare": "书",
+        "definite": "书"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "shū",
+      "linguistic": {
+        "classifier": "本"
+      }
+    },
+    {
+      "term_id": "object-chair",
+      "fact_id": "object:chair",
+      "source_text": "chair",
+      "target_text": "椅子",
+      "forms": [
+        "椅子"
+      ],
+      "forms_by_key": {
+        "bare": "椅子",
+        "definite": "椅子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "yǐzi",
+      "linguistic": {
+        "classifier": "把"
+      }
+    },
+    {
+      "term_id": "object-clock",
+      "fact_id": "object:clock",
+      "source_text": "clock",
+      "target_text": "钟",
+      "forms": [
+        "钟"
+      ],
+      "forms_by_key": {
+        "bare": "钟",
+        "definite": "钟"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "zhōng",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-lamp",
+      "fact_id": "object:lamp",
+      "source_text": "lamp",
+      "target_text": "台灯",
+      "forms": [
+        "台灯"
+      ],
+      "forms_by_key": {
+        "bare": "台灯",
+        "definite": "台灯"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "táidēng",
+      "linguistic": {
+        "classifier": "盏"
+      }
+    },
+    {
+      "term_id": "object-window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "窗户",
+      "forms": [
+        "窗户"
+      ],
+      "forms_by_key": {
+        "bare": "窗户",
+        "definite": "窗户"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "chuānghu",
+      "linguistic": {
+        "classifier": "扇"
+      }
+    },
+    {
+      "term_id": "attribute-cup-red",
+      "fact_id": "attribute:cup-red",
+      "source_text": "red",
+      "target_text": "红色",
+      "forms": [
+        "红色",
+        "红色的"
+      ],
+      "forms_by_key": {
+        "predicative": "红色的",
+        "modifier": "红色的",
+        "name": "红色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "hóngsè"
+    },
+    {
+      "term_id": "relation-cup-next-to-window",
+      "fact_id": "relation:cup-next_to-window",
+      "source_text": "next_to",
+      "target_text": "旁边",
+      "forms": [
+        "旁边"
+      ],
+      "forms_by_key": {
+        "default": "旁边"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "pángbiān"
+    },
+    {
+      "term_id": "object-apple",
+      "fact_id": "object:apple",
+      "source_text": "apple",
+      "target_text": "苹果",
+      "forms": [
+        "苹果"
+      ],
+      "forms_by_key": {
+        "bare": "苹果",
+        "definite": "苹果"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "píngguǒ",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "桌子",
+      "forms": [
+        "桌子"
+      ],
+      "forms_by_key": {
+        "bare": "桌子",
+        "definite": "桌子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "zhuōzi",
+      "linguistic": {
+        "classifier": "张"
+      }
+    },
+    {
+      "term_id": "relation-cup-on-table",
+      "fact_id": "relation:cup-on-table",
+      "source_text": "on",
+      "target_text": "上面",
+      "forms": [
+        "上面"
+      ],
+      "forms_by_key": {
+        "default": "上面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shàngmiàn"
+    },
+    {
+      "term_id": "attribute-book-green",
+      "fact_id": "attribute:book-green",
+      "source_text": "green",
+      "target_text": "绿色",
+      "forms": [
+        "绿色",
+        "绿色的"
+      ],
+      "forms_by_key": {
+        "predicative": "绿色的",
+        "modifier": "绿色的",
+        "name": "绿色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lǜsè"
+    },
+    {
+      "term_id": "object-shoe",
+      "fact_id": "object:shoe",
+      "source_text": "shoe",
+      "target_text": "鞋",
+      "forms": [
+        "鞋"
+      ],
+      "forms_by_key": {
+        "bare": "鞋",
+        "definite": "鞋"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "xié",
+      "linguistic": {
+        "classifier": "只"
+      }
+    },
+    {
+      "term_id": "attribute-shoe-black",
+      "fact_id": "attribute:shoe-black",
+      "source_text": "black",
+      "target_text": "黑色",
+      "forms": [
+        "黑色",
+        "黑色的"
+      ],
+      "forms_by_key": {
+        "predicative": "黑色的",
+        "modifier": "黑色的",
+        "name": "黑色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "hēisè"
+    },
+    {
+      "term_id": "attribute-lamp-blue",
+      "fact_id": "attribute:lamp-blue",
+      "source_text": "blue",
+      "target_text": "蓝色",
+      "forms": [
+        "蓝色",
+        "蓝色的"
+      ],
+      "forms_by_key": {
+        "predicative": "蓝色的",
+        "modifier": "蓝色的",
+        "name": "蓝色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lánsè"
+    },
+    {
+      "term_id": "attribute-plate-white",
+      "fact_id": "attribute:plate-white",
+      "source_text": "white",
+      "target_text": "白色",
+      "forms": [
+        "白色",
+        "白色的"
+      ],
+      "forms_by_key": {
+        "predicative": "白色的",
+        "modifier": "白色的",
+        "name": "白色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "báisè"
+    },
+    {
+      "term_id": "attribute-apple-yellow",
+      "fact_id": "attribute:apple-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色",
+      "forms": [
+        "黄色",
+        "黄色的"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色的",
+        "modifier": "黄色的",
+        "name": "黄色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "huángsè"
+    },
+    {
+      "term_id": "object-ball",
+      "fact_id": "object:ball",
+      "source_text": "ball",
+      "target_text": "球",
+      "forms": [
+        "球"
+      ],
+      "forms_by_key": {
+        "bare": "球",
+        "definite": "球"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "qiú",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "包",
+      "forms": [
+        "包"
+      ],
+      "forms_by_key": {
+        "bare": "包",
+        "definite": "包"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "bāo",
+      "linguistic": {
+        "classifier": "个"
+      }
+    },
+    {
+      "term_id": "object-coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "咖啡",
+      "forms": [
+        "咖啡"
+      ],
+      "forms_by_key": {
+        "bare": "咖啡",
+        "definite": "咖啡"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kāfēi",
+      "linguistic": {
+        "classifier": "杯"
+      }
+    },
+    {
+      "term_id": "object-pen",
+      "fact_id": "object:pen",
+      "source_text": "pen",
+      "target_text": "笔",
+      "forms": [
+        "笔"
+      ],
+      "forms_by_key": {
+        "bare": "笔",
+        "definite": "笔"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "bǐ",
+      "linguistic": {
+        "classifier": "支"
+      }
+    },
+    {
+      "term_id": "object-key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "钥匙",
+      "forms": [
+        "钥匙"
+      ],
+      "forms_by_key": {
+        "bare": "钥匙",
+        "definite": "钥匙"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "yàoshi",
+      "linguistic": {
+        "classifier": "把"
+      }
+    },
+    {
+      "term_id": "relation-shoe-under-chair",
+      "fact_id": "relation:shoe-under-chair",
+      "source_text": "under",
+      "target_text": "下面",
+      "forms": [
+        "下面"
+      ],
+      "forms_by_key": {
+        "default": "下面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "xiàmiàn"
+    },
+    {
+      "term_id": "relation-lamp-next-to-book",
+      "fact_id": "relation:lamp-next_to-book",
+      "source_text": "next_to",
+      "target_text": "旁边",
+      "forms": [
+        "旁边"
+      ],
+      "forms_by_key": {
+        "default": "旁边"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "pángbiān"
+    },
+    {
+      "term_id": "object-door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "门",
+      "forms": [
+        "门"
+      ],
+      "forms_by_key": {
+        "bare": "门",
+        "definite": "门"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "mén",
+      "linguistic": {
+        "classifier": "扇"
+      }
+    },
+    {
+      "term_id": "object-phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "电话机",
+      "forms": [
+        "电话机"
+      ],
+      "forms_by_key": {
+        "bare": "电话机",
+        "definite": "电话机"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "diànhuàjī",
+      "linguistic": {
+        "classifier": "台"
+      }
+    },
+    {
+      "term_id": "attribute-bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "绿色",
+      "forms": [
+        "绿色",
+        "绿色的"
+      ],
+      "forms_by_key": {
+        "predicative": "绿色的",
+        "modifier": "绿色的",
+        "name": "绿色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lǜsè"
+    },
+    {
+      "term_id": "object-spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "勺子",
+      "forms": [
+        "勺子"
+      ],
+      "forms_by_key": {
+        "bare": "勺子",
+        "definite": "勺子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "sháozi",
+      "linguistic": {
+        "classifier": "把"
+      }
+    },
+    {
+      "term_id": "relation-spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "下面",
+      "forms": [
+        "下面"
+      ],
+      "forms_by_key": {
+        "default": "下面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "xiàmiàn"
+    },
+    {
+      "term_id": "attribute-plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色",
+      "forms": [
+        "黄色",
+        "黄色的"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色的",
+        "modifier": "黄色的",
+        "name": "黄色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "huángsè"
+    },
+    {
+      "term_id": "relation-plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "上面",
+      "forms": [
+        "上面"
+      ],
+      "forms_by_key": {
+        "default": "上面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shàngmiàn"
+    },
+    {
+      "term_id": "relation-bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "下面",
+      "forms": [
+        "下面"
+      ],
+      "forms_by_key": {
+        "default": "下面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "xiàmiàn"
+    },
+    {
+      "term_id": "attribute-phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "红色",
+      "forms": [
+        "红色",
+        "红色的"
+      ],
+      "forms_by_key": {
+        "predicative": "红色的",
+        "modifier": "红色的",
+        "name": "红色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "hóngsè"
+    },
+    {
+      "term_id": "relation-phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next_to",
+      "target_text": "旁边",
+      "forms": [
+        "旁边"
+      ],
+      "forms_by_key": {
+        "default": "旁边"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "pángbiān"
+    },
+    {
+      "term_id": "object-fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "叉子",
+      "forms": [
+        "叉子"
+      ],
+      "forms_by_key": {
+        "bare": "叉子",
+        "definite": "叉子"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "chāzi",
+      "linguistic": {
+        "classifier": "把"
+      }
+    },
+    {
+      "term_id": "relation-window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next_to",
+      "target_text": "旁边",
+      "forms": [
+        "旁边"
+      ],
+      "forms_by_key": {
+        "default": "旁边"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "pángbiān"
+    },
+    {
+      "term_id": "attribute-fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "绿色",
+      "forms": [
+        "绿色",
+        "绿色的"
+      ],
+      "forms_by_key": {
+        "predicative": "绿色的",
+        "modifier": "绿色的",
+        "name": "绿色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lǜsè"
+    },
+    {
+      "term_id": "attribute-bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "蓝色",
+      "forms": [
+        "蓝色",
+        "蓝色的"
+      ],
+      "forms_by_key": {
+        "predicative": "蓝色的",
+        "modifier": "蓝色的",
+        "name": "蓝色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lánsè"
+    },
+    {
+      "term_id": "attribute-door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色",
+      "forms": [
+        "黄色",
+        "黄色的"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色的",
+        "modifier": "黄色的",
+        "name": "黄色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "huángsè"
+    },
+    {
+      "term_id": "relation-key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "上面",
+      "forms": [
+        "上面"
+      ],
+      "forms_by_key": {
+        "default": "上面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shàngmiàn"
+    },
+    {
+      "term_id": "object-tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "茶",
+      "forms": [
+        "茶"
+      ],
+      "forms_by_key": {
+        "bare": "茶",
+        "definite": "茶"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "chá",
+      "linguistic": {
+        "classifier": "杯"
+      }
+    },
+    {
+      "term_id": "attribute-door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "红色",
+      "forms": [
+        "红色",
+        "红色的"
+      ],
+      "forms_by_key": {
+        "predicative": "红色的",
+        "modifier": "红色的",
+        "name": "红色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "hóngsè"
+    },
+    {
+      "term_id": "attribute-spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色",
+      "forms": [
+        "黄色",
+        "黄色的"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色的",
+        "modifier": "黄色的",
+        "name": "黄色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "huángsè"
+    },
+    {
+      "term_id": "attribute-door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "蓝色",
+      "forms": [
+        "蓝色",
+        "蓝色的"
+      ],
+      "forms_by_key": {
+        "predicative": "蓝色的",
+        "modifier": "蓝色的",
+        "name": "蓝色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lánsè"
+    },
+    {
+      "term_id": "attribute-book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "红色",
+      "forms": [
+        "红色",
+        "红色的"
+      ],
+      "forms_by_key": {
+        "predicative": "红色的",
+        "modifier": "红色的",
+        "name": "红色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "hóngsè"
+    },
+    {
+      "term_id": "attribute-cup-colour-red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "红色",
+      "forms": [
+        "红色",
+        "红色的"
+      ],
+      "forms_by_key": {
+        "predicative": "红色的",
+        "modifier": "红色的",
+        "name": "红色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "hóngsè"
+    },
+    {
+      "term_id": "attribute-book-colour-green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "绿色",
+      "forms": [
+        "绿色",
+        "绿色的"
+      ],
+      "forms_by_key": {
+        "predicative": "绿色的",
+        "modifier": "绿色的",
+        "name": "绿色"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "lǜsè"
+    },
+    {
+      "term_id": "relation-cup-table-on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "上面",
+      "forms": [
+        "上面"
+      ],
+      "forms_by_key": {
+        "default": "上面"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shàngmiàn"
+    }
+  ]
+}

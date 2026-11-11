@@ -1,0 +1,58 @@
+construction_id = "quantity-comparison"
+
+[[examples]]
+example_id = "more-books-than-cups"
+levels = ["A2"]
+purposes = ["compareGroups"]
+meaning = "There are more books than cups."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "first" = "object:book", "second" = "object:cup" }
+truth = true
+labels = ["more"]
+sentence = "किताबें कपों से ज़्यादा हैं."
+translation = "There are more books than cups."
+chunks = [{ "text" = "किताबें", "join" = "none" }, { "text" = "कपों", "join" = "space" }, { "text" = "से", "join" = "space" }, { "text" = "ज़्यादा", "join" = "space" }, { "text" = "हैं", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "fewer-cups-than-books"
+levels = ["A2"]
+purposes = ["compareGroups"]
+meaning = "There are fewer cups than books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "first" = "object:cup", "second" = "object:book" }
+truth = true
+labels = ["fewer"]
+sentence = "कप किताबों से कम हैं."
+translation = "There are fewer cups than books."
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "किताबों", "join" = "space" }, { "text" = "से", "join" = "space" }, { "text" = "कम", "join" = "space" }, { "text" = "हैं", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "more-books-than-cups-format"
+levels = ["A2"]
+purposes = ["compareGroups"]
+sentence = "किताबें कपों से ज़्यादा हैं"
+correction = "किताबें कपों से ज़्यादा हैं."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "fewer-cups-than-books-format"
+levels = ["A2"]
+purposes = ["compareGroups"]
+sentence = "कप किताबों से कम हैं"
+correction = "कप किताबों से कम हैं."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-quantity-comparison"
+levels = ["A2"]
+purposes = ["compareGroups"]
+sentence = "कप किताबें से कम हैं."
+correction = "कप किताबों से कम हैं."
+note = "The reference group is oblique plural before से."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

@@ -1,0 +1,49 @@
+construction_id = "detail-question"
+
+[[examples]]
+example_id = "ask-eat-in-or-take-away"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "To have here or to take away?"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "target" = "object:coffee" }
+truth = true
+labels = []
+sentence = "在这里吃 还是 打包?"
+translation = "To have here or to take away?"
+chunks = [{ "text" = "在这里吃", "join" = "none" }, { "text" = "还是", "join" = "space" }, { "text" = "打包", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-which-colour"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "Which colour?"
+scene = { "objects" = [{ "fact_id" = "object:pen", "concept" = "pen" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:pen", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:pen", "field" = "colour", "value" = "blue" }] }
+bindings = { "target" = "object:pen" }
+truth = true
+labels = []
+sentence = "要 什么 颜色 的?"
+translation = "Which colour?"
+chunks = [{ "text" = "要", "join" = "none" }, { "text" = "什么", "join" = "space" }, { "text" = "颜色", "join" = "space" }, { "text" = "的", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-eat-in-or-take-away-format"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+sentence = "在这里吃 还是 打包"
+correction = "在这里吃 还是 打包?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-which-colour-format"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+sentence = "要 什么 颜色 的"
+correction = "要 什么 颜色 的?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

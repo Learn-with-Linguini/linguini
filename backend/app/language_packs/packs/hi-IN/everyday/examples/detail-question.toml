@@ -1,0 +1,49 @@
+construction_id = "detail-question"
+
+[[examples]]
+example_id = "ask-eat-in-or-take-away"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "To have here or to take away?"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "target" = "object:coffee" }
+truth = true
+labels = []
+sentence = "यहीं के लिए या साथ ले जाने के लिए?"
+translation = "To have here or to take away?"
+chunks = [{ "text" = "यहीं", "join" = "none" }, { "text" = "के", "join" = "space" }, { "text" = "लिए", "join" = "space" }, { "text" = "या", "join" = "space" }, { "text" = "साथ", "join" = "space" }, { "text" = "ले", "join" = "space" }, { "text" = "जाने", "join" = "space" }, { "text" = "के", "join" = "space" }, { "text" = "लिए", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-which-colour"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "Which colour?"
+scene = { "objects" = [{ "fact_id" = "object:pen", "concept" = "pen" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:pen", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:pen", "field" = "colour", "value" = "blue" }] }
+bindings = { "target" = "object:pen" }
+truth = true
+labels = []
+sentence = "कौन-सा रंग चाहिए?"
+translation = "Which colour?"
+chunks = [{ "text" = "कौन-सा", "join" = "none" }, { "text" = "रंग", "join" = "space" }, { "text" = "चाहिए", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-eat-in-or-take-away-format"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+sentence = "यहीं के लिए या साथ ले जाने के लिए"
+correction = "यहीं के लिए या साथ ले जाने के लिए?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-which-colour-format"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+sentence = "कौन-सा रंग चाहिए"
+correction = "कौन-सा रंग चाहिए?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

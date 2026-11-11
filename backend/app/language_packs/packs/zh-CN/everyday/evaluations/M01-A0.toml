@@ -1,0 +1,147 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "a0-fork-identification"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:fork" }
+truth = true
+labels = []
+input = "Identify the highlighted fork."
+expected_meaning = "This is a fork."
+acceptable = ["这是 叉子."]
+reject = [{ "sentence" = "这是 叉子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-spoon-not-fork"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:spoon" }
+truth = true
+labels = []
+input = "Identify the highlighted spoon."
+expected_meaning = "This is a spoon."
+acceptable = ["这是 勺子."]
+reject = [{ "sentence" = "这是 勺子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-door-form"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:door" }
+truth = true
+labels = []
+input = "Identify one highlighted door."
+expected_meaning = "This is a door."
+acceptable = ["这是 门."]
+reject = [{ "sentence" = "这是 门", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-window-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window", "shown" = "object:window" }
+truth = true
+labels = []
+input = "Ask whether this object is a window."
+expected_meaning = "Is this a window?"
+acceptable = ["这是 窗户 吗?"]
+reject = [{ "sentence" = "这是 窗户 吗", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "a0-phone-language"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone" }
+truth = true
+labels = []
+input = "Identify the highlighted phone in the target language."
+expected_meaning = "This is a phone."
+acceptable = ["这是 电话机."]
+reject = [{ "sentence" = "这是 电话机", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-key-order"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }] }
+bindings = { "object" = "object:key" }
+truth = true
+labels = []
+input = "Identify the highlighted key in the neutral taught frame."
+expected_meaning = "This is a key."
+acceptable = ["这是 钥匙."]
+reject = [{ "sentence" = "这是 钥匙", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-window-name"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window" }
+truth = true
+use = "name"
+labels = []
+input = "Give the vocabulary name for the window."
+expected_meaning = "the window (vocabulary label)"
+acceptable = ["窗户"]
+reject = [{ "sentence" = "窗户.", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "a0-held-table"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:table", "concept" = "table" }] }
+bindings = { "object" = "object:table" }
+truth = true
+labels = []
+input = "Identify the highlighted table."
+expected_meaning = "This is a table."
+acceptable = ["这是 桌子."]
+reject = [{ "sentence" = "这是 桌子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-held-bag-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag", "shown" = "object:bag" }
+truth = true
+labels = []
+input = "Ask whether this object is a bag."
+expected_meaning = "Is it a bag?"
+acceptable = ["这是 包 吗?"]
+reject = [{ "sentence" = "这是 包 吗", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"

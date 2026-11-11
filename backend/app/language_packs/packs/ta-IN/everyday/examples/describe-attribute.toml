@@ -1,0 +1,178 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a red cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "இது ஒரு சிவப்பு கோப்பை."
+translation = "This is a red cup."
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "சிவப்பு", join = "space" }, { text = "கோப்பை.", join = "space" }]
+accepted_alternatives = ["கோப்பை சிவப்பா இருக்கு."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a green book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "இது ஒரு பச்சை புத்தகம்."
+translation = "This is a green book."
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "பச்சை", join = "space" }, { text = "புத்தகம்.", join = "space" }]
+accepted_alternatives = ["புத்தகம் பச்சையா இருக்கு."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a black shoe."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }], attributes = [{ fact_id = "attribute:shoe-black", object = "object:shoe", kind = "color", value = "black" }] }
+bindings = { object = "object:shoe", attribute = "attribute:shoe-black" }
+truth = true
+labels = []
+sentence = "இது ஒரு கருப்பு செருப்பு."
+translation = "This is a black shoe."
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "கருப்பு", join = "space" }, { text = "செருப்பு.", join = "space" }]
+accepted_alternatives = ["செருப்பு கருப்பா இருக்கு."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a blue lamp."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }], attributes = [{ fact_id = "attribute:lamp-blue", object = "object:lamp", kind = "color", value = "blue" }] }
+bindings = { object = "object:lamp", attribute = "attribute:lamp-blue" }
+truth = true
+labels = []
+sentence = "இது ஒரு நீல விளக்கு."
+translation = "This is a blue lamp."
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "நீல", join = "space" }, { text = "விளக்கு.", join = "space" }]
+accepted_alternatives = ["விளக்கு நீலமா இருக்கு."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-white-plate"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a white plate."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "இது ஒரு வெள்ளை தட்டு."
+translation = "This is a white plate."
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "வெள்ளை", join = "space" }, { text = "தட்டு.", join = "space" }]
+accepted_alternatives = ["தட்டு வெள்ளையா இருக்கு."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-yellow-apple"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a yellow apple."
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:apple-yellow", object = "object:apple", kind = "color", value = "yellow" }] }
+bindings = { object = "object:apple", attribute = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "இது ஒரு மஞ்சள் ஆப்பிள்."
+translation = "This is a yellow apple."
+chunks = [{ text = "இது", join = "none" }, { text = "ஒரு", join = "space" }, { text = "மஞ்சள்", join = "space" }, { text = "ஆப்பிள்.", join = "space" }]
+accepted_alternatives = ["ஆப்பிள் மஞ்சளா இருக்கு."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "choose-red-cup"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "red (the colour of the cup)"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "சிவப்பு"
+translation = "red (the colour of the cup)"
+chunks = [{ text = "சிவப்பு", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "choose-green-book"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "green (the colour of the book)"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "பச்சை"
+translation = "green (the colour of the book)"
+chunks = [{ text = "பச்சை", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "கோப்பை என்ன நிறம்?"
+translation = "What colour is the cup?"
+chunks = [{ text = "கோப்பை", join = "none" }, { text = "என்ன", join = "space" }, { text = "நிறம்?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the book?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "புத்தகம் என்ன நிறம்?"
+translation = "What colour is the book?"
+chunks = [{ text = "புத்தகம்", join = "none" }, { text = "என்ன", join = "space" }, { text = "நிறம்?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-05"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "இவை ஒரு சிவப்பு கோப்பை."
+correction = "இது ஒரு சிவப்பு கோப்பை."
+note = "The scene binds one cup; the plural demonstrative conflicts with that identification."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-06"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "ஒரு கோப்பை சிவப்பு இது."
+correction = "இது ஒரு சிவப்பு கோப்பை."
+note = "Use the taught இது + ஒரு + colour modifier + noun order."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-13"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "கோப்பை எங்கே இருக்கு?"
+correction = "கோப்பை என்ன நிறம்?"
+note = "The follow-up requests the colour of the cup, not its location. This is an intent mismatch, not a claim that the location question is ungrammatical."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

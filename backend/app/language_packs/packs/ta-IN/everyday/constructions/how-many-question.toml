@@ -1,0 +1,14 @@
+construction_id = "how-many-question"
+version = 1
+summary = "Ask how many of a counted object there are."
+guidance = "Ask எத்தனை + noun + இருக்கு?: எத்தனை புத்தகம் இருக்கு? In everyday spoken Tamil the noun after a number usually stays singular."
+features = ["quantity-question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "how-many-frame"
+message = "Ask with எத்தனை … இருக்கு?"
+must_contain = ["^எத்தனை ", "இருக்கு\\?$"]

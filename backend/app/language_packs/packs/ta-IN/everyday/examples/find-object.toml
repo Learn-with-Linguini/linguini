@@ -1,0 +1,25 @@
+construction_id = "find-object"
+
+[[examples]]
+example_id = "find-cup"
+levels = ["A0"]
+purposes = ["findNamed"]
+meaning = "Find the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "கோப்பையைக் கண்டுபிடிங்க."
+translation = "Find the cup."
+chunks = [{ text = "கோப்பையைக்", join = "none" }, { text = "கண்டுபிடிங்க", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "find-cup-form"
+levels = ["A0"]
+purposes = ["findNamed"]
+sentence = "கோப்பை கண்டுபிடி."
+correction = "கோப்பையைக் கண்டுபிடிங்க."
+note = "Use the object form -ஐ and the courteous -ங்க ending."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

@@ -1,0 +1,49 @@
+construction_id = "ownership-statement"
+
+[[examples]]
+example_id = "it-is-mine"
+levels = ["A0"]
+purposes = ["answerOwnership"]
+meaning = "It's mine."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "owner:cup" }
+truth = true
+labels = []
+sentence = "私の 物です."
+translation = "It's mine."
+chunks = [{ "text" = "私の", "join" = "none" }, { "text" = "物です", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "it-is-not-mine"
+levels = ["A0"]
+purposes = ["answerOwnership"]
+meaning = "It's not mine."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "owner:cup" }
+truth = false
+labels = []
+sentence = "私の 物ではありません."
+translation = "It's not mine."
+chunks = [{ "text" = "私の", "join" = "none" }, { "text" = "物ではありません", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "it-is-mine-form"
+levels = ["A0"]
+purposes = ["answerOwnership"]
+sentence = "私の 物です"
+correction = "私の 物です."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "it-is-not-mine-form"
+levels = ["A0"]
+purposes = ["answerOwnership"]
+sentence = "私の 物ではありません"
+correction = "私の 物ではありません."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

@@ -1,0 +1,14 @@
+construction_id = "quantity-comparison"
+version = 1
+summary = "Say which of two counted groups has more or fewer objects."
+guidance = "Compare with first noun + second noun + ஐ விட + அதிகமா (the more label) or குறைவா (the fewer label) + இருக்கு: புத்தகம் கோப்பையை விட அதிகமா இருக்கு."
+features = ["quantity-comparison"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { first = "noun", second = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "comparison-frame"
+message = "Compare with … விட … இருக்கு."
+must_contain = [" விட ", "இருக்கு\\.$"]

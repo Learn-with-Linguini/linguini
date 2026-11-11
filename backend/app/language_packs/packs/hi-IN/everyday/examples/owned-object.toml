@@ -1,0 +1,97 @@
+construction_id = "owned-object"
+
+[[examples]]
+example_id = "cup-is-mine"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+meaning = "The cup is mine."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "owner:cup" }
+truth = true
+labels = []
+sentence = "कप मेरा है."
+translation = "The cup is mine."
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "मेरा", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "cup-is-yours"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+meaning = "The cup is yours."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "possessor:second" }
+truth = true
+labels = []
+sentence = "कप आपका है."
+translation = "The cup is yours."
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "आपका", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "book-is-anas"
+levels = ["A2"]
+purposes = ["buildOwnershipDescription"]
+meaning = "The book is Ana's."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:book", "owner" = "owner:book" }
+truth = true
+labels = []
+sentence = "किताब अना की है."
+translation = "The book is Ana's."
+chunks = [{ "text" = "किताब", "join" = "none" }, { "text" = "अना", "join" = "space" }, { "text" = "की", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "no-book-is-anas"
+levels = ["A2"]
+purposes = ["clarifyOwnership"]
+meaning = "No, the book is Ana's."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:book", "owner" = "owner:book" }
+truth = true
+labels = ["no"]
+sentence = "नहीं, किताब अना की है."
+translation = "No, the book is Ana's."
+chunks = [{ "text" = "नहीं", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "किताब", "join" = "space" }, { "text" = "अना", "join" = "space" }, { "text" = "की", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-is-mine-format"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+sentence = "कप मेरा है"
+correction = "कप मेरा है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-is-yours-format"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+sentence = "कप आपका है"
+correction = "कप आपका है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "book-is-anas-format"
+levels = ["A2"]
+purposes = ["buildOwnershipDescription"]
+sentence = "किताब अना की है"
+correction = "किताब अना की है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "no-book-is-anas-format"
+levels = ["A2"]
+purposes = ["clarifyOwnership"]
+sentence = "नहीं, किताब अना की है"
+correction = "नहीं, किताब अना की है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

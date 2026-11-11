@@ -1,0 +1,23 @@
+construction_id = "polite-request"
+version = 1
+summary = "Politely order, borrow or ask for an item."
+guidance = "Use कृपया मुझे order-phrase दीजिए. For borrowing add उधार before दीजिए; for passing use पकड़ा दीजिए. Keep the exact number + adjective + direct-count noun phrase returned for order-phrase. Café कॉफ़ी/चाय can count menu servings directly (दो छोटी कॉफ़ी); do not invent a photographed cup or assert its count. Agree the size/colour with the requested item; no learner-gender assumption is needed. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "polite-request"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "object" = "noun", "quantity" = "determiner", "size" = "phrase" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "polite-imperative"
+message = "Use the polite request ending दीजिए."
+must_contain = ["दीजिए[.]$"]

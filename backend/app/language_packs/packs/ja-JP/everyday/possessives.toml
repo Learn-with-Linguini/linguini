@@ -1,0 +1,43 @@
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[possessors]]
+possessor = "first"
+meaning = "my / mine"
+
+[[possessors.forms]]
+text = "私の"
+use = "determiner"
+romanization = "watashi no"
+
+[[possessors.forms]]
+text = "私の"
+use = "predicate"
+romanization = "watashi no"
+
+[[possessors]]
+possessor = "second"
+meaning = "your / yours"
+
+[[possessors.forms]]
+text = "あなたの"
+use = "determiner"
+romanization = "anata no"
+
+[[possessors.forms]]
+text = "あなたの"
+use = "predicate"
+romanization = "anata no"
+
+[[cast]]
+owner_id = "ana"
+english_name = "Ana"
+name = "アナ"
+gender = "feminine"
+romanization = "Ana"
+
+[[cast]]
+owner_id = "leo"
+english_name = "Leo"
+name = "レオ"
+gender = "masculine"
+romanization = "Reo"

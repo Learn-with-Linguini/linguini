@@ -1,0 +1,23 @@
+construction_id = "order-repair"
+version = 1
+summary = "Correct exactly the mistaken detail."
+guidance = "Start 不对, then give the bound corrected value politely: 不对, 请 给我 三 杯. / 不对, 请 打包. / 不对, 我 在这里吃. Do not affirm the mistake or introduce a new item. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "order-repair"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = { "quantity" = "determiner", "size" = "phrase", "detail" = "phrase" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "repair"
+message = "Correct the mistaken detail explicitly."
+must_contain = ["^不对,"]

@@ -1,0 +1,23 @@
+construction_id = "quantity-statement"
+version = 1
+summary = "State or correct a confirmed count."
+guidance = "Use number + direct-plural noun + हैं., e.g. पाँच किताबें हैं. One takes singular noun + है. A correction starts नहीं, and gives the bound true count. Do not add a classifier or use a singular auxiliary with plural inanimate nouns. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "quantity-statement"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "object" = "noun", "count" = "determiner" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "quantity-verb"
+message = "A counted existence statement ends in है/हैं."
+must_contain = ["\\s(है|हैं)[.]$"]

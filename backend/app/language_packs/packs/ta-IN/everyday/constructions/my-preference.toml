@@ -1,0 +1,26 @@
+construction_id = "my-preference"
+version = 1
+summary = "Say that I like (or do not like) the object."
+guidance = "Say எனக்கு + noun + பிடிக்கும், or பிடிக்காது when the use is dislike: எனக்கு கோப்பை பிடிக்கும். எனக்கு புத்தகம் பிடிக்காது."
+features = ["preference", "first-person"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "preference-frame"
+message = "Say the first-person like frame."
+must_contain = ["^எனக்கு ", "\\.$"]
+
+[[checks]]
+check_id = "dislike-negated"
+message = "A dislike sentence says the negative."
+must_contain = ["பிடிக்காது\\.$"]
+uses = ["dislike"]
+
+[[checks]]
+check_id = "like-not-negated"
+message = "A like sentence is not negated."
+must_not_contain = ["பிடிக்காது"]
+uses = ["like"]

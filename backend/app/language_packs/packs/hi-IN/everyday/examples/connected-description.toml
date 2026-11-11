@@ -1,0 +1,73 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "other-object" = "object:book", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "लाल कप है और किताब भी है."
+translation = "There is a red cup and there is also a book."
+chunks = [{ "text" = "लाल", "join" = "none" }, { "text" = "कप", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "और", "join" = "space" }, { "text" = "किताब", "join" = "space" }, { "text" = "भी", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also an apple."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "other-object" = "object:apple", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "सफ़ेद प्लेट है और सेब भी है."
+translation = "There is a white plate and there is also an apple."
+chunks = [{ "text" = "सफ़ेद", "join" = "none" }, { "text" = "प्लेट", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "और", "join" = "space" }, { "text" = "सेब", "join" = "space" }, { "text" = "भी", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "connect-location-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair. There is a bottle."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }, { "fact_id" = "object:bottle", "concept" = "bottle" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe", "reference" = "object:chair", "other-object" = "object:bottle", "relation" = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "जूता कुर्सी के नीचे है और बोतल भी है."
+translation = "The shoe is under the chair. There is a bottle."
+chunks = [{ "text" = "जूता", "join" = "none" }, { "text" = "कुर्सी", "join" = "space" }, { "text" = "के", "join" = "space" }, { "text" = "नीचे", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "और", "join" = "space" }, { "text" = "बोतल", "join" = "space" }, { "text" = "भी", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-cup-book-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "लाल कप है और किताब भी है"
+correction = "लाल कप है और किताब भी है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-plate-apple-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "सफ़ेद प्लेट है और सेब भी है"
+correction = "सफ़ेद प्लेट है और सेब भी है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "connect-location-existence-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+sentence = "जूता कुर्सी के नीचे है और बोतल भी है"
+correction = "जूता कुर्सी के नीचे है और बोतल भी है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

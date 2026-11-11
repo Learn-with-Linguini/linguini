@@ -1,0 +1,108 @@
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a1-four-plates"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 4 }] }
+bindings = { "object" = "object:plate", "count" = "count:plate" }
+truth = true
+input = "Say there are four plates."
+expected_meaning = "There are four plates."
+acceptable = ["皿が 四 枚 あります."]
+reject = [{ "sentence" = "皿が 四 枚 あります", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナが 四 枚 あります.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }, { "sentence" = "皿が 二 枚 あります.", "reason" = "The stated quantity contradicts the bound count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-statement-frame"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }], "counts" = [{ "fact_id" = "count:key", "object" = "object:key", "quantity" = 6 }] }
+bindings = { "object" = "object:key", "count" = "count:key" }
+truth = true
+input = "Say there are six keys."
+expected_meaning = "There are six keys."
+acceptable = ["鍵が 六 本 あります."]
+reject = [{ "sentence" = "鍵が 六 本 あります", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナが 六 本 あります.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }, { "sentence" = "鍵が 二 本 あります.", "reason" = "The stated quantity contradicts the bound count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-board"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:fork", "count" = "number:7" }
+truth = false
+use = "board"
+input = "Say the practice board shows seven forks."
+expected_meaning = "There are seven forks."
+acceptable = ["フォークが 七 本 あります."]
+reject = [{ "sentence" = "フォークが 七 本 あります", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナが 七 本 あります.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }, { "sentence" = "フォークが 二 本 あります.", "reason" = "The stated quantity contradicts the bound count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m03-a1-how-many-spoons"
+category = "valid"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:plate", "concept" = "plate" }], "counts" = [{ "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 5 }, { "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 4 }] }
+bindings = { "object" = "object:spoon" }
+truth = true
+input = "Ask how many spoons there are."
+expected_meaning = "How many spoons are there?"
+acceptable = ["スプーンは 何 本 ありますか?"]
+reject = [{ "sentence" = "スプーンは 何 本 ありますか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m03-a1-held-phones"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }, { "fact_id" = "object:bag", "concept" = "bag" }], "counts" = [{ "fact_id" = "count:phone", "object" = "object:phone", "quantity" = 10 }, { "fact_id" = "count:bag", "object" = "object:bag", "quantity" = 2 }] }
+bindings = { "object" = "object:phone", "count" = "count:phone" }
+truth = true
+input = "Say there are ten phones."
+expected_meaning = "There are ten phones."
+acceptable = ["電話が 十 台 あります."]
+reject = [{ "sentence" = "電話が 十 台 あります", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナが 十 台 あります.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }, { "sentence" = "電話が 二 台 あります.", "reason" = "The stated quantity contradicts the bound count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-held-unicode"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "counts" = [{ "fact_id" = "count:door", "object" = "object:door", "quantity" = 5 }] }
+bindings = { "object" = "object:door", "count" = "count:door" }
+truth = true
+input = "Say there are five doors."
+expected_meaning = "There are five doors."
+acceptable = ["ドアが 五 枚 あります."]
+reject = [{ "sentence" = "ドアが 五 枚 あります", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナが 五 枚 あります.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }, { "sentence" = "ドアが 二 枚 あります.", "reason" = "The stated quantity contradicts the bound count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-held-counter"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 3 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+input = "Say there are three books."
+expected_meaning = "There are three books."
+acceptable = ["本が 三 冊 あります."]
+reject = [{ "sentence" = "本が 三 冊 あります", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナが 三 冊 あります.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }, { "sentence" = "本が 二 冊 あります.", "reason" = "The stated quantity contradicts the bound count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

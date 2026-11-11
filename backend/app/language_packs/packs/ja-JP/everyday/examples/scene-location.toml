@@ -1,0 +1,121 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The cup is on the table."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "コップは テーブルの 上に あります."
+translation = "The cup is on the table."
+chunks = [{ "text" = "コップは", "join" = "none" }, { "text" = "テーブルの", "join" = "space" }, { "text" = "上に", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The shoe is under the chair."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe", "reference" = "object:chair", "relation" = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "靴は 椅子の 下に あります."
+translation = "The shoe is under the chair."
+chunks = [{ "text" = "靴は", "join" = "none" }, { "text" = "椅子の", "join" = "space" }, { "text" = "下に", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "lamp-next-to-book"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The lamp is next to the book."
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }, { "fact_id" = "object:book", "concept" = "book" }], "relations" = [{ "fact_id" = "relation:lamp-next_to-book", "subject" = "object:lamp", "reference" = "object:book", "relation" = "next_to" }] }
+bindings = { "subject" = "object:lamp", "reference" = "object:book", "relation" = "relation:lamp-next_to-book" }
+truth = true
+labels = []
+sentence = "ランプは 本の 隣に あります."
+translation = "The lamp is next to the book."
+chunks = [{ "text" = "ランプは", "join" = "none" }, { "text" = "本の", "join" = "space" }, { "text" = "隣に", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "Where is the shoe?"
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe" }
+truth = true
+labels = []
+sentence = "靴は どこに ありますか?"
+translation = "Where is the shoe?"
+chunks = [{ "text" = "靴は", "join" = "none" }, { "text" = "どこに", "join" = "space" }, { "text" = "ありますか", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "コップは テーブルの 上に あります."
+translation = "The cup is on the table."
+chunks = [{ "text" = "コップは", "join" = "none" }, { "text" = "テーブルの", "join" = "space" }, { "text" = "上に", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-on-table-form"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "コップは テーブルの 上に あります"
+correction = "コップは テーブルの 上に あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "shoe-under-chair-form"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "靴は 椅子の 下に あります"
+correction = "靴は 椅子の 下に あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "lamp-next-to-book-form"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "ランプは 本の 隣に あります"
+correction = "ランプは 本の 隣に あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-shoe-location-form"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "靴は どこに ありますか."
+correction = "靴は どこに ありますか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "m02-cup-on-table-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "コップは テーブルの 上に あります"
+correction = "コップは テーブルの 上に あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
