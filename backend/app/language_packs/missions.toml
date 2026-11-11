@@ -147,6 +147,7 @@ target_ids = ["recognise-position"]
 [[missions.slots]]
 purpose = "askWhere"
 construction_id = "where-question"
+additional_constructions = ["scene-location"]
 target_ids = ["build-question", "name-object"]
 prompt_labels = ["ask-where"]
 
