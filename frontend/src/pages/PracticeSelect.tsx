@@ -25,6 +25,11 @@ export function PracticeSelect() {
   const { practiceNotice: notice, retrySessionId } = (location.state as { practiceNotice?: string; retrySessionId?: string } | null) ?? {};
   const { learner, user, activeProfile, profileSaving, saveUser } = useAppState();
   const { scenes } = useScenesQuery();
+  const [sceneCollection, setSceneCollection] = useState<"nus" | "others">("nus");
+  const hasNusScenes = scenes.some(scene => scene.id.startsWith("nus-"));
+  const catalogScenes = hasNusScenes
+    ? scenes.filter(scene => scene.id.startsWith("nus-") === (sceneCollection === "nus"))
+    : scenes;
   const activeProfileId = activeProfile?.id;
   const [uploading, setUploading] = useState(false);
   const [selected, setSelected] = useState(false);
@@ -152,10 +157,20 @@ export function PracticeSelect() {
     </div>
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
-    <h2>Or practise with the below</h2>
+    <div className="spread practice-select__scenes-heading">
+      <h2>Or practise with the below</h2>
+      {hasNusScenes ? <div className="chip-row" role="group" aria-label="Scene collection">
+        {(["nus", "others"] as const).map(collection => <button key={collection} type="button"
+          className={`chip${sceneCollection === collection ? " chip--selected" : ""}`}
+          aria-pressed={sceneCollection === collection}
+          onClick={() => { setSceneCollection(collection); trackAction("practice_scene_collection_toggled", { collection }); }}>
+          {collection === "nus" ? "NUS" : "Others"}
+        </button>)}
+      </div> : null}
+    </div>
     <SceneCatalogStatus />
     <div ref={readyScenesRef} className="grid-2">
-      {scenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
+      {catalogScenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
         disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => { setStartingScene(scene); trackAction("practice_scene_selected", { sceneId: scene.id, title: scene.title }); chooseAsset(scene.mediaAssetId); }}>
         <SceneVisual scene={scene} />
         <span className="small items-center justify-center" style={{ fontWeight: 700 }}>{scene.title}</span>

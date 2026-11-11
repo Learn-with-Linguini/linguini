@@ -158,6 +158,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
+| `practice_scene_collection_toggled` | `{ collection: "nus" \| "others" }` | User switches the scene catalog between NUS and other scenes |
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
 | `revisit_review_shown` | `{ sessionId, newWordCount, practisedWordCount }` | Review of a repeat lesson on a photo shows which words were practised before (counts are distinct labels) |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
