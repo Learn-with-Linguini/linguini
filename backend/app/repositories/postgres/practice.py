@@ -128,6 +128,20 @@ class SessionBackedLearningRepository:
                 week_start_date, time.min, tzinfo=learner_timezone
             ).astimezone(UTC)
             week_end = week_start + timedelta(days=7)
+            weekly_activity = [
+                xp_events.c.user_id == users.c.id,
+                xp_events.c.occurred_at >= week_start,
+                xp_events.c.occurred_at < week_end,
+            ]
+            if language_code:
+                weekly_activity.append(
+                    xp_events.c.language_profile_id.in_(
+                        select(language_profiles.c.id).where(
+                            func.lower(language_profiles.c.target_language_code)
+                            == language_code.lower()
+                        )
+                    )
+                )
             weekly_scores = (
                 select(
                     users.c.id.label("user_id"),
@@ -138,11 +152,7 @@ class SessionBackedLearningRepository:
                 .select_from(
                     users.outerjoin(
                         xp_events,
-                        and_(
-                            xp_events.c.user_id == users.c.id,
-                            xp_events.c.occurred_at >= week_start,
-                            xp_events.c.occurred_at < week_end,
-                        ),
+                        and_(*weekly_activity),
                     )
                 )
                 .group_by(users.c.id, users.c.display_name, users.c.avatar)
