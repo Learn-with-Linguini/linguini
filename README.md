@@ -35,9 +35,9 @@ owns grading, learning evidence, rewards and session state.
 | --- | --- | --- |
 | <img src="docs/screenshots/home.png" alt="Home with streak and next practice" width="220" /> | <img src="docs/screenshots/learn.png" alt="Photo-led vocabulary and lesson tasks" width="220" /> | <img src="docs/screenshots/journal.png" alt="Journal history with scene photos" width="220" /> |
 
-[Watch the launch film](frontend/public/film/linguini-film-1080p.mp4)
-([720p](frontend/public/film/linguini-film-720p.mp4)). Editable media and regeneration
-steps are in [marketing/](marketing/README.md).
+Watch us on YouTube: [Introducing Linguini](https://www.youtube.com/watch?v=oWa6wZYabJE)
+and the [beta walkthrough](https://www.youtube.com/watch?v=ozalzJPkdQU). Editable media
+and regeneration steps are in [marketing/](marketing/README.md).
 
 Our [STePS poster](<Linguini STePS Poster (A1).pdf>), presented at NUS STePS on
 11 November:
