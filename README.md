@@ -39,6 +39,13 @@ owns grading, learning evidence, rewards and session state.
 ([720p](frontend/public/film/linguini-film-720p.mp4)). Editable media and regeneration
 steps are in [marketing/](marketing/README.md).
 
+Our [STePS poster](<Linguini STePS Poster (A1).pdf>), presented at NUS STePS on
+11 November:
+
+<p align="center">
+  <img src="Linguini%20STePS%20Poster%20(A1).png" alt="Linguini STePS poster" width="480" />
+</p>
+
 ## Repository
 
 | Path | Purpose |
