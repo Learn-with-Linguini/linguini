@@ -29,11 +29,16 @@ The public marketing pages and interactive `/demo` share the frontend deployment
 The demo uses bundled content; the signed-in app calls the backend. The backend
 owns grading, learning evidence, rewards and session state.
 
-## Screenshots and film
+## Product walkthrough
 
-| Home | Practice | Journal |
-| --- | --- | --- |
-| <img src="docs/screenshots/home.png" alt="Home with streak and next practice" width="220" /> | <img src="docs/screenshots/learn.png" alt="Photo-led vocabulary and lesson tasks" width="220" /> | <img src="docs/screenshots/journal.png" alt="Journal history with scene photos" width="220" /> |
+<p align="center">
+  <a href="frontend/public/film/linguini-demo.mp4">
+    <img src="frontend/public/film/poster.jpg" alt="Watch the step-by-step Linguini demo" width="720" />
+  </a>
+</p>
+
+See the current app flow from choosing a photo through completing a lesson.
+[Watch the step-by-step Linguini demo](frontend/public/film/linguini-demo.mp4).
 
 Watch us on YouTube: [Introducing Linguini](https://www.youtube.com/watch?v=oWa6wZYabJE)
 and the [beta walkthrough](https://www.youtube.com/watch?v=ozalzJPkdQU). Editable media
