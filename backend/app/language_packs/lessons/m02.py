@@ -8,6 +8,7 @@ comes from validated, model-generated sentences instead of per-language tables.
 from __future__ import annotations
 
 import random
+import re
 
 from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_a0 import (
@@ -50,8 +51,9 @@ _INVERSE = {
 
 
 def relation_kind(text) -> str:
-    """A relation's kind (``next_to``) from a fact or a proposed English meaning."""
-    return "_".join(str(text).strip().casefold().replace("-", " ").split())
+    """A relation's kind (``next_to``) from API, fact or proposed English text."""
+    words = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", str(text).strip())
+    return "_".join(words.casefold().replace("-", " ").replace("_", " ").split())
 
 
 # ---------------------------------------------------------------- facts and selection
