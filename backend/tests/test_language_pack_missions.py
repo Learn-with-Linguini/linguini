@@ -120,6 +120,9 @@ def test_m02_a2_photo_rule_needs_one_object_matching_both_clues():
     on = SimpleNamespace(id=UUID(int=9), subject_scene_object_id=cup.id,
                          reference_scene_object_id=table.id, relation="on")
     assert photo_reasons(mission, [cup, table, book], [on], scene_attributes) == []
+    next_to = SimpleNamespace(id=UUID(int=11), subject_scene_object_id=cup.id,
+                              reference_scene_object_id=table.id, relation="nextTo")
+    assert photo_reasons(mission, [cup, table, book], [next_to], scene_attributes) == []
     # Both red objects on the table: the clues no longer identify one object.
     book_on = SimpleNamespace(id=UUID(int=10), subject_scene_object_id=book.id,
                               reference_scene_object_id=table.id, relation="on")
